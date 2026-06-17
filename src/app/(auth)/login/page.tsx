@@ -2,13 +2,22 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { loginAction, type LoginState } from "@/server/actions/auth";
 import { FormField } from "@/components/auth/form-field";
+import { PasswordField } from "@/components/auth/password-field";
 import { SubmitButton } from "@/components/auth/submit-button";
+import styles from "@/components/auth/auth-page.module.css";
 
 const initialState: LoginState = {};
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const confirmationError =
+    searchParams.get("error") === "confirmation_failed"
+      ? "Email confirmation failed. Open the link in the same browser you signed up with, or sign up again."
+      : undefined;
+  const signupSuccess = searchParams.get("signup") === "success";
   const [state, setState] = useState<LoginState>(initialState);
   const [pending, startTransition] = useTransition();
 
@@ -18,8 +27,6 @@ export default function LoginPage() {
         const result = await loginAction(state, formData);
         setState(result ?? {});
       } catch (err) {
-        // Next.js's redirect() throws a special NEXT_REDIRECT error to
-        // trigger navigation — rethrow it so the framework can handle it.
         if (
           err &&
           typeof err === "object" &&
@@ -35,35 +42,44 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-lg font-semibold">Log in</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Welcome back. Pick up where you left off.
+    <>
+      <div className={styles.header}>
+        <h1 className={styles.title}>
+          Welcome <em className={styles.titleEm}>back</em>
+        </h1>
+        <p className={styles.subtitle}>
+          Pick up where you left off on your path to your first job.
         </p>
       </div>
 
-      <form action={handleSubmit} className="flex flex-col gap-4">
+      <form action={handleSubmit} className={styles.form}>
         <FormField
           id="email"
           name="email"
           type="email"
-          label="Email"
+          label="Email address"
+          placeholder="Enter your email address"
           autoComplete="email"
           error={state?.fieldErrors?.email}
         />
-        <FormField
+
+        <PasswordField
           id="password"
           name="password"
-          type="password"
           label="Password"
+          placeholder="Enter your password"
           autoComplete="current-password"
           error={state?.fieldErrors?.password}
         />
 
-        {state?.error && (
-          <p role="alert" className="text-sm text-red-600">
-            {state.error}
+        {(signupSuccess || state?.error ?? confirmationError) && (
+          <p
+            role={signupSuccess ? "status" : "alert"}
+            className={signupSuccess ? styles.successAlert : styles.alert}
+          >
+            {signupSuccess
+              ? "Account created successfully. Log in with your email and password."
+              : (state?.error ?? confirmationError)}
           </p>
         )}
 
@@ -72,12 +88,12 @@ export default function LoginPage() {
         </SubmitButton>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className={styles.footer}>
         Don&#x2019;t have an account?{" "}
-        <Link href="/signup" className="font-medium text-foreground underline">
+        <Link href="/signup" className={styles.footerLink}>
           Sign up
         </Link>
       </p>
-    </div>
+    </>
   );
 }

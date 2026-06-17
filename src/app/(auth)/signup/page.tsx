@@ -4,7 +4,9 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { signupAction, type SignupState } from "@/server/actions/auth";
 import { FormField } from "@/components/auth/form-field";
+import { PasswordField } from "@/components/auth/password-field";
 import { SubmitButton } from "@/components/auth/submit-button";
+import styles from "@/components/auth/auth-page.module.css";
 
 const initialState: SignupState = {};
 
@@ -18,10 +20,6 @@ export default function SignupPage() {
         const result = await signupAction(state, formData);
         setState(result ?? {});
       } catch (err) {
-        // Next.js's redirect() throws a special NEXT_REDIRECT error to
-        // trigger navigation — rethrow it so the framework can handle it.
-        // Any other error is unexpected; surface it as a form error rather
-        // than letting the component crash mid-transition.
         if (
           err &&
           typeof err === "object" &&
@@ -37,19 +35,22 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-lg font-semibold">Create your account</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Start your path from graduation to your first job.
+    <>
+      <div className={styles.header}>
+        <h1 className={styles.title}>
+          Create your <em className={styles.titleEm}>account</em>
+        </h1>
+        <p className={styles.subtitle}>
+          Start your path from graduation to your first job — guided by AI.
         </p>
       </div>
 
-      <form action={handleSubmit} className="flex flex-col gap-4">
+      <form action={handleSubmit} className={styles.form}>
         <FormField
           id="name"
           name="name"
           label="Full name"
+          placeholder="Your full name"
           autoComplete="name"
           error={state?.fieldErrors?.name}
         />
@@ -57,21 +58,22 @@ export default function SignupPage() {
           id="email"
           name="email"
           type="email"
-          label="Email"
+          label="Email address"
+          placeholder="Enter your email address"
           autoComplete="email"
           error={state?.fieldErrors?.email}
         />
-        <FormField
+        <PasswordField
           id="password"
           name="password"
-          type="password"
           label="Password"
+          placeholder="At least 8 characters"
           autoComplete="new-password"
           error={state?.fieldErrors?.password}
         />
 
         {state?.error && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className={styles.alert}>
             {state.error}
           </p>
         )}
@@ -81,12 +83,12 @@ export default function SignupPage() {
         </SubmitButton>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className={styles.footer}>
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-foreground underline">
+        <Link href="/login" className={styles.footerLink}>
           Log in
         </Link>
       </p>
-    </div>
+    </>
   );
 }

@@ -1,21 +1,69 @@
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/server/db/supabase-server";
+
+const RESET_FLOW_COOKIE = "jb_reset_flow";
 
 /**
- * Supabase emails a link to `${NEXT_PUBLIC_APP_URL}/auth/callback?code=...`
- * after signup. This exchanges that one-time code for a real session
- * (sets the auth cookies) and then sends the user on to the dashboard.
+ * Supabase emails a link to `${APP_URL}/auth/callback?code=...` (or
+ * `?token_hash=...&type=signup`) after signup or password recovery.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const tokenHash = searchParams.get("token_hash");
+  const type = searchParams.get("type") as EmailOtpType | null;
+  const isPasswordReset =
+    request.cookies.get(RESET_FLOW_COOKIE)?.value === "1" ||
+    type === "recovery";
+  let next =
+    searchParams.get("next") ??
+    (isPasswordReset ? "/reset-password" : "/dashboard");
+
+  if (!next.startsWith("/")) {
+    next = isPasswordReset ? "/reset-password" : "/dashboard";
+  }
+
+  const successRedirect = `${origin}${next}`;
+  let response = NextResponse.redirect(successRedirect);
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(
+          cookiesToSet: { name: string; value: string; options: CookieOptions }[],
+        ) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          response = NextResponse.redirect(successRedirect);
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
 
   if (code) {
-    const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      response.cookies.delete(RESET_FLOW_COOKIE);
+      return response;
+    }
+  } else if (tokenHash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      type,
+      token_hash: tokenHash,
+    });
+    if (!error) {
+      response.cookies.delete(RESET_FLOW_COOKIE);
+      return response;
     }
   }
 

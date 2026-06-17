@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
+import AppShell from "@/components/layout/app-shell";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Jobilly.ai — From Graduation to Your First Job",
@@ -31,7 +35,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <TRPCProvider>{children}</TRPCProvider>
+        <TRPCProvider>
+          <div className="flex min-h-screen flex-col">
+            <AppShell>{children}</AppShell>
+            <SiteFooter />
+          </div>
+        </TRPCProvider>
       </body>
     </html>
   );

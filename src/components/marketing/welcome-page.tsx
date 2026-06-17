@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import styles from "./welcome-page.module.css";
-import { Navbar } from "./navbar";
 import { EmailCaptureForm } from "./email-capture-form";
+import { FeatureCards } from "./feature-cards";
 import { useScrollReveal } from "./use-scroll-reveal";
 import { useCounterAnimation } from "./use-counter-animation";
 
@@ -13,7 +13,6 @@ export function WelcomePage() {
 
   return (
     <div className={styles.page} ref={revealRef}>
-      <Navbar />
 
       {/* HERO */}
       <div className={styles.hero}>
@@ -172,110 +171,7 @@ export function WelcomePage() {
           Four features, working together. Start free and unlock more as you need it.
         </p>
 
-        <div className={styles.featuresGrid}>
-          <div
-            className={`${styles.featureCard} ${styles.reveal} ${styles.d1}`}
-            data-reveal
-            data-reveal-visible-class={styles.revealVisible}
-          >
-            <div className={`${styles.featureIconWrap} ${styles.fiBlue}`}>
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <path
-                  d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24C19.523 24 24 19.523 24 14"
-                  stroke="#1877F2"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <circle cx="14" cy="14" r="3" fill="#1877F2" />
-                <path d="M20 4L24 4L24 8" stroke="#1877F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M24 4L18 10" stroke="#1877F2" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div className={`${styles.featureBadge} ${styles.badgeFree}`}>Free</div>
-            <div className={styles.featureTitle}>Career Advisory</div>
-            <div className={styles.featureDesc}>
-              One-on-one sessions with expert mentors. Tell us your background and goals &#x2014; we
-              map out exactly which skills and technologies to focus on first.
-            </div>
-          </div>
-
-          <div
-            className={`${styles.featureCard} ${styles.reveal} ${styles.d2}`}
-            data-reveal
-            data-reveal-visible-class={styles.revealVisible}
-          >
-            <div className={`${styles.featureIconWrap} ${styles.fiGreen}`}>
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <rect x="4" y="6" width="20" height="16" rx="3" stroke="#059669" strokeWidth="2" />
-                <path d="M9 12H19M9 16H15" stroke="#059669" strokeWidth="2" strokeLinecap="round" />
-                <path d="M14 2V6" stroke="#059669" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="21" cy="21" r="4" fill="#059669" />
-                <path
-                  d="M19.5 21L20.5 22L22.5 20"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div className={`${styles.featureBadge} ${styles.badgeFree}`}>Free</div>
-            <div className={styles.featureTitle}>Growth School</div>
-            <div className={styles.featureDesc}>
-              AI-generated micro-lessons, intelligent quizzes, and real-world coding challenges
-              modelled on how Meta, Google, and Amazon use these skills in production.
-            </div>
-          </div>
-
-          <div
-            className={`${styles.featureCard} ${styles.reveal} ${styles.d3}`}
-            data-reveal
-            data-reveal-visible-class={styles.revealVisible}
-          >
-            <div className={`${styles.featureIconWrap} ${styles.fiViolet}`}>
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <rect x="4" y="8" width="20" height="14" rx="3" stroke="#7C3AED" strokeWidth="2" />
-                <path d="M9 15C9 15 11 17 14 17C17 17 19 15 19 15" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="10.5" cy="12.5" r="1.5" fill="#7C3AED" />
-                <circle cx="17.5" cy="12.5" r="1.5" fill="#7C3AED" />
-                <path d="M19 5L22 8M9 5L6 8" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" />
-                <path d="M14 5V8" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div className={`${styles.featureBadge} ${styles.badgeSoon}`}>Coming Soon</div>
-            <div className={styles.featureTitle}>Mock Interviews</div>
-            <div className={styles.featureDesc}>
-              Voice AI interviews with real company personas &#x2014; Meta, Google, Amazon, Apple. The
-              system gets smarter with every candidate who shares their real interview experience.
-            </div>
-          </div>
-
-          <div
-            className={`${styles.featureCard} ${styles.reveal} ${styles.d4}`}
-            data-reveal
-            data-reveal-visible-class={styles.revealVisible}
-          >
-            <div className={`${styles.featureIconWrap} ${styles.fiOrange}`}>
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <path
-                  d="M20 6H8C6.895 6 6 6.895 6 8V20C6 21.105 6.895 22 8 22H20C21.105 22 22 21.105 22 20V8C22 6.895 21.105 6 20 6Z"
-                  stroke="#F97316"
-                  strokeWidth="2"
-                />
-                <path d="M10 12H18M10 16H15" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-                <path d="M17 3V7M11 3V7" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="21" cy="7" r="4" fill="#F97316" />
-                <path d="M19.5 7H22.5M21 5.5V8.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div className={`${styles.featureBadge} ${styles.badgePremium}`}>Premium</div>
-            <div className={styles.featureTitle}>Job Applications</div>
-            <div className={styles.featureDesc}>
-              Subscribe and let us handle it. Our team applies to matched roles, tailors your
-              resume for each one, and keeps you updated &#x2014; while you focus entirely on learning.
-            </div>
-          </div>
-        </div>
+        <FeatureCards />
       </section>
 
       {/* HOW IT WORKS */}
@@ -460,19 +356,6 @@ export function WelcomePage() {
           No credit card. No spam. Cancel anytime.
         </p>
       </div>
-
-      {/* FOOTER */}
-      <footer className={styles.footer}>
-        <div className={styles.footerLogo}>
-          jobilly<span className={styles.footerLogoWhite}>.ai</span>
-        </div>
-        <div className={styles.footerLinks}>
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-          <a href="#">Contact</a>
-        </div>
-        <div className={styles.footerCopy}>&#xA9; 2026 Jobilly.ai &#x2014; Built for graduates.</div>
-      </footer>
     </div>
   );
 }

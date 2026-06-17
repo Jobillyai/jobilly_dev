@@ -1,4 +1,4 @@
-import Link from "next/link";
+import styles from "@/components/auth/auth-page.module.css";
 
 export default function AuthLayout({
   children,
@@ -6,12 +6,11 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 px-4 py-12">
-      <Link href="/" className="mb-8 text-xl font-bold tracking-tight">
-        Jobilly.ai
-      </Link>
-      <div className="w-full max-w-sm rounded-lg border border-border bg-background p-8 shadow-sm">
-        {children}
+    <div className={styles.shell}>
+      <div className={styles.bgCircle1} aria-hidden />
+      <div className={styles.bgCircle2} aria-hidden />
+      <div className={styles.content}>
+        <div className={styles.card}>{children}</div>
       </div>
     </div>
   );

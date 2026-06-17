@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { createAdminClient } from "@/server/db/supabase-admin";
 import { createClient } from "@/server/db/supabase-server";
 
 const signupSchema = z.object({
@@ -14,6 +15,21 @@ const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
   password: z.string().min(1, "Enter your password"),
 });
+
+function formatAuthError(message: string): string {
+  if (/rate limit/i.test(message)) {
+    return "Too many emails were sent from this project. Wait a few minutes, then try again.";
+  }
+
+  return message;
+}
+
+function shouldAutoConfirmSignup(): boolean {
+  return (
+    process.env.NODE_ENV === "development" ||
+    process.env.AUTO_CONFIRM_SIGNUP === "true"
+  );
+}
 
 export type SignupState = {
   error?: string;
@@ -42,24 +58,39 @@ export async function signupAction(
   }
 
   const { name, email, password } = parsed.data;
+
+  if (shouldAutoConfirmSignup()) {
+    const admin = createAdminClient();
+    const { error: createError } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { name },
+    });
+
+    if (createError) {
+      return { error: formatAuthError(createError.message) };
+    }
+
+    redirect("/login?signup=success");
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { name }, // consumed by the handle_new_user trigger (migration 0002)
+      data: { name },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
     },
   });
 
   if (error) {
-    // Supabase returns a generic-looking message for "email already in use"
-    // to avoid leaking which emails are registered; surface it as-is.
-    return { error: error.message };
+    return { error: formatAuthError(error.message) };
   }
 
-  redirect("/confirm");
+  redirect("/login?signup=success");
 }
 
 export type LoginState = {
@@ -91,7 +122,6 @@ export async function loginAction(
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
-    // Deliberately vague — don't reveal whether the email exists.
     return { error: "Incorrect email or password." };
   }
 
