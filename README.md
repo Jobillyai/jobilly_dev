@@ -122,6 +122,18 @@ Built on Supabase Auth, using Next.js Server Actions rather than client-side API
 
 A note on the implementation: this project pins React 18 (required by the current tRPC v10 + TanStack Query v4 pairing), so the auth forms use `useState` + `useTransition` rather than React 19's `useActionState`/`useFormState` — those hooks aren't available on this React version. The pattern is Next.js's documented "custom invocation using startTransition," not a workaround.
 
+## Welcome page (marketing home page)
+
+The home page (`/`) is the full marketing/waitlist design, converted from a static HTML mockup into Next.js components under `src/components/marketing/`:
+
+- `welcome-page.tsx` — the page itself, all sections (hero, stats, features, how-it-works, institutions, bottom CTA, footer)
+- `welcome-page.module.css` — a CSS Module holding the original hand-tuned styles (custom properties, keyframe animations, responsive breakpoints) largely as-is, scoped to this page so they can't leak into or collide with the rest of the app's Tailwind-based styling
+- `navbar.tsx` — the sticky nav, now with real `Log in` / `Get Early Access` links pointing at `/login` and `/signup`
+- `email-capture-form.tsx` — the waitlist email capture, still posting to the same Formspree endpoint as the original design
+- `use-scroll-reveal.ts` / `use-counter-animation.ts` — small hooks porting the original vanilla-JS `IntersectionObserver` scroll-reveal and stat-counter animations to React
+
+Fonts (Plus Jakarta Sans, Instrument Serif) are loaded via a plain `<link>` tag in `src/app/layout.tsx` rather than `next/font/google`, because the latter fetches font files from Google's servers at *build* time — if your CI or deploy environment restricts outbound network access during builds, that fetch can fail. The `<link>` approach matches what the original design already used in production and has no such requirement.
+
 ## What's intentionally not in this scaffold yet
 
 Per the agreed Phase 0 scope, this does not include: feature dashboards (Phase 1), Cloudflare/Vercel/Railway provisioning (requires your accounts), Sentry/Axiom/Upstash wiring, Stripe, or any of the AI service integrations. Those land in later phases per the plan's 18-week schedule.
