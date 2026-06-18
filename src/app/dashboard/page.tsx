@@ -19,7 +19,7 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <FeatureCards developmentInProgress />
+        <FeatureCards developmentInProgress enableFeatureLinks />
       </main>
     </div>
   );

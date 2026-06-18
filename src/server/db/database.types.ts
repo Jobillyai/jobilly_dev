@@ -82,6 +82,44 @@ export type Database = {
         >;
         Relationships: [];
       };
+      career_advisory_intakes: {
+        Row: {
+          id: string;
+          candidate_id: string;
+          name: string;
+          email: string;
+          phone: string;
+          graduation_details: string;
+          branch: string;
+          is_veteran: boolean;
+          interested_technology: string;
+          google_meet_link: string | null;
+          session_scheduled_at: string | null;
+          invite_sent_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          candidate_id: string;
+          name: string;
+          email: string;
+          phone: string;
+          graduation_details: string;
+          branch: string;
+          is_veteran?: boolean;
+          interested_technology: string;
+          google_meet_link?: string | null;
+          session_scheduled_at?: string | null;
+          invite_sent_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["career_advisory_intakes"]["Insert"]
+        >;
+        Relationships: [];
+      };
       // Remaining tables (mentor_profiles, institutions, advisory_sessions,
       // learning_*, quiz_*, sandbox_*, company_personas, interview_*,
       // job_*, application_profile, scraped_jobs, recruiter_messages,

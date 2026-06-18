@@ -72,7 +72,7 @@ export default function LoginPage() {
           error={state?.fieldErrors?.password}
         />
 
-        {(signupSuccess || state?.error ?? confirmationError) && (
+        {((signupSuccess || state?.error) ?? confirmationError) && (
           <p
             role={signupSuccess ? "status" : "alert"}
             className={signupSuccess ? styles.successAlert : styles.alert}

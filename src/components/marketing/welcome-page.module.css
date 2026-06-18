@@ -475,6 +475,12 @@
 .featureCard:hover::after {
   opacity: 1;
 }
+.featureCardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
 .featureIconWrap {
   width: 56px;
   height: 56px;

@@ -1,11 +1,14 @@
+import Link from "next/link";
 import styles from "./welcome-page.module.css";
 
 type FeatureCardsProps = {
   developmentInProgress?: boolean;
+  enableFeatureLinks?: boolean;
 };
 
 const features = [
   {
+    slug: "career-advisory",
     iconClass: styles.fiBlue,
     badgeClass: styles.badgeFree,
     badge: "Free",
@@ -33,6 +36,7 @@ const features = [
     ),
   },
   {
+    slug: null,
     iconClass: styles.fiGreen,
     badgeClass: styles.badgeFree,
     badge: "Free",
@@ -56,6 +60,7 @@ const features = [
     ),
   },
   {
+    slug: null,
     iconClass: styles.fiViolet,
     badgeClass: styles.badgeSoon,
     badge: "Coming Soon",
@@ -79,6 +84,7 @@ const features = [
     ),
   },
   {
+    slug: null,
     iconClass: styles.fiOrange,
     badgeClass: styles.badgePremium,
     badge: "Premium",
@@ -106,25 +112,53 @@ const features = [
   },
 ] as const;
 
-export function FeatureCards({ developmentInProgress = false }: FeatureCardsProps) {
+export function FeatureCards({
+  developmentInProgress = false,
+  enableFeatureLinks = false,
+}: FeatureCardsProps) {
   return (
     <div className={styles.featuresGrid}>
-      {features.map((feature) => (
-        <div key={feature.title} className={styles.featureCard}>
-          <div className={`${styles.featureIconWrap} ${feature.iconClass}`}>
-            {feature.icon}
+      {features.map((feature) => {
+        const href =
+          enableFeatureLinks && feature.slug
+            ? (`/dashboard/${feature.slug}` as const)
+            : undefined;
+
+        const card = (
+          <>
+            <div className={`${styles.featureIconWrap} ${feature.iconClass}`}>
+              {feature.icon}
+            </div>
+            <div
+              className={`${styles.featureBadge} ${
+                developmentInProgress ? styles.badgeDev : feature.badgeClass
+              }`}
+            >
+              {developmentInProgress ? "Development in Progress" : feature.badge}
+            </div>
+            <div className={styles.featureTitle}>{feature.title}</div>
+            <div className={styles.featureDesc}>{feature.description}</div>
+          </>
+        );
+
+        if (href) {
+          return (
+            <Link
+              key={feature.title}
+              href={href}
+              className={`${styles.featureCard} ${styles.featureCardLink}`}
+            >
+              {card}
+            </Link>
+          );
+        }
+
+        return (
+          <div key={feature.title} className={styles.featureCard}>
+            {card}
           </div>
-          <div
-            className={`${styles.featureBadge} ${
-              developmentInProgress ? styles.badgeDev : feature.badgeClass
-            }`}
-          >
-            {developmentInProgress ? "Development in Progress" : feature.badge}
-          </div>
-          <div className={styles.featureTitle}>{feature.title}</div>
-          <div className={styles.featureDesc}>{feature.description}</div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
