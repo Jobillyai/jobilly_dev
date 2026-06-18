@@ -1,0 +1,247 @@
+.background {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(24, 119, 242, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 119, 242, 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 90% 75% at 50% 45%, black 12%, transparent 82%);
+}
+
+.dotField {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(24, 119, 242, 0.18) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 5%, transparent 75%);
+  opacity: 0.35;
+}
+
+.abstractSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.9;
+}
+
+.abstractBlob {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  top: 8%;
+  right: 18%;
+  border-radius: 42% 58% 63% 37% / 36% 42% 58% 64%;
+  background: radial-gradient(circle at 30% 30%, rgba(124, 58, 237, 0.08), rgba(24, 119, 242, 0.04) 55%, transparent 72%);
+  filter: blur(2px);
+  animation: blobDrift 14s ease-in-out infinite;
+}
+
+.abstractBlobAlt {
+  width: 260px;
+  height: 260px;
+  top: auto;
+  right: auto;
+  left: 12%;
+  bottom: 10%;
+  border-radius: 58% 42% 37% 63% / 48% 56% 44% 52%;
+  background: radial-gradient(circle at 60% 40%, rgba(5, 150, 105, 0.07), rgba(74, 159, 255, 0.04) 50%, transparent 70%);
+  animation-delay: -6s;
+}
+
+.ringCluster {
+  position: absolute;
+  right: 28%;
+  top: 52%;
+}
+
+.ring {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border: 1.5px solid rgba(24, 119, 242, 0.1);
+  border-radius: 50%;
+  animation: ringPulse 8s ease-in-out infinite;
+}
+
+.ringSm {
+  width: 88px;
+  height: 88px;
+  top: 26px;
+  left: 26px;
+  border-color: rgba(74, 159, 255, 0.12);
+  animation-delay: -3s;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(0.5px);
+}
+
+.orbTop {
+  width: 520px;
+  height: 520px;
+  top: -160px;
+  left: -120px;
+  background: radial-gradient(circle, rgba(24, 119, 242, 0.11) 0%, transparent 68%);
+  animation: orbDrift 18s ease-in-out infinite;
+}
+
+.orbBottom {
+  width: 460px;
+  height: 460px;
+  bottom: -140px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(74, 159, 255, 0.09) 0%, transparent 70%);
+  animation: orbDrift 20s ease-in-out infinite reverse;
+}
+
+.orbMid {
+  width: 300px;
+  height: 300px;
+  top: 46%;
+  left: 42%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.06) 0%, transparent 72%);
+  animation: orbDriftCentered 16s ease-in-out infinite;
+  animation-delay: -5s;
+}
+
+.glowLine {
+  position: absolute;
+  top: 22%;
+  left: 5%;
+  width: 40%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(24, 119, 242, 0.3), transparent);
+  transform: rotate(-12deg);
+  opacity: 0.55;
+}
+
+.glowLineAlt {
+  top: auto;
+  bottom: 28%;
+  left: auto;
+  right: 4%;
+  width: 38%;
+  transform: rotate(14deg);
+}
+
+.sparkCluster {
+  position: absolute;
+  left: 18%;
+  top: 58%;
+}
+
+.spark {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #1877f2;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  opacity: 0.3;
+  animation: sparkle 3s ease-in-out infinite;
+}
+
+.sparkMid {
+  top: 18px;
+  left: 14px;
+  width: 7px;
+  height: 7px;
+  animation-delay: 0.8s;
+}
+
+.sparkSmall {
+  top: -10px;
+  left: 24px;
+  width: 5px;
+  height: 5px;
+  animation-delay: 1.6s;
+}
+
+@keyframes blobDrift {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  50% {
+    transform: translate(24px, -18px) rotate(8deg);
+  }
+}
+
+@keyframes orbDrift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(30px, -22px);
+  }
+}
+
+@keyframes orbDriftCentered {
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+
+  50% {
+    transform: translate(calc(-50% + 30px), calc(-50% - 22px));
+  }
+}
+
+@keyframes ringPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: rotate(45deg) scale(1);
+  }
+
+  50% {
+    opacity: 0.45;
+    transform: rotate(45deg) scale(1.15);
+  }
+}
+
+@media (max-width: 900px) {
+  .abstractBlob,
+  .ringCluster {
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 600px) {
+  .sparkCluster,
+  .glowLine,
+  .glowLineAlt,
+  .abstractSvg,
+  .abstractBlob,
+  .ringCluster,
+  .dotField {
+    display: none;
+  }
+}

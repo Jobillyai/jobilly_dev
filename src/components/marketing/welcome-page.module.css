@@ -22,7 +22,7 @@
   --text-muted: #6b7280;
 
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background: var(--white);
+  background: linear-gradient(180deg, var(--blue-50) 0%, var(--white) 55%);
   color: var(--text-primary);
   overflow-x: hidden;
   line-height: 1.6;
@@ -122,37 +122,8 @@
   justify-content: center;
   text-align: center;
   padding: 120px 24px 80px;
-  background: linear-gradient(180deg, var(--blue-50) 0%, var(--white) 60%);
   position: relative;
   overflow: hidden;
-}
-.heroBgCircle {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.c1 {
-  width: 700px;
-  height: 700px;
-  top: -200px;
-  left: -200px;
-  background: radial-gradient(circle, rgba(24, 119, 242, 0.06) 0%, transparent 70%);
-}
-.c2 {
-  width: 500px;
-  height: 500px;
-  bottom: -100px;
-  right: -100px;
-  background: radial-gradient(circle, rgba(10, 52, 96, 0.05) 0%, transparent 70%);
-}
-.heroGrid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image: linear-gradient(rgba(24, 119, 242, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(24, 119, 242, 0.04) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 80%);
 }
 .heroEyebrow {
   display: inline-flex;
@@ -348,6 +319,8 @@
 
 /* ── STATS ── */
 .statsSection {
+  position: relative;
+  z-index: 1;
   background: var(--blue-900);
   padding: 72px 24px;
   display: flex;
@@ -390,15 +363,26 @@
 
 /* ── SECTIONS ── */
 .section {
+  position: relative;
+  overflow: hidden;
   padding: 100px 24px;
   max-width: 1100px;
   margin: 0 auto;
 }
 .sectionFull {
+  position: relative;
+  overflow: hidden;
   max-width: 100%;
   padding: 100px 0;
 }
+.sectionContent {
+  position: relative;
+  z-index: 1;
+}
+
 .sectionInner {
+  position: relative;
+  z-index: 1;
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 24px;
@@ -556,7 +540,7 @@
 
 /* ── HOW IT WORKS ── */
 .hiwBg {
-  background: var(--blue-50);
+  background: rgba(240, 246, 255, 0.72);
 }
 .stepsGrid {
   display: grid;
@@ -597,9 +581,11 @@
 
 /* ── COMPANIES ── */
 .companiesStrip {
-  background: var(--white);
-  border-top: 1px solid var(--gray-100);
-  border-bottom: 1px solid var(--gray-100);
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  border-top: 1px solid rgba(24, 119, 242, 0.08);
+  border-bottom: 1px solid rgba(24, 119, 242, 0.08);
   padding: 48px 24px;
   text-align: center;
 }
@@ -631,6 +617,8 @@
 
 /* ── INSTITUTION ── */
 .instSection {
+  position: relative;
+  z-index: 1;
   background: var(--blue-900);
   padding: 100px 24px;
 }
@@ -730,7 +718,9 @@
 
 /* ── BOTTOM CTA ── */
 .ctaSection {
-  background: linear-gradient(180deg, var(--white) 0%, var(--blue-50) 100%);
+  position: relative;
+  overflow: hidden;
+  background: transparent;
   padding: 120px 24px;
   text-align: center;
 }

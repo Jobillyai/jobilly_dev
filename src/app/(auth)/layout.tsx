@@ -1,3 +1,4 @@
+import { AuthBackground } from "@/components/auth/auth-background";
 import styles from "@/components/auth/auth-page.module.css";
 
 export default function AuthLayout({
@@ -7,8 +8,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className={styles.shell}>
-      <div className={styles.bgCircle1} aria-hidden />
-      <div className={styles.bgCircle2} aria-hidden />
+      <AuthBackground />
       <div className={styles.content}>
         <div className={styles.card}>{children}</div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AbstractBackground } from "@/components/layout/abstract-background";
 import styles from "./welcome-page.module.css";
 import { EmailCaptureForm } from "./email-capture-form";
 import { FeatureCards } from "./feature-cards";
@@ -16,9 +17,7 @@ export function WelcomePage() {
 
       {/* HERO */}
       <div className={styles.hero}>
-        <div className={`${styles.heroBgCircle} ${styles.c1}`} />
-        <div className={`${styles.heroBgCircle} ${styles.c2}`} />
-        <div className={styles.heroGrid} />
+        <AbstractBackground />
 
         <div className={styles.heroEyebrow}>
           <div className={styles.pulseDot} />
@@ -142,6 +141,8 @@ export function WelcomePage() {
 
       {/* COMPANIES */}
       <div className={styles.companiesStrip}>
+        <AbstractBackground />
+        <div className={styles.sectionContent}>
         <div className={styles.companiesLabel}>Practice interviewing for roles at</div>
         <div className={styles.companiesLogos}>
           <div className={styles.companyLogo}>Meta</div>
@@ -151,10 +152,13 @@ export function WelcomePage() {
           <div className={styles.companyLogo}>Microsoft</div>
           <div className={styles.companyLogo}>Startups</div>
         </div>
+        </div>
       </div>
 
       {/* FEATURES */}
       <section className={styles.section}>
+        <AbstractBackground />
+        <div className={styles.sectionContent}>
         <div className={`${styles.label} ${styles.reveal}`} data-reveal data-reveal-visible-class={styles.revealVisible}>
           <div className={styles.labelDot} /> What&#x2019;s inside
         </div>
@@ -172,10 +176,12 @@ export function WelcomePage() {
         </p>
 
         <FeatureCards />
+        </div>
       </section>
 
       {/* HOW IT WORKS */}
       <div className={`${styles.sectionFull} ${styles.hiwBg}`}>
+        <AbstractBackground />
         <div className={styles.sectionInner}>
           <div className={`${styles.label} ${styles.reveal}`} data-reveal data-reveal-visible-class={styles.revealVisible}>
             <div className={styles.labelDot} /> The path
@@ -329,6 +335,8 @@ export function WelcomePage() {
 
       {/* BOTTOM CTA */}
       <div className={styles.ctaSection}>
+        <AbstractBackground />
+        <div className={styles.sectionContent}>
         <div
           className={`${styles.sectionTitle} ${styles.reveal}`}
           style={{ maxWidth: 640, margin: "0 auto 16px" }}
@@ -355,6 +363,7 @@ export function WelcomePage() {
         >
           No credit card. No spam. Cancel anytime.
         </p>
+        </div>
       </div>
     </div>
   );

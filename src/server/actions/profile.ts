@@ -118,6 +118,8 @@ export async function uploadAvatarAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
+  revalidatePath("/admin");
+  revalidatePath("/admin/profile");
 
   return { avatarUrl };
 }
@@ -201,6 +203,8 @@ export async function updateProfileAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
+  revalidatePath("/admin");
+  revalidatePath("/admin/profile");
 
   return { success: true };
 }

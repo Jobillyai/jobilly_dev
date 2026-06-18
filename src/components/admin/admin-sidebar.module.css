@@ -1,0 +1,197 @@
+.adminSidebar {
+  --blue-900: #0a1628;
+  --blue-500: #1877f2;
+  --blue-50: #f0f6ff;
+  --white: #ffffff;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --text-muted: #6b7280;
+  --text-secondary: #374151;
+
+  position: relative;
+  width: 240px;
+  flex-shrink: 0;
+  min-height: calc(100vh - 68px);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  overflow: hidden;
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(240, 246, 255, 0.82) 45%,
+    rgba(232, 241, 255, 0.88) 100%
+  );
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    10px 0 36px rgba(10, 22, 40, 0.06);
+}
+
+.adminSidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 160px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+.adminSidebar::after {
+  content: "";
+  position: absolute;
+  top: -35%;
+  left: -25%;
+  width: 90%;
+  height: 55%;
+  background: radial-gradient(circle, rgba(24, 119, 242, 0.1) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+.brand {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 24px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.brandMark {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #3d8ff7 0%, #1877f2 55%, #0f5fd0 100%);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 6px 16px rgba(24, 119, 242, 0.35);
+}
+
+.brandText {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--blue-900);
+  letter-spacing: -0.3px;
+}
+
+.brandSub {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.nav {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.navLink,
+.signOutBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, border-color 0.2s;
+  font-family: inherit;
+  text-align: left;
+}
+
+.navLink:hover,
+.signOutBtn:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(240, 246, 255, 0.9) 100%);
+  color: var(--blue-900);
+  border-color: rgba(24, 119, 242, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 4px 14px rgba(24, 119, 242, 0.08);
+}
+
+.navLinkActive {
+  background: linear-gradient(135deg, rgba(24, 119, 242, 0.16) 0%, rgba(255, 255, 255, 0.55) 100%);
+  color: var(--blue-500);
+  border-color: rgba(24, 119, 242, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 6px 18px rgba(24, 119, 242, 0.12);
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.signOutBtn {
+  color: #dc2626;
+}
+
+.signOutBtn:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(254, 242, 242, 0.9) 100%);
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.15);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 4px 14px rgba(239, 68, 68, 0.08);
+}
+
+@media (max-width: 900px) {
+  .adminSidebar {
+    width: 72px;
+    padding: 20px 10px;
+  }
+
+  .brandText,
+  .navLabel,
+  .brandSub {
+    display: none;
+  }
+
+  .brand {
+    justify-content: center;
+    padding: 0 0 20px;
+  }
+
+  .navLink,
+  .signOutBtn {
+    justify-content: center;
+    padding: 12px;
+  }
+}

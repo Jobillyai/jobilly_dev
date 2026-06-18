@@ -1,0 +1,234 @@
+.sheet {
+  border: 1.5px solid #c7d9f2;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(10, 22, 40, 0.08);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #e8f1ff 0%, #f5f9ff 100%);
+  border-bottom: 1px solid #d7e6fb;
+}
+
+.toolbarLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toolbarLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.toolbarFile {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0a1628;
+}
+
+.refreshBtn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  background: #1877f2;
+  color: #ffffff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.refreshBtn:hover:not(:disabled) {
+  background: #0f5fd0;
+  transform: translateY(-1px);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.metaBar {
+  display: grid;
+  gap: 6px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #374151;
+  background: #f9fbff;
+  border-bottom: 1px solid #e8f1ff;
+}
+
+.metaBar strong {
+  color: #0a1628;
+}
+
+.message {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.12);
+}
+
+.empty {
+  padding: 40px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.tableViewport {
+  overflow: auto;
+  max-height: 62vh;
+}
+
+.excelTable {
+  width: 100%;
+  min-width: 1180px;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.excelTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.excelTable th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: #217346;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+}
+
+.excelTable td {
+  padding: 10px 12px;
+  border-right: 1px solid #e8f1ff;
+  border-bottom: 1px solid #edf2fb;
+  color: #0a1628;
+  vertical-align: top;
+  background: #ffffff;
+}
+
+.excelTable tbody tr:nth-child(even) td {
+  background: #f8fbff;
+}
+
+.rowSelected td {
+  background: rgba(24, 119, 242, 0.08) !important;
+}
+
+.rowNumHead,
+.rowNum {
+  width: 42px;
+  text-align: center;
+  color: #6b7280;
+  font-weight: 700;
+  background: #f3f4f6 !important;
+}
+
+.cellStrong {
+  font-weight: 700;
+  min-width: 180px;
+}
+
+.cellWide {
+  min-width: 260px;
+  max-width: 320px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.cellDate {
+  white-space: nowrap;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.scoreBadge {
+  display: inline-flex;
+  min-width: 44px;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(24, 119, 242, 0.1);
+  color: #1877f2;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.fitBadge {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.fithigh {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.fitmedium {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.fitlow {
+  background: rgba(107, 114, 128, 0.12);
+  color: #4b5563;
+}
+
+.jobLink {
+  color: #1877f2;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.jobLink:hover {
+  text-decoration: underline;
+}
+
+.footerNote {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-top: 1px solid #edf2fb;
+}
+
+@media (max-width: 900px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

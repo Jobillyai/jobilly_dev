@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { isAdminRole } from "@/lib/auth/roles";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { createClient } from "@/server/db/supabase-server";
 
@@ -119,10 +120,23 @@ export async function loginAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data: authData, error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
     return { error: "Incorrect email or password." };
+  }
+
+  const userId = authData.user?.id;
+  if (userId) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (isAdminRole(profile?.role)) {
+      redirect("/admin");
+    }
   }
 
   redirect("/dashboard");

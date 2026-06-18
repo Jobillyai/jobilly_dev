@@ -9,35 +9,12 @@
   --text-secondary: #374151;
   --text-muted: #6b7280;
 
-  min-height: 100vh;
+  position: relative;
+  min-height: calc(100vh - 68px);
   font-family: "Plus Jakarta Sans", sans-serif;
   background: linear-gradient(180deg, var(--blue-50) 0%, var(--white) 55%);
   color: var(--text-primary);
-  position: relative;
   overflow: hidden;
-}
-
-.bgCircle1,
-.bgCircle2 {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.bgCircle1 {
-  width: 520px;
-  height: 520px;
-  top: -160px;
-  left: -140px;
-  background: radial-gradient(circle, rgba(24, 119, 242, 0.07) 0%, transparent 70%);
-}
-
-.bgCircle2 {
-  width: 420px;
-  height: 420px;
-  bottom: -120px;
-  right: -100px;
-  background: radial-gradient(circle, rgba(24, 119, 242, 0.05) 0%, transparent 70%);
 }
 
 .content {
@@ -52,16 +29,18 @@
 }
 
 .card {
+  position: relative;
+  z-index: 2;
   width: 100%;
   max-width: 440px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1.5px solid rgba(24, 119, 242, 0.1);
   border-radius: 20px;
   padding: 40px 36px;
   box-shadow:
-    0 4px 24px rgba(10, 22, 40, 0.06),
+    0 8px 40px rgba(10, 22, 40, 0.08),
     0 1px 3px rgba(10, 22, 40, 0.04);
 }
 
@@ -304,6 +283,22 @@
 }
 
 .footerLink:hover {
+  color: var(--accent-dark);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue-500);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.backLink:hover {
   color: var(--accent-dark);
 }
 

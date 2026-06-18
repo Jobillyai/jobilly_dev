@@ -1,21 +1,31 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { logoutAction } from "@/server/actions/auth";
 import type { SessionUser } from "@/lib/auth/session";
+import { formatDisplayName } from "@/lib/format-display-name";
 import styles from "./navbar.module.css";
 
 type UserMenuProps = {
   user: SessionUser;
+  profileHref?: "/dashboard/profile" | "/admin/profile";
+  logoutActionFn?: typeof logoutAction;
+  showLogout?: boolean;
 };
 
-export function UserMenu({ user }: UserMenuProps) {
-  const router = useRouter();
+export function UserMenu({
+  user,
+  profileHref = "/dashboard/profile",
+  logoutActionFn = logoutAction,
+  showLogout = true,
+}: UserMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
-  const displayName = user.name ?? user.email.split("@")[0];
+  const displayName = user.name
+    ? formatDisplayName(user.name)
+    : formatDisplayName(user.email.split("@")[0] ?? user.email);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -80,22 +90,21 @@ export function UserMenu({ user }: UserMenuProps) {
             <span className={styles.userDropdownName}>{displayName}</span>
             <span className={styles.userDropdownEmail}>{user.email}</span>
           </div>
-          <button
-            type="button"
+          <Link
+            href={profileHref}
             className={styles.userDropdownItem}
             role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              router.push("/dashboard/profile");
-            }}
+            onClick={() => setOpen(false)}
           >
             Edit profile
-          </button>
-          <form action={logoutAction}>
-            <button type="submit" className={styles.userDropdownItemLogout} role="menuitem">
-              Log out
-            </button>
-          </form>
+          </Link>
+          {showLogout && (
+            <form action={logoutActionFn}>
+              <button type="submit" className={styles.userDropdownItemLogout} role="menuitem">
+                Log out
+              </button>
+            </form>
+          )}
         </div>
       )}
     </div>

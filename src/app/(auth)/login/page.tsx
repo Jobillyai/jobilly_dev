@@ -93,6 +93,10 @@ export default function LoginPage() {
         <Link href="/signup" className={styles.footerLink}>
           Sign up
         </Link>
+        {" · "}
+        <Link href="/admin/login" className={styles.footerLink}>
+          Admin login
+        </Link>
       </p>
     </>
   );

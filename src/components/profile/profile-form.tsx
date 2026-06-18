@@ -15,6 +15,8 @@ import styles from "./profile-form.module.css";
 
 type ProfileFormProps = {
   profile: UserProfile;
+  backHref?: "/dashboard" | "/admin";
+  backLabel?: string;
 };
 
 const initialState: ProfileState = {};
@@ -28,7 +30,11 @@ function getInitials(name: string | undefined, email: string) {
   return source.slice(0, 2).toUpperCase();
 }
 
-export function ProfileForm({ profile }: ProfileFormProps) {
+export function ProfileForm({
+  profile,
+  backHref = "/dashboard",
+  backLabel = "Back to dashboard",
+}: ProfileFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [state, setState] = useState<ProfileState>(initialState);
@@ -282,8 +288,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       </form>
 
       <p className={authStyles.footer}>
-        <Link href="/dashboard" className={authStyles.footerLink}>
-          Back to dashboard
+        <Link href={backHref} className={authStyles.footerLink}>
+          {backLabel}
         </Link>
       </p>
     </>

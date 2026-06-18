@@ -21,8 +21,16 @@ export type SendMeetInviteResult =
     }
   | {
       sent: false;
+      skipped: true;
+    }
+  | {
+      sent: false;
       error: string;
     };
+
+export function isCareerAdvisoryInviteEnabled(): boolean {
+  return process.env.NODE_ENV === "development";
+}
 
 function getMeetUrl(): string | null {
   const meetUrl = process.env.CAREER_ADVISORY_GOOGLE_MEET_URL?.trim();
@@ -78,6 +86,10 @@ function buildInviteHtml(input: {
 export async function sendCareerAdvisoryMeetInvite(
   input: SendMeetInviteInput,
 ): Promise<SendMeetInviteResult> {
+  if (!isCareerAdvisoryInviteEnabled()) {
+    return { sent: false, skipped: true };
+  }
+
   const meetUrl = getMeetUrl();
   if (!meetUrl) {
     return {
@@ -105,22 +117,15 @@ export async function sendCareerAdvisoryMeetInvite(
   });
 
   if (!resendApiKey) {
-    if (process.env.NODE_ENV === "development") {
-      console.log("[career-advisory] Meet invite (dev — no RESEND_API_KEY):");
-      console.log(`  To: ${input.candidateEmail}`);
-      console.log(`  When: ${formatSessionDateTime(sessionStart)}`);
-      console.log(`  Meet: ${meetUrl}`);
-      return {
-        sent: true,
-        meetUrl,
-        sessionScheduledAt: sessionStart.toISOString(),
-        devMode: true,
-      };
-    }
-
+    console.log("[career-advisory] Meet invite (dev — no RESEND_API_KEY):");
+    console.log(`  To: ${input.candidateEmail}`);
+    console.log(`  When: ${formatSessionDateTime(sessionStart)}`);
+    console.log(`  Meet: ${meetUrl}`);
     return {
-      sent: false,
-      error: "Email service is not configured.",
+      sent: true,
+      meetUrl,
+      sessionScheduledAt: sessionStart.toISOString(),
+      devMode: true,
     };
   }
 

@@ -120,6 +120,34 @@ export type Database = {
         >;
         Relationships: [];
       };
+      scraped_jobs: {
+        Row: {
+          id: string;
+          candidate_id: string;
+          employee_id: string;
+          company: string;
+          role: string;
+          job_url: string;
+          jd_text: string | null;
+          relevance_score: number | null;
+          selected: boolean;
+          scraped_at: string;
+        };
+        Insert: {
+          id?: string;
+          candidate_id: string;
+          employee_id: string;
+          company: string;
+          role: string;
+          job_url: string;
+          jd_text?: string | null;
+          relevance_score?: number | null;
+          selected?: boolean;
+          scraped_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["scraped_jobs"]["Insert"]>;
+        Relationships: [];
+      };
       // Remaining tables (mentor_profiles, institutions, advisory_sessions,
       // learning_*, quiz_*, sandbox_*, company_personas, interview_*,
       // job_*, application_profile, scraped_jobs, recruiter_messages,

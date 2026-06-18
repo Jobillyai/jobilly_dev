@@ -1,0 +1,199 @@
+.floatingCards {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floatingCard {
+  position: absolute;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10px 30px rgba(10, 22, 40, 0.07);
+  animation-duration: 7.5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: var(--float-delay);
+  max-width: 200px;
+}
+
+.floatA {
+  animation-name: cardFloatA;
+}
+
+.floatB {
+  animation-name: cardFloatB;
+}
+
+.floatC {
+  animation-name: cardFloatC;
+}
+
+.floatD {
+  animation-name: cardFloatD;
+}
+
+.cardLeftTop {
+  left: clamp(16px, 8vw, 120px);
+  top: 14%;
+}
+
+.cardRightMid {
+  right: clamp(16px, 8vw, 120px);
+  top: 38%;
+}
+
+.cardRightBottom {
+  right: clamp(16px, 9vw, 130px);
+  bottom: 14%;
+}
+
+.cardLeftBottom {
+  left: clamp(16px, 10vw, 140px);
+  bottom: 12%;
+}
+
+.cardBlue {
+  border-color: rgba(24, 119, 242, 0.18);
+}
+
+.cardGreen {
+  border-color: rgba(5, 150, 105, 0.18);
+}
+
+.cardPurple {
+  border-color: rgba(124, 58, 237, 0.2);
+}
+
+.cardViolet {
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.floatingCardTitle {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0a1628;
+  margin-bottom: 2px;
+}
+
+.floatingCardDetail {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+@keyframes cardFloatA {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(32px, -38px);
+  }
+
+  50% {
+    transform: translate(-26px, -62px);
+  }
+
+  75% {
+    transform: translate(22px, -28px);
+  }
+}
+
+@keyframes cardFloatB {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-36px, -48px);
+  }
+
+  50% {
+    transform: translate(28px, -68px);
+  }
+
+  75% {
+    transform: translate(-22px, -34px);
+  }
+}
+
+@keyframes cardFloatC {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(26px, -52px);
+  }
+
+  50% {
+    transform: translate(-34px, -40px);
+  }
+
+  75% {
+    transform: translate(18px, -64px);
+  }
+}
+
+@keyframes cardFloatD {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-30px, -32px);
+  }
+
+  50% {
+    transform: translate(38px, -58px);
+  }
+
+  75% {
+    transform: translate(-24px, -46px);
+  }
+}
+
+@media (max-width: 900px) {
+  .floatingCard {
+    max-width: 160px;
+    padding: 10px 12px;
+    opacity: 0.75;
+    animation-duration: 8s;
+  }
+
+  .cardLeftTop {
+    left: 12px;
+    top: 10%;
+  }
+
+  .cardRightMid {
+    right: 12px;
+    top: 32%;
+  }
+
+  .cardRightBottom {
+    right: 12px;
+    bottom: 18%;
+  }
+
+  .cardLeftBottom {
+    left: 12px;
+    bottom: 10%;
+  }
+}
+
+@media (max-width: 600px) {
+  .floatingCards {
+    display: none;
+  }
+}

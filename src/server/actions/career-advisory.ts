@@ -136,13 +136,19 @@ export async function submitCareerAdvisoryAction(
 
   revalidatePath("/dashboard/career-advisory");
 
+  if ("skipped" in inviteResult && inviteResult.skipped) {
+    return { success: true, inviteEmailSent: false };
+  }
+
   if (!inviteResult.sent) {
+    const inviteError =
+      "error" in inviteResult
+        ? inviteResult.error
+        : "Your details were saved, but we could not send the Google Meet invite email.";
     return {
       success: true,
       inviteEmailSent: false,
-      error:
-        inviteResult.error ??
-        "Your details were saved, but we could not send the Google Meet invite email.",
+      error: inviteError,
     };
   }
 

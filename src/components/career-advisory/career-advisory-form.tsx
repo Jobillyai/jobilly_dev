@@ -58,7 +58,9 @@ export function CareerAdvisoryForm({
           <p className={authStyles.subtitle}>
             {state.inviteEmailSent
               ? "Check your email for your Google Meet calendar invite and session details."
-              : "Your details were saved. We could not send the Google Meet invite email yet."}
+              : state.error
+                ? "Your details were saved. We could not send the Google Meet invite email yet."
+                : "Thanks for sharing your details. Our career advisory team will review your information."}
           </p>
         </div>
 

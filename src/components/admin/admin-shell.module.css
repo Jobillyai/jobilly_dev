@@ -1,0 +1,10 @@
+.adminShell {
+  display: flex;
+  min-height: calc(100vh - 68px);
+  background: linear-gradient(135deg, #f0f6ff 0%, #ffffff 42%, #e8f1ff 100%);
+}
+
+.adminContent {
+  flex: 1;
+  min-width: 0;
+}

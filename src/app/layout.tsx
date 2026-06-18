@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AppShell from "@/components/layout/app-shell";
+import { RouteLoader } from "@/components/layout/route-loader";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import "./globals.css";
@@ -36,6 +37,7 @@ export default function RootLayout({
       </head>
       <body>
         <TRPCProvider>
+          <RouteLoader />
           <div className="flex min-h-screen flex-col">
             <AppShell>{children}</AppShell>
             <SiteFooter />

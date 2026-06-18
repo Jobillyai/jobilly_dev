@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAdminRole } from "@/lib/auth/roles";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -9,8 +10,9 @@ export async function middleware(request: NextRequest) {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     const { pathname } = request.nextUrl;
-    if (pathname.startsWith("/dashboard")) {
-      return NextResponse.redirect(new URL("/login", request.url));
+    if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
+      const loginPath = pathname.startsWith("/admin") ? "/admin/login" : "/login";
+      return NextResponse.redirect(new URL(loginPath, request.url));
     }
     return response;
   }
@@ -38,28 +40,46 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  // Refreshes the auth token if expired. Required for SSR — without this,
-  // server components see stale/expired sessions.
   const { data } = await supabase.auth.getUser();
   const isLoggedIn = !!data.user;
   const { pathname } = request.nextUrl;
 
+  let userRole: string | null = null;
+  if (isLoggedIn && data.user) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+    userRole = profile?.role ?? null;
+  }
+
+  const isAdmin = isAdminRole(userRole);
+  const isAdminLogin = pathname === "/admin/login";
+  const isAdminRoute = pathname.startsWith("/admin");
   const isAuthEntryPage = pathname === "/login" || pathname === "/signup";
   const isProtectedPage = pathname.startsWith("/dashboard");
 
+  if (isAdminRoute && !isAdminLogin && !isLoggedIn) {
+    return NextResponse.redirect(new URL("/admin/login", request.url));
+  }
+
+  if (isAdminRoute && !isAdminLogin && isLoggedIn && !isAdmin) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (isAdminLogin && isLoggedIn && isAdmin) {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
   if (isProtectedPage && !isLoggedIn) {
-    const redirectUrl = new URL("/login", request.url);
-    return NextResponse.redirect(redirectUrl);
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if (isAuthEntryPage && isLoggedIn) {
-    const redirectUrl = new URL("/dashboard", request.url);
+    const redirectUrl = new URL(isAdmin ? "/admin" : "/dashboard", request.url);
     return NextResponse.redirect(redirectUrl);
   }
-
-  // Phase 6 (institutions) will branch on hostname here for subdomain
-  // routing (e.g. acme.jobilly.ai -> institution-scoped layout). Left as a
-  // no-op for Phase 0.
 
   return response;
 }
