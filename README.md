@@ -1,38 +1,91 @@
 # Jobilly.ai
 
-From Graduation to First Job — Guided by AI.
+**From Graduation to First Job — Guided by AI.**
 
-This repo is the **Phase 0** scaffold from the Technical Architecture & Development Plan (v4.0): repo structure, CI, Next.js skeleton, full Supabase schema with Row-Level Security, and the tRPC service-layer boundary. Feature dashboards (Phase 1+) build on top of this.
+Jobilly.ai is a career platform for graduates and early-career candidates. It combines AI-guided learning, career advisory, mock interviews, and job application support in one place. This repository is the main web application: marketing site, candidate dashboard, career advisory intake, and an internal admin console.
 
-## Stack
+## Features
 
-Next.js 14 (App Router) + TypeScript strict · Supabase (Postgres + pgvector + Auth + Storage + RLS) · tRPC + Zod · TanStack Query · Tailwind + shadcn/ui patterns.
+### Candidate experience
+
+- **Marketing home page** (`/`) — hero, stats, feature highlights, how-it-works, institutions section, and waitlist email capture
+- **Auth** — signup, login, email confirmation, forgot/reset password
+- **Candidate dashboard** (`/dashboard`) — welcome hub with links to platform features
+- **Profile** (`/dashboard/profile`) — name, education, career goals, LinkedIn, resume upload
+- **Career advisory** (`/dashboard/career-advisory`) — intake form (education, branch, technology interests, veteran status); sends a Google Meet invite email in local dev via Resend
+- **Route loading** — top progress bar and overlay while navigating between pages
+
+### Admin console
+
+Protected routes under `/admin` for users with the `admin` role:
+
+- **Dashboard** — stat cards, donut charts (candidate plans, advisory coverage, Meet invites, scraped jobs), quick actions, recent activity
+- **Candidates** — browse candidates with profile and career advisory submission details
+- **Job scraping** — per-candidate job search powered by the [Remotive API](https://remotive.com/remote-jobs/api), scored by branch/technology/education; Excel-style sheet to mark jobs for apply workflow
+- **Jobs hub** (`/admin/jobs`) — overview of all scraped jobs across candidates
+- **Tasks & calendar** — placeholder pages for upcoming workflow tooling
+- **Admin profile** — admin account details
+
+### UI polish
+
+- Abstract background art on auth pages and marketing sections
+- Glassmorphism admin sidebar
+- Responsive layouts with CSS Modules alongside Tailwind
+
+## Tech stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 14 (App Router), TypeScript strict |
+| Database & auth | Supabase (Postgres, Auth, Storage, RLS, pgvector) |
+| API layer | tRPC + Zod + TanStack Query |
+| Email | Resend (career advisory Meet invites) |
+| Styling | Tailwind CSS, CSS Modules, shadcn/ui patterns |
+| Testing | Vitest |
+| CI | GitHub Actions (lint → typecheck → test → build) |
 
 ## Getting started
 
-### 1. Prerequisites
+### Prerequisites
 
-- Node.js 20+
-- A [Supabase](https://supabase.com) project (free tier is fine to start)
-- The [Supabase CLI](https://supabase.com/docs/guides/cli), installed as a **standalone binary** (not an npm dependency — see install instructions for your OS, e.g. Homebrew on macOS or the install script on Linux)
+- **Node.js 20+**
+- A [Supabase](https://supabase.com) project
+- The [Supabase CLI](https://supabase.com/docs/guides/cli) (standalone binary, not an npm package)
 
-### 2. Install dependencies
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure environment variables
+### 2. Configure environment
 
 ```bash
 cp .env.example .env.local
 ```
 
-Fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` from your Supabase project's API settings (Project Settings → API). Leave the AI/media/infra keys blank for now — they're only needed starting Phase 2+.
+Fill in at minimum:
 
-In production/staging, **do not** use `.env` files for real secrets — store them in Doppler or Infisical and inject at deploy time, per the architecture plan's secrets-management decision.
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side admin operations |
+| `SUPABASE_PROJECT_ID` | Used by `db:generate-types` |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` for local dev |
 
-### 4. Apply the database schema
+Optional for career advisory Meet invites (local dev only):
+
+| Variable | Purpose |
+|----------|---------|
+| `RESEND_API_KEY` | Resend API key |
+| `RESEND_FROM_EMAIL` | Verified sender address |
+| `CAREER_ADVISORY_GOOGLE_MEET_URL` | Meet link included in invite emails |
+| `CAREER_ADVISORY_ORGANIZER_EMAIL` | Organizer email on calendar invites |
+
+In production/staging, store secrets in Doppler or Infisical — do not commit real values to git.
+
+### 3. Apply the database schema
 
 Link the CLI to your project (one-time):
 
@@ -41,36 +94,58 @@ supabase login
 supabase link --project-ref <your-project-ref>
 ```
 
-Push the migrations in `supabase/migrations/` (extensions, enums, all tables, and every RLS policy):
+Push migrations:
 
 ```bash
 npm run db:migrate
 ```
 
-Then generate TypeScript types from the live schema, replacing the placeholder in `src/server/db/database.types.ts`:
+Regenerate TypeScript types from the live schema:
 
 ```bash
 npm run db:generate-types
 ```
 
-For **local development** instead of a hosted project, you can run Supabase locally with Docker:
+For local Supabase with Docker:
 
 ```bash
-supabase start    # spins up local Postgres + Auth + Studio
-supabase db reset # applies migrations + seed.sql
+supabase start
+supabase db reset   # applies migrations + seed.sql
 ```
 
-### 5. Run the app
+### 4. Configure Supabase Auth redirects
+
+In the Supabase dashboard → **Authentication → URL Configuration**:
+
+- **Site URL:** `http://localhost:3000`
+- **Redirect URLs:** `http://localhost:3000/auth/callback`
+
+Add your production URL when deploying.
+
+### 5. Create an admin user
+
+After migrations and env setup:
+
+```bash
+node scripts/create-admin.mjs you@email.com "Your Name" your-password
+```
+
+This creates a Supabase Auth user and sets `role = admin` in `public.users`. Sign in at `/admin/login`.
+
+### 6. Run the app
 
 ```bash
 npm run dev
 ```
 
-Visit `http://localhost:3000`.
+| URL | Description |
+|-----|-------------|
+| `http://localhost:3000` | Marketing home page |
+| `http://localhost:3000/login` | Candidate login |
+| `http://localhost:3000/dashboard` | Candidate dashboard |
+| `http://localhost:3000/admin` | Admin console |
 
-### 6. Verify the quality gate locally
-
-This is the same check GitHub Actions runs on every push/PR:
+### 7. Quality gate (same as CI)
 
 ```bash
 npm run lint
@@ -83,61 +158,103 @@ npm run build
 
 ```
 src/
-  app/                  Next.js App Router pages + the tRPC route handler
+  app/
+    (auth)/              Login, signup, password reset
+    admin/               Admin login + protected admin routes
+    dashboard/           Candidate dashboard, profile, career advisory
+    auth/callback/       Email confirmation handler
+    api/trpc/            tRPC route handler
+  components/
+    admin/               Admin sidebar, charts, candidates list, job sheet
+    auth/                Auth background and form layouts
+    career-advisory/     Advisory intake form
+    layout/              App shell, loaders, abstract background
+    marketing/           Welcome page, navbar, feature cards
+    profile/             Profile form
+  lib/
+    auth/                Session helpers, role checks
+    trpc/                Client-side tRPC wiring
   server/
-    api/
-      routers/           tRPC routers — thin, Zod-validated, delegate to services
-      root.ts             combines all routers into the app router
-      trpc.ts             context, base procedures, auth/role middleware
-    db/                  Supabase clients (browser / server / admin) + generated types
-    services/            business logic — the only code that queries tables directly
-  components/ui/        shared UI primitives (shadcn/ui pattern)
-  lib/trpc/             client-side tRPC + React Query wiring
+    actions/             Server Actions (auth, profile, admin, jobs)
+    api/routers/         tRPC routers (thin, Zod-validated)
+    db/                  Supabase clients + generated types
+    services/            Business logic and database queries
 supabase/
-  migrations/           ordered SQL migrations: schema, then RLS policies
-  seed.sql              local dev seed data
-  config.toml           local Supabase CLI config
-.github/workflows/ci.yml  lint -> typecheck -> test -> build gate
+  migrations/            Ordered SQL: schema, RLS policies
+  seed.sql               Local dev seed data
+scripts/
+  create-admin.mjs       Bootstrap an admin account
 ```
 
-## Architectural rules to keep as the codebase grows
+## User roles
 
-- **Routers stay thin.** A router validates input with Zod and calls a service function. It never calls `.from("table")` directly — see `candidate.ts` / `candidate-service.ts` for the reference pattern.
-- **RLS is the real security boundary**, not the app layer. `protectedProcedure` and `roleProtectedProcedure` are convenience checks for better error messages and to avoid unnecessary queries — they are not a substitute for the Postgres policies in `supabase/migrations/0009`–`0013`. Every new table needs RLS enabled and explicit policies before it ships.
-- **Never import `supabase-admin.ts` into client code.** It holds the service-role key and bypasses RLS entirely; it's guarded with `server-only` so any accidental client import fails the build, but don't rely on that as your only check.
-- **One migration file per logical change**, applied in order. Don't edit a migration that's already been applied to a shared environment — write a new one.
-- **New AI/media integrations** (HeyGen, Deepgram, ElevenLabs, Apify, etc.) belong in `server/services/`, called from a router or a background worker — never called directly from a client component.
+Defined in `public.users.role`:
 
-## Auth flow (signup, login, logout)
+| Role | Access |
+|------|--------|
+| `free_candidate` | Standard candidate dashboard |
+| `institution_candidate` | Institution-affiliated candidate |
+| `subscribed_candidate` | Premium candidate |
+| `admin` | Full admin console |
+| `institution_admin` | Institution management (planned) |
+| `employee` | Internal staff (planned) |
 
-Built on Supabase Auth, using Next.js Server Actions rather than client-side API calls — this keeps the actual auth calls server-side and works with the cookie-based session the rest of the app relies on.
+Middleware (`src/middleware.ts`) enforces route protection at the edge: `/dashboard` requires a session; `/admin` requires `admin` role.
 
-- `/signup` and `/login` — forms backed by server actions in `src/server/actions/auth.ts`. Both validate input with Zod before touching Supabase.
-- `/confirm` — shown after signup, telling the person to check their email (Supabase requires email confirmation by default on hosted projects).
-- `/auth/callback` — a route handler that exchanges the one-time code from the confirmation email link for a real session, then redirects to `/dashboard`.
-- `/dashboard` — a minimal protected page; redirects to `/login` if there's no session. This is where Phase 1 feature dashboards will eventually live.
-- Middleware (`src/middleware.ts`) enforces the same protection at the edge: visiting `/dashboard` while logged out redirects to `/login`; visiting `/login` or `/signup` while already logged in redirects to `/dashboard`.
+## Architectural rules
 
-**Before testing signup locally**, set your Supabase project's redirect URLs: in the Supabase dashboard, go to Authentication → URL Configuration, and set Site URL to `http://localhost:3000` and add `http://localhost:3000/auth/callback` as an allowed redirect URL. Without this, the confirmation email link won't route back to your app correctly. When you deploy, add your production URL there too.
+- **Routers stay thin** — validate with Zod, delegate to `server/services/`
+- **RLS is the security boundary** — every table needs Postgres policies before shipping
+- **Never import `supabase-admin.ts` in client code** — it bypasses RLS
+- **One migration per logical change** — never edit applied migrations; add a new file
+- **AI/media integrations** belong in `server/services/`, not client components
 
-A note on the implementation: this project pins React 18 (required by the current tRPC v10 + TanStack Query v4 pairing), so the auth forms use `useState` + `useTransition` rather than React 19's `useActionState`/`useFormState` — those hooks aren't available on this React version. The pattern is Next.js's documented "custom invocation using startTransition," not a workaround.
+## Database tables (high level)
 
-## Welcome page (marketing home page)
+| Area | Tables |
+|------|--------|
+| Identity | `users`, `password_reset_codes` |
+| Career advisory | `career_advisory_intakes` |
+| Jobs | `scraped_jobs`, `job_applications` |
+| Learning | `growth_school_*` (schema ready, UI pending) |
+| Interviews | `mock_interviews_*` (schema ready, UI pending) |
+| Institutions | `institutions`, `institution_*` (schema ready, UI pending) |
 
-The home page (`/`) is the full marketing/waitlist design, converted from a static HTML mockup into Next.js components under `src/components/marketing/`:
+## What's built vs planned
 
-- `welcome-page.tsx` — the page itself, all sections (hero, stats, features, how-it-works, institutions, bottom CTA, footer)
-- `welcome-page.module.css` — a CSS Module holding the original hand-tuned styles (custom properties, keyframe animations, responsive breakpoints) largely as-is, scoped to this page so they can't leak into or collide with the rest of the app's Tailwind-based styling
-- `navbar.tsx` — the sticky nav, now with real `Log in` / `Get Early Access` links pointing at `/login` and `/signup`
-- `email-capture-form.tsx` — the waitlist email capture, still posting to the same Formspree endpoint as the original design
-- `use-scroll-reveal.ts` / `use-counter-animation.ts` — small hooks porting the original vanilla-JS `IntersectionObserver` scroll-reveal and stat-counter animations to React
+**Built**
 
-Fonts (Plus Jakarta Sans, Instrument Serif) are loaded via a plain `<link>` tag in `src/app/layout.tsx` rather than `next/font/google`, because the latter fetches font files from Google's servers at *build* time — if your CI or deploy environment restricts outbound network access during builds, that fetch can fail. The `<link>` approach matches what the original design already used in production and has no such requirement.
+- Auth flow, profile, career advisory intake + Meet invite emails (dev)
+- Admin dashboard, candidates, job scraping (Remotive), pie charts
+- Marketing welcome page, loading states, abstract backgrounds
 
-## What's intentionally not in this scaffold yet
+**Planned (schema or stubs exist)**
 
-Per the agreed Phase 0 scope, this does not include: feature dashboards (Phase 1), Cloudflare/Vercel/Railway provisioning (requires your accounts), Sentry/Axiom/Upstash wiring, Stripe, or any of the AI service integrations. Those land in later phases per the plan's 18-week schedule.
+- Growth School learning paths
+- AI mock interviews (HeyGen, Deepgram, ElevenLabs)
+- Stripe subscriptions
+- Institution portals
+- Full job application workflow (`job_applications`)
+- Apify-based scraping (currently uses Remotive API)
+- Tasks and calendar admin tools
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run test` | Vitest |
+| `npm run db:migrate` | Push Supabase migrations |
+| `npm run db:generate-types` | Regenerate `database.types.ts` |
+| `npm run db:reset` | Reset local DB with seed |
 
 ## Known harmless build warning
 
-`npm run build` prints a warning like `A Node.js API is used (process.version at line: ...) which is not supported in the Edge Runtime`, pointing at `@supabase/supabase-js`. This is an upstream Supabase bug (a Node deprecation-check that Next.js's bundler flags even though it's guarded and never runs in the Edge Runtime) — not something wrong in this codebase, and not something that affects middleware at runtime. Safe to ignore; it'll likely disappear in a future Supabase release.
+`npm run build` may print an Edge Runtime warning from `@supabase/supabase-js` (`process.version`). This is an upstream Supabase issue and does not affect middleware at runtime.
+
+## License
+
+Private — Jobilly.ai. All rights reserved.
