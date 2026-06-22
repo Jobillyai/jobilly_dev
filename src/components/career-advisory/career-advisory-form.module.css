@@ -3,7 +3,8 @@
 }
 
 .select,
-.textarea {
+.textarea,
+.dateTimeInput {
   width: 100%;
   background: var(--white);
   border: 1.5px solid var(--gray-300);
@@ -18,9 +19,17 @@
 }
 
 .select:focus,
-.textarea:focus {
+.textarea:focus,
+.dateTimeInput:focus {
   border-color: var(--blue-500);
   box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.1);
+}
+
+.fieldHint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
 
 .textarea {
@@ -29,7 +38,8 @@
 }
 
 .selectError,
-.textareaError {
+.textareaError,
+.dateTimeInputError {
   border-color: #ef4444 !important;
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
 }

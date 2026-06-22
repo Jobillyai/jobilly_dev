@@ -30,15 +30,6 @@
   pointer-events: none;
 }
 
-.routeLoaderSpinner {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 3px solid rgba(24, 119, 242, 0.15);
-  border-top-color: #1877f2;
-  animation: routeLoaderSpin 0.8s linear infinite;
-}
-
 @keyframes routeLoaderSlide {
   0% {
     transform: translateX(-100%);
@@ -46,11 +37,5 @@
 
   100% {
     transform: translateX(350%);
-  }
-}
-
-@keyframes routeLoaderSpin {
-  to {
-    transform: rotate(360deg);
   }
 }

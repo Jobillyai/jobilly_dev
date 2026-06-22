@@ -6,23 +6,37 @@ import {
   submitCareerAdvisoryAction,
   type CareerAdvisoryState,
 } from "@/server/actions/career-advisory";
+import type { CandidateCareerAdvisoryIntake } from "@/server/services/career-advisory-intake";
 import { FormField } from "@/components/auth/form-field";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { SessionBookingPicker } from "@/components/career-advisory/session-booking-picker";
 import authStyles from "@/components/auth/auth-page.module.css";
 import styles from "./career-advisory-form.module.css";
 
 type CareerAdvisoryFormProps = {
   defaultName?: string;
   defaultEmail?: string;
+  existingIntake?: CandidateCareerAdvisoryIntake | null;
 };
 
-const initialState: CareerAdvisoryState = {};
+function intakeToSuccessState(
+  intake: CandidateCareerAdvisoryIntake,
+): CareerAdvisoryState {
+  return {
+    success: true,
+    inviteEmailSent: Boolean(intake.inviteSentAt),
+    sessionScheduledAt: intake.sessionScheduledAt ?? undefined,
+  };
+}
 
 export function CareerAdvisoryForm({
   defaultName = "",
   defaultEmail = "",
+  existingIntake = null,
 }: CareerAdvisoryFormProps) {
-  const [state, setState] = useState<CareerAdvisoryState>(initialState);
+  const [state, setState] = useState<CareerAdvisoryState>(() =>
+    existingIntake ? intakeToSuccessState(existingIntake) : {},
+  );
   const [pending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
@@ -192,6 +206,8 @@ export function CareerAdvisoryForm({
             </p>
           )}
         </div>
+
+        <SessionBookingPicker error={state.fieldErrors?.sessionScheduledAt} />
 
         {state.error && (
           <p role="alert" className={authStyles.alert}>

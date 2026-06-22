@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { JobillyLoader } from "./jobilly-loader";
 import styles from "./route-loader.module.css";
 
 function isInternalNavigationLink(anchor: HTMLAnchorElement) {
@@ -26,14 +27,29 @@ export function RouteLoader() {
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousPathRef = useRef(pathname);
 
-  function startLoading() {
+  function clearTimers() {
     if (hideTimerRef.current) {
       clearTimeout(hideTimerRef.current);
       hideTimerRef.current = null;
     }
+    if (safetyTimerRef.current) {
+      clearTimeout(safetyTimerRef.current);
+      safetyTimerRef.current = null;
+    }
+  }
+
+  function startLoading() {
+    clearTimers();
     setLoading(true);
+
+    // Never block the UI indefinitely if navigation or a redirect fails.
+    safetyTimerRef.current = setTimeout(() => {
+      setLoading(false);
+      safetyTimerRef.current = null;
+    }, 12000);
   }
 
   function stopLoading(delay = 350) {
@@ -44,6 +60,10 @@ export function RouteLoader() {
     hideTimerRef.current = setTimeout(() => {
       setLoading(false);
       hideTimerRef.current = null;
+      if (safetyTimerRef.current) {
+        clearTimeout(safetyTimerRef.current);
+        safetyTimerRef.current = null;
+      }
     }, delay);
   }
 
@@ -72,19 +92,11 @@ export function RouteLoader() {
       }
     }
 
-    function handleFormSubmit() {
-      startLoading();
-    }
-
     document.addEventListener("click", handleDocumentClick, true);
-    document.addEventListener("submit", handleFormSubmit, true);
 
     return () => {
       document.removeEventListener("click", handleDocumentClick, true);
-      document.removeEventListener("submit", handleFormSubmit, true);
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current);
-      }
+      clearTimers();
     };
   }, [pathname]);
 
@@ -98,7 +110,7 @@ export function RouteLoader() {
         <div className={styles.routeLoaderBarInner} />
       </div>
       <div className={styles.routeLoaderOverlay} aria-live="polite" aria-busy="true">
-        <div className={styles.routeLoaderSpinner} aria-hidden />
+        <JobillyLoader variant="default" size="md" />
       </div>
     </>
   );

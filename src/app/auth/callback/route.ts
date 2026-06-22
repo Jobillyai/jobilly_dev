@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
 
 const RESET_FLOW_COOKIE = "jb_reset_flow";
 
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
             request.cookies.set(name, value),
           );
           response = NextResponse.redirect(successRedirect);
-          cookiesToSet.forEach(({ name, value, options }) =>
+          applySessionCookiesToSet(cookiesToSet, (name, value, options) =>
             response.cookies.set(name, value, options),
           );
         },

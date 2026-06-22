@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/server/db/supabase-server";
 import { sendCareerAdvisoryMeetInvite } from "@/server/services/send-career-advisory-invite";
+import {
+  parseSessionScheduledInput,
+  validateSessionBookingTime,
+} from "@/lib/career-advisory/booking-window";
 
 const intakeSchema = z.object({
   name: z.string().min(1, "Enter your name").max(200),
@@ -25,6 +29,9 @@ const intakeSchema = z.object({
     .string()
     .min(1, "Enter the technology you are interested in")
     .max(300),
+  sessionScheduledAt: z
+    .string()
+    .min(1, "Choose your preferred session date and time"),
 });
 
 export type CareerAdvisoryState = {
@@ -40,7 +47,8 @@ export type CareerAdvisoryState = {
       | "graduationDetails"
       | "branch"
       | "isVeteran"
-      | "interestedTechnology",
+      | "interestedTechnology"
+      | "sessionScheduledAt",
       string
     >
   >;
@@ -58,6 +66,7 @@ export async function submitCareerAdvisoryAction(
     branch: formData.get("branch"),
     isVeteran: formData.get("isVeteran"),
     interestedTechnology: formData.get("interestedTechnology"),
+    sessionScheduledAt: formData.get("sessionScheduledAt"),
   });
 
   if (!parsed.success) {
@@ -71,12 +80,31 @@ export async function submitCareerAdvisoryAction(
         key === "graduationDetails" ||
         key === "branch" ||
         key === "isVeteran" ||
-        key === "interestedTechnology"
+        key === "interestedTechnology" ||
+        key === "sessionScheduledAt"
       ) {
         fieldErrors[key] = issue.message;
       }
     }
     return { fieldErrors };
+  }
+
+  const sessionStart = parseSessionScheduledInput(parsed.data.sessionScheduledAt);
+  if (!sessionStart) {
+    return {
+      fieldErrors: {
+        sessionScheduledAt: "Choose a valid session date and time.",
+      },
+    };
+  }
+
+  const bookingValidation = validateSessionBookingTime(sessionStart);
+  if (!bookingValidation.valid) {
+    return {
+      fieldErrors: {
+        sessionScheduledAt: bookingValidation.message,
+      },
+    };
   }
 
   const supabase = await createClient();
@@ -98,6 +126,7 @@ export async function submitCareerAdvisoryAction(
         branch: parsed.data.branch,
         is_veteran: parsed.data.isVeteran === "yes",
         interested_technology: parsed.data.interestedTechnology,
+        session_scheduled_at: sessionStart.toISOString(),
         updated_at: new Date().toISOString(),
       },
       { onConflict: "candidate_id" },
@@ -120,6 +149,11 @@ export async function submitCareerAdvisoryAction(
     candidateId: authData.user.id,
     candidateName: parsed.data.name,
     candidateEmail: parsed.data.email,
+    candidatePhone: parsed.data.phone,
+    branch: parsed.data.branch,
+    graduationDetails: parsed.data.graduationDetails,
+    interestedTechnology: parsed.data.interestedTechnology,
+    sessionScheduledAt: sessionStart.toISOString(),
   });
 
   if (inviteResult.sent) {
@@ -134,10 +168,16 @@ export async function submitCareerAdvisoryAction(
       .eq("candidate_id", authData.user.id);
   }
 
-  revalidatePath("/dashboard/career-advisory");
+  revalidatePath("/admin");
+  revalidatePath("/admin/candidates");
+  revalidatePath("/admin/calendar");
 
   if ("skipped" in inviteResult && inviteResult.skipped) {
-    return { success: true, inviteEmailSent: false };
+    return {
+      success: true,
+      inviteEmailSent: false,
+      sessionScheduledAt: sessionStart.toISOString(),
+    };
   }
 
   if (!inviteResult.sent) {
@@ -148,6 +188,7 @@ export async function submitCareerAdvisoryAction(
     return {
       success: true,
       inviteEmailSent: false,
+      sessionScheduledAt: sessionStart.toISOString(),
       error: inviteError,
     };
   }

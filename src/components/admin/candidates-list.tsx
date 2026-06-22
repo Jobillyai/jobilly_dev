@@ -56,7 +56,7 @@ export function CandidatesList({ candidates }: CandidatesListProps) {
         const submission = candidate.submission;
 
         return (
-          <article key={candidate.id} className={styles.candidateCard}>
+          <article key={candidate.id} id={`candidate-${candidate.id}`} className={styles.candidateCard}>
             <div className={styles.candidateHeader}>
               <div>
                 <h3 className={styles.candidateName}>{displayName}</h3>
@@ -155,6 +155,34 @@ export function CandidatesList({ candidates }: CandidatesListProps) {
                       <dd>{formatDate(submission.sessionScheduledAt)}</dd>
                     </>
                   )}
+                  {submission.googleMeetLink ? (
+                    <>
+                      <dt>Google Meet</dt>
+                      <dd className={styles.detailWide}>
+                        <a
+                          href={submission.googleMeetLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.meetLinkBtn}
+                        >
+                          Join meeting
+                        </a>
+                        <a
+                          href={submission.googleMeetLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.detailLink}
+                        >
+                          {submission.googleMeetLink}
+                        </a>
+                      </dd>
+                    </>
+                  ) : submission.inviteSentAt ? (
+                    <>
+                      <dt>Google Meet</dt>
+                      <dd>Invite sent — link not stored</dd>
+                    </>
+                  ) : null}
                 </dl>
               </div>
             ) : (

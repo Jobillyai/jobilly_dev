@@ -1,3 +1,4 @@
+import { JobillyLoader } from "@/components/layout/jobilly-loader";
 import styles from "./auth-page.module.css";
 
 interface SubmitButtonProps {
@@ -18,8 +19,13 @@ export function SubmitButton({
       type="submit"
       disabled={pending || disabled}
       className={styles.submitBtn}
+      aria-busy={pending}
     >
-      {pending ? pendingLabel : children}
+      {pending ? (
+        <JobillyLoader variant="inverse" size="sm" label={pendingLabel} />
+      ) : (
+        children
+      )}
     </button>
   );
 }

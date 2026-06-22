@@ -1,8 +1,7 @@
 const SESSION_DURATION_MINUTES = 45;
 
 /**
- * Schedules the advisory session 48 hours from submission, rounded to the
- * next whole hour.
+ * @deprecated Use candidate-selected booking time instead.
  */
 export function getNextAdvisorySessionTime(from = new Date()): Date {
   const scheduled = new Date(from.getTime() + 48 * 60 * 60 * 1000);

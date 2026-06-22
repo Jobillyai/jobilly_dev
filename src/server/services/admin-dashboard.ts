@@ -67,6 +67,24 @@ export type AdminRecentSubmission = {
   inviteSent: boolean;
 };
 
+export type AdminCalendarSession = {
+  id: string;
+  candidateId: string;
+  name: string;
+  email: string;
+  branch: string;
+  googleMeetLink: string | null;
+  sessionScheduledAt: string | null;
+  inviteSentAt: string | null;
+  createdAt: string;
+};
+
+export type AdminCalendarOverview = {
+  upcoming: AdminCalendarSession[];
+  pendingInvites: AdminCalendarSession[];
+  past: AdminCalendarSession[];
+};
+
 export type AdminDashboardOverview = {
   stats: AdminDashboardStats;
   recentCandidates: AdminRecentCandidate[];
@@ -226,6 +244,70 @@ export async function getCareerAdvisorySubmissions(): Promise<
   return candidates
     .map((candidate) => candidate.submission)
     .filter((submission): submission is CareerAdvisorySubmission => submission !== null);
+}
+
+export async function getAdminCalendarOverview(): Promise<AdminCalendarOverview> {
+  const supabase = await createClient();
+  const now = Date.now();
+
+  const { data, error } = await supabase
+    .from("career_advisory_intakes")
+    .select(
+      "id, candidate_id, name, email, branch, google_meet_link, session_scheduled_at, invite_sent_at, created_at",
+    )
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return { upcoming: [], pendingInvites: [], past: [] };
+  }
+
+  const sessions: AdminCalendarSession[] = data.map((row) => ({
+    id: row.id,
+    candidateId: row.candidate_id,
+    name: row.name,
+    email: row.email,
+    branch: row.branch,
+    googleMeetLink: row.google_meet_link,
+    sessionScheduledAt: row.session_scheduled_at,
+    inviteSentAt: row.invite_sent_at,
+    createdAt: row.created_at,
+  }));
+
+  const upcoming: AdminCalendarSession[] = [];
+  const pendingInvites: AdminCalendarSession[] = [];
+  const past: AdminCalendarSession[] = [];
+
+  for (const session of sessions) {
+    if (!session.inviteSentAt) {
+      pendingInvites.push(session);
+      continue;
+    }
+
+    if (session.sessionScheduledAt) {
+      const sessionTime = new Date(session.sessionScheduledAt).getTime();
+      if (sessionTime >= now) {
+        upcoming.push(session);
+      } else {
+        past.push(session);
+      }
+      continue;
+    }
+
+    past.push(session);
+  }
+
+  upcoming.sort(
+    (a, b) =>
+      new Date(a.sessionScheduledAt ?? 0).getTime() -
+      new Date(b.sessionScheduledAt ?? 0).getTime(),
+  );
+  past.sort(
+    (a, b) =>
+      new Date(b.sessionScheduledAt ?? b.createdAt).getTime() -
+      new Date(a.sessionScheduledAt ?? a.createdAt).getTime(),
+  );
+
+  return { upcoming, pendingInvites, past };
 }
 
 export async function getAdminCandidates(): Promise<AdminCandidate[]> {

@@ -1,0 +1,96 @@
+.loader {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  background: transparent;
+}
+
+.letter {
+  display: inline-block;
+  animation: letterFall 1.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  animation-delay: calc(var(--i) * 0.12s);
+  will-change: transform, opacity;
+}
+
+.gap {
+  display: inline-block;
+  width: 0.28em;
+}
+
+.aiLetter {
+  font-weight: 800;
+  color: #0a1628;
+}
+
+.default {
+  color: #4a9fff;
+}
+
+.light {
+  color: #4a9fff;
+}
+
+.light .aiLetter {
+  color: #0a1628;
+}
+
+.inverse .letter:not(.aiLetter) {
+  color: #7ec8ff;
+}
+
+.inverse .aiLetter {
+  color: #0a1628;
+}
+
+.sm {
+  font-size: 16px;
+  letter-spacing: 0.02em;
+}
+
+.md {
+  font-size: 28px;
+}
+
+.lg {
+  font-size: 36px;
+}
+
+@keyframes letterFall {
+  0% {
+    transform: translateY(-32px) rotate(-8deg);
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  38% {
+    transform: translateY(4px) rotate(0deg);
+    opacity: 1;
+  }
+
+  48% {
+    transform: translateY(-2px);
+  }
+
+  58% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  82% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-32px) rotate(-8deg);
+    opacity: 0;
+  }
+}

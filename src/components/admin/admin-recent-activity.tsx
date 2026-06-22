@@ -75,8 +75,8 @@ export function AdminRecentActivity({
       <section className={styles.section}>
         <div className={styles.sectionHeaderRow}>
           <h2 className={styles.sectionTitle}>Recent advisory submissions</h2>
-          <Link href="/admin/candidates" className={styles.sectionLink}>
-            View all
+          <Link href="/admin/calendar" className={styles.sectionLink}>
+            View calendar
           </Link>
         </div>
         {recentSubmissions.length === 0 ? (
@@ -94,13 +94,21 @@ export function AdminRecentActivity({
                     {submission.branch} · {formatDate(submission.createdAt)}
                   </p>
                 </div>
-                <span
-                  className={`${styles.badge} ${
-                    submission.inviteSent ? styles.badgeSubmitted : styles.badgePending
-                  }`}
-                >
-                  {submission.inviteSent ? "Invite sent" : "Invite pending"}
-                </span>
+                <div className={styles.recentItemActions}>
+                  <span
+                    className={`${styles.badge} ${
+                      submission.inviteSent ? styles.badgeSubmitted : styles.badgePending
+                    }`}
+                  >
+                    {submission.inviteSent ? "Invite sent" : "Invite pending"}
+                  </span>
+                  <Link
+                    href={`/admin/candidates#candidate-${submission.candidateId}`}
+                    className={styles.recentLinkPrimary}
+                  >
+                    View booking
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

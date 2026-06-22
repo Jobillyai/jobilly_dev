@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
 import { isAdminRole } from "@/lib/auth/roles";
 
 export async function middleware(request: NextRequest) {
@@ -32,7 +33,7 @@ export async function middleware(request: NextRequest) {
             request.cookies.set(name, value),
           );
           response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
+          applySessionCookiesToSet(cookiesToSet, (name, value, options) =>
             response.cookies.set(name, value, options),
           );
         },
