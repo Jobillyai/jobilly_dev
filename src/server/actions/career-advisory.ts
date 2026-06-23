@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/server/db/supabase-server";
+import { createAdminClient } from "@/server/db/supabase-admin";
 import { sendCareerAdvisoryMeetInvite } from "@/server/services/send-career-advisory-invite";
+import { ensurePublicUserRecord } from "@/server/services/ensure-public-user";
 import {
   parseSessionScheduledInput,
   validateSessionBookingTime,
@@ -114,30 +116,43 @@ export async function submitCareerAdvisoryAction(
     return { error: "You must be logged in to submit this form." };
   }
 
-  const { data, error } = await supabase
+  const userReady = await ensurePublicUserRecord(authData.user);
+  if (userReady.error) {
+    console.error("ensurePublicUserRecord failed:", userReady.error);
+    return {
+      error:
+        "Your account is not fully set up yet. Log out, sign in again, and retry.",
+    };
+  }
+
+  const admin = createAdminClient();
+  const intakePayload = {
+    candidate_id: authData.user.id,
+    name: parsed.data.name,
+    email: parsed.data.email,
+    phone: parsed.data.phone,
+    graduation_details: parsed.data.graduationDetails,
+    branch: parsed.data.branch,
+    is_veteran: parsed.data.isVeteran === "yes",
+    interested_technology: parsed.data.interestedTechnology,
+    session_scheduled_at: sessionStart.toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await admin
     .from("career_advisory_intakes")
-    .upsert(
-      {
-        candidate_id: authData.user.id,
-        name: parsed.data.name,
-        email: parsed.data.email,
-        phone: parsed.data.phone,
-        graduation_details: parsed.data.graduationDetails,
-        branch: parsed.data.branch,
-        is_veteran: parsed.data.isVeteran === "yes",
-        interested_technology: parsed.data.interestedTechnology,
-        session_scheduled_at: sessionStart.toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "candidate_id" },
-    )
+    .upsert(intakePayload, { onConflict: "candidate_id" })
     .select("id")
     .single();
 
   if (error) {
+    console.error("career_advisory_intakes upsert failed:", error);
+    const migrationHint =
+      error.code === "42P01" || error.message.includes("does not exist")
+        ? " Make sure database migrations are applied."
+        : "";
     return {
-      error:
-        "Could not save your details. Make sure database migrations are applied.",
+      error: `Could not save your details.${migrationHint}`,
     };
   }
 
@@ -157,7 +172,7 @@ export async function submitCareerAdvisoryAction(
   });
 
   if (inviteResult.sent) {
-    await supabase
+    await admin
       .from("career_advisory_intakes")
       .update({
         google_meet_link: inviteResult.meetUrl,
@@ -171,6 +186,7 @@ export async function submitCareerAdvisoryAction(
   revalidatePath("/admin");
   revalidatePath("/admin/candidates");
   revalidatePath("/admin/calendar");
+  revalidatePath("/admin/tasks");
 
   if ("skipped" in inviteResult && inviteResult.skipped) {
     return {

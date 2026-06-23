@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminDashboardCharts } from "@/components/admin/admin-dashboard-charts";
+import { AdminMeetingTasks } from "@/components/admin/admin-meeting-tasks";
 import { AdminQuickActions } from "@/components/admin/admin-quick-actions";
 import { AdminRecentActivity } from "@/components/admin/admin-recent-activity";
 import { getAdminUser } from "@/lib/auth/admin";
@@ -14,7 +16,7 @@ export default async function AdminDashboardPage() {
     redirect("/admin/login");
   }
 
-  const { stats, recentCandidates, recentSubmissions } =
+  const { stats, recentCandidates, recentSubmissions, upcomingMeetings } =
     await getAdminDashboardOverview();
 
   const candidatesWithSubmission =
@@ -67,6 +69,20 @@ export default async function AdminDashboardPage() {
         />
 
         <AdminQuickActions />
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeaderRow}>
+            <h2 className={styles.sectionTitle}>Upcoming meetings</h2>
+            <Link href="/admin/tasks" className={styles.sectionLink}>
+              View all tasks
+            </Link>
+          </div>
+          <AdminMeetingTasks
+            tasks={upcomingMeetings}
+            compact
+            emptyMessage="No upcoming career advisory meetings. New bookings will appear here after candidates submit the form."
+          />
+        </section>
 
         <AdminRecentActivity
           recentCandidates={recentCandidates}

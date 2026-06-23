@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   submitCareerAdvisoryAction,
   type CareerAdvisoryState,
@@ -34,17 +35,39 @@ export function CareerAdvisoryForm({
   defaultEmail = "",
   existingIntake = null,
 }: CareerAdvisoryFormProps) {
+  const router = useRouter();
   const [state, setState] = useState<CareerAdvisoryState>(() =>
     existingIntake ? intakeToSuccessState(existingIntake) : {},
   );
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       const result = await submitCareerAdvisoryAction(state, formData);
       setState(result ?? {});
+      if (result?.success) {
+        setRedirectCountdown(10);
+      }
     });
   }
+
+  useEffect(() => {
+    if (redirectCountdown === null) {
+      return;
+    }
+
+    if (redirectCountdown <= 0) {
+      router.push("/dashboard");
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setRedirectCountdown((current) => (current === null ? null : current - 1));
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [redirectCountdown, router]);
 
   if (state.success) {
     const scheduledLabel = state.sessionScheduledAt
@@ -87,6 +110,12 @@ export function CareerAdvisoryForm({
         {state.error && (
           <p role="alert" className={authStyles.alert}>
             {state.error}
+          </p>
+        )}
+
+        {redirectCountdown !== null && redirectCountdown > 0 && (
+          <p className={styles.redirectNotice}>
+            Redirecting to dashboard in {redirectCountdown}s…
           </p>
         )}
 

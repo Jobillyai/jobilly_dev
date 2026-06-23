@@ -101,6 +101,9 @@ function buildOrganizerBookingHtml(input: {
       <p style="font-size: 14px; line-height: 1.6; color: #6b7280;">
         Meet link: <a href="${input.meetUrl}" style="color: #1877f2;">${input.meetUrl}</a>
       </p>
+      <p style="font-size: 14px; line-height: 1.6; color: #6b7280; margin-top: 16px;">
+        A calendar invite (.ics) is attached — add it to your calendar in one click.
+      </p>
       <p style="font-size: 14px; line-height: 1.6; color: #374151; margin-top: 24px;">
         This booking is also recorded in the admin portal:
       </p>
@@ -158,7 +161,8 @@ export async function sendCareerAdvisoryMeetInvite(
   const fromEmail =
     process.env.RESEND_FROM_EMAIL?.trim() ?? "Jobilly <onboarding@resend.dev>";
   const organizerEmail =
-    process.env.CAREER_ADVISORY_ORGANIZER_EMAIL?.trim() ?? "info@jobilly.ai";
+    process.env.CAREER_ADVISORY_ORGANIZER_EMAIL?.trim() ??
+    "avinashprince812@gmail.com";
   const resendApiKey = process.env.RESEND_API_KEY?.trim();
 
   const icsContent = buildCareerAdvisoryIcsInvite({
@@ -247,6 +251,7 @@ export async function sendCareerAdvisoryMeetInvite(
         adminCandidateUrl,
         adminCalendarUrl,
       }),
+      attachments: [inviteAttachment],
     });
 
     if (organizerError) {

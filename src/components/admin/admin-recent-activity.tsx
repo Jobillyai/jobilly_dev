@@ -19,6 +19,21 @@ function formatDate(value: string): string {
   }).format(new Date(value));
 }
 
+function formatSessionDateTime(value: string | null): string {
+  if (!value) {
+    return "Session time pending";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(new Date(value));
+}
+
 export function AdminRecentActivity({
   recentCandidates,
   recentSubmissions,
@@ -91,7 +106,10 @@ export function AdminRecentActivity({
                   </p>
                   <p className={styles.recentItemMeta}>{submission.email}</p>
                   <p className={styles.recentItemMeta}>
-                    {submission.branch} · {formatDate(submission.createdAt)}
+                    {submission.branch} · Submitted {formatDate(submission.createdAt)}
+                  </p>
+                  <p className={styles.recentItemMeta}>
+                    {formatSessionDateTime(submission.sessionScheduledAt)}
                   </p>
                 </div>
                 <div className={styles.recentItemActions}>
@@ -102,6 +120,16 @@ export function AdminRecentActivity({
                   >
                     {submission.inviteSent ? "Invite sent" : "Invite pending"}
                   </span>
+                  {submission.googleMeetLink ? (
+                    <a
+                      href={submission.googleMeetLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.meetLinkBtn}
+                    >
+                      Join Meet
+                    </a>
+                  ) : null}
                   <Link
                     href={`/admin/candidates#candidate-${submission.candidateId}`}
                     className={styles.recentLinkPrimary}

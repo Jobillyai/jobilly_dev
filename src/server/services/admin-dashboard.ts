@@ -65,6 +65,17 @@ export type AdminRecentSubmission = {
   branch: string;
   createdAt: string;
   inviteSent: boolean;
+  sessionScheduledAt: string | null;
+  googleMeetLink: string | null;
+};
+
+export type AdminMeetingTask = {
+  id: string;
+  candidateId: string;
+  candidateName: string;
+  sessionScheduledAt: string | null;
+  googleMeetLink: string | null;
+  inviteSent: boolean;
 };
 
 export type AdminCalendarSession = {
@@ -89,6 +100,7 @@ export type AdminDashboardOverview = {
   stats: AdminDashboardStats;
   recentCandidates: AdminRecentCandidate[];
   recentSubmissions: AdminRecentSubmission[];
+  upcomingMeetings: AdminMeetingTask[];
 };
 
 function mapSubmissionRow(row: {
@@ -181,7 +193,9 @@ export async function getAdminDashboardOverview(): Promise<AdminDashboardOvervie
       .limit(5),
     supabase
       .from("career_advisory_intakes")
-      .select("id, candidate_id, name, email, branch, invite_sent_at, created_at")
+      .select(
+        "id, candidate_id, name, email, branch, google_meet_link, session_scheduled_at, invite_sent_at, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(5),
     supabase.from("scraped_jobs").select("candidate_id"),
@@ -201,6 +215,38 @@ export async function getAdminDashboardOverview(): Promise<AdminDashboardOvervie
   }
 
   const totalCandidates = candidatesResult.count ?? 0;
+
+  const recentSubmissions = (recentSubmissionsResult.data ?? []).map((row) => ({
+    id: row.id,
+    candidateId: row.candidate_id,
+    name: row.name,
+    email: row.email,
+    branch: row.branch,
+    createdAt: row.created_at,
+    inviteSent: Boolean(row.invite_sent_at),
+    sessionScheduledAt: row.session_scheduled_at,
+    googleMeetLink: row.google_meet_link,
+  }));
+
+  const calendarOverview = await getAdminCalendarOverview();
+  const upcomingMeetings: AdminMeetingTask[] = [
+    ...calendarOverview.upcoming,
+    ...calendarOverview.pendingInvites.filter((session) => session.sessionScheduledAt),
+  ]
+    .map((session) => ({
+      id: session.id,
+      candidateId: session.candidateId,
+      candidateName: session.name,
+      sessionScheduledAt: session.sessionScheduledAt,
+      googleMeetLink: session.googleMeetLink,
+      inviteSent: Boolean(session.inviteSentAt),
+    }))
+    .sort(
+      (a, b) =>
+        new Date(a.sessionScheduledAt ?? 0).getTime() -
+        new Date(b.sessionScheduledAt ?? 0).getTime(),
+    )
+    .slice(0, 8);
 
   return {
     stats: {
@@ -225,15 +271,8 @@ export async function getAdminDashboardOverview(): Promise<AdminDashboardOvervie
       hasSubmission: submissionCandidateIds.has(user.id),
       scrapedJobCount: scrapedCountByCandidate.get(user.id) ?? 0,
     })),
-    recentSubmissions: (recentSubmissionsResult.data ?? []).map((row) => ({
-      id: row.id,
-      candidateId: row.candidate_id,
-      name: row.name,
-      email: row.email,
-      branch: row.branch,
-      createdAt: row.created_at,
-      inviteSent: Boolean(row.invite_sent_at),
-    })),
+    recentSubmissions,
+    upcomingMeetings,
   };
 }
 
@@ -308,6 +347,25 @@ export async function getAdminCalendarOverview(): Promise<AdminCalendarOverview>
   );
 
   return { upcoming, pendingInvites, past };
+}
+
+export async function getAdminMeetingTasks(): Promise<AdminMeetingTask[]> {
+  const { upcoming, pendingInvites } = await getAdminCalendarOverview();
+
+  return [...upcoming, ...pendingInvites.filter((session) => session.sessionScheduledAt)]
+    .map((session) => ({
+      id: session.id,
+      candidateId: session.candidateId,
+      candidateName: session.name,
+      sessionScheduledAt: session.sessionScheduledAt,
+      googleMeetLink: session.googleMeetLink,
+      inviteSent: Boolean(session.inviteSentAt),
+    }))
+    .sort(
+      (a, b) =>
+        new Date(a.sessionScheduledAt ?? 0).getTime() -
+        new Date(b.sessionScheduledAt ?? 0).getTime(),
+    );
 }
 
 export async function getAdminCandidates(): Promise<AdminCandidate[]> {

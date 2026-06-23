@@ -1,105 +1,19 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { AdminCalendarSession } from "@/server/services/admin-dashboard";
 import { formatDisplayName } from "@/lib/format-display-name";
+import {
+  buildMonthGrid,
+  formatMonthLabel,
+  getSessionDateKey,
+} from "@/lib/calendar/month-grid";
 import styles from "@/app/admin/admin.module.css";
 
-type AdminCalendarSessionsProps = {
-  title: string;
-  sessions: AdminCalendarSession[];
-  emptyMessage: string;
+type CalendarSession = AdminCalendarSession & {
+  status: "upcoming" | "pending" | "past";
 };
-
-function formatDateTime(value: string | null): string {
-  if (!value) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function SessionTable({
-  title,
-  sessions,
-  emptyMessage,
-}: AdminCalendarSessionsProps) {
-  return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>
-        {title} ({sessions.length})
-      </h2>
-      {sessions.length === 0 ? (
-        <p className={styles.emptyInline}>{emptyMessage}</p>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Candidate</th>
-                <th>Branch</th>
-                <th>Session</th>
-                <th>Invite</th>
-                <th>Google Meet</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map((session) => (
-                <tr key={session.id}>
-                  <td>
-                    <p className={styles.tablePrimary}>{formatDisplayName(session.name)}</p>
-                    <p className={styles.tableSecondary}>{session.email}</p>
-                  </td>
-                  <td>{session.branch}</td>
-                  <td>{formatDateTime(session.sessionScheduledAt)}</td>
-                  <td>
-                    <span
-                      className={`${styles.badge} ${
-                        session.inviteSentAt ? styles.badgeSubmitted : styles.badgePending
-                      }`}
-                    >
-                      {session.inviteSentAt
-                        ? `Sent ${formatDateTime(session.inviteSentAt)}`
-                        : "Pending"}
-                    </span>
-                  </td>
-                  <td>
-                    {session.googleMeetLink ? (
-                      <a
-                        href={session.googleMeetLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.meetLinkBtn}
-                      >
-                        Join meeting
-                      </a>
-                    ) : (
-                      <span className={styles.tableSecondary}>—</span>
-                    )}
-                  </td>
-                  <td>
-                    <Link
-                      href={`/admin/candidates#candidate-${session.candidateId}`}
-                      className={styles.recentLinkPrimary}
-                    >
-                      View candidate
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
-}
 
 type AdminCalendarViewProps = {
   upcoming: AdminCalendarSession[];
@@ -107,39 +21,234 @@ type AdminCalendarViewProps = {
   past: AdminCalendarSession[];
 };
 
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function formatEventTime(value: string | null): string {
+  if (!value) {
+    return "TBD";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function mergeSessions(
+  upcoming: AdminCalendarSession[],
+  pendingInvites: AdminCalendarSession[],
+  past: AdminCalendarSession[],
+): CalendarSession[] {
+  return [
+    ...upcoming.map((session) => ({ ...session, status: "upcoming" as const })),
+    ...pendingInvites.map((session) => ({ ...session, status: "pending" as const })),
+    ...past.map((session) => ({ ...session, status: "past" as const })),
+  ];
+}
+
+function groupSessionsByDay(sessions: CalendarSession[]): Map<string, CalendarSession[]> {
+  const grouped = new Map<string, CalendarSession[]>();
+
+  for (const session of sessions) {
+    const dateKey = getSessionDateKey(session.sessionScheduledAt, session.createdAt);
+    const existing = grouped.get(dateKey) ?? [];
+    existing.push(session);
+    grouped.set(dateKey, existing);
+  }
+
+  for (const daySessions of grouped.values()) {
+    daySessions.sort((a, b) => {
+      const aTime = new Date(a.sessionScheduledAt ?? a.createdAt).getTime();
+      const bTime = new Date(b.sessionScheduledAt ?? b.createdAt).getTime();
+      return aTime - bTime;
+    });
+  }
+
+  return grouped;
+}
+
+function eventStatusClass(status: CalendarSession["status"]): string {
+  if (status === "upcoming") {
+    return styles.calendarEventUpcoming ?? "";
+  }
+
+  if (status === "pending") {
+    return styles.calendarEventPending ?? "";
+  }
+
+  return styles.calendarEventPast ?? "";
+}
+
 export function AdminCalendarView({
   upcoming,
   pendingInvites,
   past,
 }: AdminCalendarViewProps) {
-  const totalSessions = upcoming.length + pendingInvites.length + past.length;
+  const today = new Date();
+  const [visibleMonth, setVisibleMonth] = useState({
+    year: today.getFullYear(),
+    month: today.getMonth(),
+  });
 
-  if (totalSessions === 0) {
-    return (
-      <div className={styles.emptyState}>
-        No career advisory submissions yet. Sessions will appear here after candidates
-        submit the form.
-      </div>
-    );
+  const allSessions = useMemo(
+    () => mergeSessions(upcoming, pendingInvites, past),
+    [upcoming, pendingInvites, past],
+  );
+
+  const sessionsByDay = useMemo(() => groupSessionsByDay(allSessions), [allSessions]);
+
+  const monthDays = useMemo(
+    () => buildMonthGrid(visibleMonth.year, visibleMonth.month),
+    [visibleMonth.year, visibleMonth.month],
+  );
+
+  function goToPreviousMonth() {
+    setVisibleMonth((current) => {
+      const date = new Date(current.year, current.month - 1, 1);
+      return { year: date.getFullYear(), month: date.getMonth() };
+    });
+  }
+
+  function goToNextMonth() {
+    setVisibleMonth((current) => {
+      const date = new Date(current.year, current.month + 1, 1);
+      return { year: date.getFullYear(), month: date.getMonth() };
+    });
+  }
+
+  function goToToday() {
+    const now = new Date();
+    setVisibleMonth({ year: now.getFullYear(), month: now.getMonth() });
   }
 
   return (
-    <div className={styles.calendarSections}>
-      <SessionTable
-        title="Upcoming sessions"
-        sessions={upcoming}
-        emptyMessage="No upcoming sessions scheduled."
-      />
-      <SessionTable
-        title="Pending Meet invites"
-        sessions={pendingInvites}
-        emptyMessage="All submissions have received a Meet invite."
-      />
-      <SessionTable
-        title="Past sessions"
-        sessions={past}
-        emptyMessage="No past sessions yet."
-      />
-    </div>
+    <section className={styles.calendarPanel}>
+      <div className={styles.calendarToolbar}>
+        <div className={styles.calendarToolbarLeft}>
+          <button
+            type="button"
+            className={styles.calendarNavBtn}
+            onClick={goToPreviousMonth}
+            aria-label="Previous month"
+          >
+            ‹
+          </button>
+          <h2 className={styles.calendarMonthLabel}>
+            {formatMonthLabel(visibleMonth.year, visibleMonth.month)}
+          </h2>
+          <button
+            type="button"
+            className={styles.calendarNavBtn}
+            onClick={goToNextMonth}
+            aria-label="Next month"
+          >
+            ›
+          </button>
+        </div>
+        <button type="button" className={styles.calendarTodayBtn} onClick={goToToday}>
+          Today
+        </button>
+      </div>
+
+      <div className={styles.calendarWeekdays} aria-hidden>
+        {WEEKDAY_LABELS.map((label) => (
+          <div key={label} className={styles.calendarWeekday}>
+            {label}
+          </div>
+        ))}
+      </div>
+
+      <div className={styles.calendarGrid} role="grid" aria-label="Career advisory calendar">
+        {monthDays.map((day) => {
+          const daySessions = sessionsByDay.get(day.dateKey) ?? [];
+          const visibleEvents = daySessions.slice(0, 3);
+          const hiddenCount = daySessions.length - visibleEvents.length;
+
+          return (
+            <div
+              key={day.dateKey}
+              role="gridcell"
+              className={`${styles.calendarDayCell} ${
+                day.isCurrentMonth ? "" : styles.calendarDayCellOutside
+              } ${day.isToday ? styles.calendarDayCellToday : ""}`}
+            >
+              <div className={styles.calendarDayHeader}>
+                <span className={styles.calendarDayNumber}>{day.date.getDate()}</span>
+              </div>
+
+              <div className={styles.calendarDayEvents}>
+                {visibleEvents.map((session) => {
+                  const label = formatDisplayName(session.name);
+                  const content = (
+                    <>
+                      <span className={styles.calendarEventTime}>
+                        {formatEventTime(session.sessionScheduledAt)}
+                      </span>
+                      <span className={styles.calendarEventName}>{label}</span>
+                    </>
+                  );
+
+                  if (session.googleMeetLink) {
+                    return (
+                      <a
+                        key={session.id}
+                        href={session.googleMeetLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`${styles.calendarEvent} ${eventStatusClass(session.status)}`}
+                        title={`Meeting with ${label}`}
+                      >
+                        {content}
+                      </a>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={session.id}
+                      href={`/admin/candidates#candidate-${session.candidateId}`}
+                      className={`${styles.calendarEvent} ${eventStatusClass(session.status)}`}
+                      title={`View ${label}`}
+                    >
+                      {content}
+                    </Link>
+                  );
+                })}
+
+                {hiddenCount > 0 && (
+                  <span className={styles.calendarMoreEvents}>+{hiddenCount} more</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className={styles.calendarLegend}>
+        <span className={styles.calendarLegendItem}>
+          <span
+            className={`${styles.calendarLegendDot} ${styles.calendarEventUpcoming}`}
+          />
+          Upcoming
+        </span>
+        <span className={styles.calendarLegendItem}>
+          <span
+            className={`${styles.calendarLegendDot} ${styles.calendarEventPending}`}
+          />
+          Pending invite
+        </span>
+        <span className={styles.calendarLegendItem}>
+          <span className={`${styles.calendarLegendDot} ${styles.calendarEventPast}`} />
+          Past
+        </span>
+      </div>
+
+      {allSessions.length === 0 && (
+        <p className={styles.calendarEmptyHint}>
+          No career advisory sessions yet. Bookings will appear on the calendar after
+          candidates submit the form.
+        </p>
+      )}
+    </section>
   );
 }
