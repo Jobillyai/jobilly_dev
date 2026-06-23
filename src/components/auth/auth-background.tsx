@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { USE_ABSTRACT_BACKGROUNDS } from "@/lib/ui/background-style";
 import { AbstractBackground } from "@/components/layout/abstract-background";
 import styles from "./auth-background.module.css";
 
@@ -13,18 +14,20 @@ export function AuthBackground() {
   return (
     <>
       <AbstractBackground />
-      <div className={styles.floatingCards} aria-hidden>
-        {floatingCards.map((card) => (
-          <div
-            key={card.title}
-            className={`${styles.floatingCard} ${card.tone} ${card.motion} ${card.position}`}
-            style={{ "--float-delay": card.delay } as CSSProperties}
-          >
-            <span className={styles.floatingCardTitle}>{card.title}</span>
-            <span className={styles.floatingCardDetail}>{card.detail}</span>
-          </div>
-        ))}
-      </div>
+      {USE_ABSTRACT_BACKGROUNDS ? (
+        <div className={styles.floatingCards} aria-hidden>
+          {floatingCards.map((card) => (
+            <div
+              key={card.title}
+              className={`${styles.floatingCard} ${card.tone} ${card.motion} ${card.position}`}
+              style={{ "--float-delay": card.delay } as CSSProperties}
+            >
+              <span className={styles.floatingCardTitle}>{card.title}</span>
+              <span className={styles.floatingCardDetail}>{card.detail}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </>
   );
 }

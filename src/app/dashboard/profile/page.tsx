@@ -12,8 +12,6 @@ export default async function ProfilePage() {
 
   return (
     <div className={authStyles.shell}>
-      <div className={authStyles.bgCircle1} aria-hidden />
-      <div className={authStyles.bgCircle2} aria-hidden />
       <div className={authStyles.content}>
         <div className={authStyles.card}>
           <ProfileForm profile={profile} />

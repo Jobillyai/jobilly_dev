@@ -9,7 +9,7 @@
 
   min-height: calc(100vh - 68px);
   font-family: "Plus Jakarta Sans", sans-serif;
-  background: linear-gradient(180deg, var(--blue-50) 0%, var(--white) 45%);
+  background: #ffffff;
   color: var(--blue-900);
 }
 

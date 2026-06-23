@@ -22,7 +22,7 @@
   --text-muted: #6b7280;
 
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background: linear-gradient(180deg, var(--blue-50) 0%, var(--white) 55%);
+  background: #ffffff;
   color: var(--text-primary);
   overflow-x: hidden;
   line-height: 1.6;

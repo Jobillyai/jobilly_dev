@@ -6,6 +6,14 @@
   z-index: 0;
 }
 
+.plainBackground {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .grid {
   position: absolute;
   inset: 0;
