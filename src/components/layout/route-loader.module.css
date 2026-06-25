@@ -1,13 +1,27 @@
-.routeLoaderBar {
+.routeLoaderRoot {
   position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.routeLoaderVisible {
+  visibility: visible;
+  opacity: 1;
+}
+
+.routeLoaderBar {
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 3px;
-  z-index: 9999;
+  z-index: 1;
   overflow: hidden;
   background: rgba(24, 119, 242, 0.12);
-  pointer-events: none;
 }
 
 .routeLoaderBarInner {
@@ -19,15 +33,13 @@
 }
 
 .routeLoaderOverlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 9998;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(2px);
-  pointer-events: none;
 }
 
 @keyframes routeLoaderSlide {

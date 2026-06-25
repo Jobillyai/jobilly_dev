@@ -1,10 +1,21 @@
 import { createClient } from "@/server/db/supabase-server";
 import type { AdminCandidate } from "@/server/services/admin-dashboard";
+import type { JobMarketSource } from "@/server/services/apify-job-search";
 import {
+  buildCandidateJobSearchQuery,
   buildCandidateSearchTerms,
   scrapeJobsForCandidate,
   type JobSearchResult,
 } from "@/server/services/candidate-job-search";
+import {
+  describeCacheStatus,
+  isScrapeCacheFresh,
+  LEGACY_SEARCH_ROLE,
+  normalizeSearchRole,
+  sourceScrapeHadError,
+  formatSearchRoleLabel,
+  type RoleScrapeCacheStatus,
+} from "@/server/services/job-role-cache";
 
 export type CandidateJobListing = {
   id: string;
@@ -16,11 +27,25 @@ export type CandidateJobListing = {
   relevanceScore: number;
   resumeMatch: "high" | "medium" | "low";
   selected: boolean;
+  applied: boolean;
+  appliedAt: string | null;
   scrapedAt: string;
+  source: string;
+  searchRole: string;
+};
+
+export type CandidateAppliedJob = {
+  id: string;
+  company: string;
+  role: string;
+  jobUrl: string;
+  location: string;
+  jdText: string | null;
+  appliedAt: string;
   source: string;
 };
 
-function mapDbRow(row: {
+type ScrapedJobRow = {
   id: string;
   company: string;
   role: string;
@@ -28,127 +53,456 @@ function mapDbRow(row: {
   jd_text: string | null;
   relevance_score: number | null;
   selected: boolean;
+  applied: boolean;
+  applied_at: string | null;
   scraped_at: string;
-}): CandidateJobListing {
+  location: string | null;
+  source: string | null;
+  search_role: string;
+};
+
+const JOB_SELECT =
+  "id, company, role, job_url, jd_text, relevance_score, selected, applied, applied_at, scraped_at, location, source, search_role";
+
+function mapDbRow(row: ScrapedJobRow): CandidateJobListing {
   const score = row.relevance_score ?? 0;
   return {
     id: row.id,
     company: row.company,
     role: row.role,
     jobUrl: row.job_url,
-    location: "Remote",
+    location: row.location ?? "United States",
     jdText: row.jd_text,
     relevanceScore: score,
     resumeMatch: score >= 70 ? "high" : score >= 45 ? "medium" : "low",
     selected: row.selected,
+    applied: row.applied,
+    appliedAt: row.applied_at,
     scrapedAt: row.scraped_at,
-    source: "Scraped",
+    source: row.source ?? "Apify",
+    searchRole: row.search_role,
   };
 }
 
-function mapSearchResult(
-  result: JobSearchResult,
-  id: string,
-  scrapedAt: string,
-): CandidateJobListing {
-  return {
-    id,
-    company: result.company,
-    role: result.role,
-    jobUrl: result.jobUrl,
-    location: result.location,
-    jdText: result.jdText,
-    relevanceScore: result.relevanceScore,
-    resumeMatch: result.resumeMatch,
-    selected: false,
-    scrapedAt,
-    source: result.source,
-  };
+async function getRoleScrapeCache(
+  candidateId: string,
+  searchRole: string,
+  sources: JobMarketSource[],
+): Promise<RoleScrapeCacheStatus[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("job_role_scrapes")
+    .select("source, last_scraped_at")
+    .eq("candidate_id", candidateId)
+    .eq("search_role", searchRole)
+    .in("source", sources);
+
+  const bySource = new Map(
+    (data ?? []).map((row) => [row.source as JobMarketSource, row.last_scraped_at]),
+  );
+
+  return sources.map((source) => {
+    const lastScrapedAt = bySource.get(source) ?? null;
+    return {
+      source,
+      lastScrapedAt,
+      fresh: isScrapeCacheFresh(lastScrapedAt),
+    };
+  });
 }
+
+async function markRoleScraped(
+  candidateId: string,
+  searchRole: string,
+  source: JobMarketSource,
+): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from("job_role_scrapes").upsert(
+    {
+      candidate_id: candidateId,
+      search_role: searchRole,
+      source,
+      last_scraped_at: new Date().toISOString(),
+    },
+    { onConflict: "candidate_id,search_role,source" },
+  );
+}
+
+async function getExistingJobUrlsForRole(
+  candidateId: string,
+  searchRole: string,
+): Promise<Set<string>> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("scraped_jobs")
+    .select("job_url")
+    .eq("candidate_id", candidateId)
+    .eq("search_role", searchRole);
+
+  return new Set((data ?? []).map((row) => row.job_url));
+}
+
+async function appendJobsForRole(
+  candidateId: string,
+  adminUserId: string,
+  searchRole: string,
+  jobs: JobSearchResult[],
+): Promise<{ inserted: number; error?: string }> {
+  if (jobs.length === 0) {
+    return { inserted: 0 };
+  }
+
+  const supabase = await createClient();
+  const scrapedAt = new Date().toISOString();
+  const existingUrls = await getExistingJobUrlsForRole(candidateId, searchRole);
+
+  const rows = jobs
+    .filter((job) => !existingUrls.has(job.jobUrl))
+    .map((job) => ({
+      candidate_id: candidateId,
+      employee_id: adminUserId,
+      search_role: searchRole,
+      company: job.company,
+      role: job.role,
+      job_url: job.jobUrl,
+      jd_text: job.jdText,
+      relevance_score: job.relevanceScore,
+      location: job.location,
+      source: job.source,
+      selected: false,
+      applied: false,
+      applied_at: null,
+      scraped_at: scrapedAt,
+    }));
+
+  if (rows.length === 0) {
+    return { inserted: 0 };
+  }
+
+  const { error } = await supabase.from("scraped_jobs").insert(rows);
+
+  if (error) {
+    return { inserted: 0, error: error.message };
+  }
+
+  return { inserted: rows.length };
+}
+
+export type PreviousSearchRole = {
+  searchRole: string;
+  label: string;
+  jobCount: number;
+  lastScrapedAt: string;
+};
 
 export async function getCandidateJobListings(
   candidateId: string,
+  searchRole?: string | null,
+  options?: { exactRoleOnly?: boolean },
 ): Promise<CandidateJobListing[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("scraped_jobs")
-    .select(
-      "id, company, role, job_url, jd_text, relevance_score, selected, scraped_at",
-    )
+    .select(JOB_SELECT)
     .eq("candidate_id", candidateId)
     .order("relevance_score", { ascending: false });
+
+  const normalizedRole = searchRole ? normalizeSearchRole(searchRole) : null;
+  if (normalizedRole) {
+    if (options?.exactRoleOnly) {
+      query = query.eq("search_role", normalizedRole);
+    } else {
+      query = query.in("search_role", [normalizedRole, LEGACY_SEARCH_ROLE]);
+    }
+  }
+
+  const { data, error } = await query;
 
   if (error || !data) {
     return [];
   }
 
-  return data.map(mapDbRow);
+  return (data as ScrapedJobRow[]).map(mapDbRow);
+}
+
+export async function getCandidatePreviousSearches(
+  candidateId: string,
+): Promise<PreviousSearchRole[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("scraped_jobs")
+    .select("search_role, scraped_at")
+    .eq("candidate_id", candidateId)
+    .order("scraped_at", { ascending: false });
+
+  if (error || !data) {
+    return [];
+  }
+
+  const byRole = new Map<string, { jobCount: number; lastScrapedAt: string }>();
+
+  for (const row of data) {
+    const role = row.search_role;
+    const current = byRole.get(role);
+
+    if (!current) {
+      byRole.set(role, { jobCount: 1, lastScrapedAt: row.scraped_at });
+      continue;
+    }
+
+    current.jobCount += 1;
+    if (row.scraped_at > current.lastScrapedAt) {
+      current.lastScrapedAt = row.scraped_at;
+    }
+  }
+
+  return [...byRole.entries()]
+    .map(([searchRole, stats]) => ({
+      searchRole,
+      label: formatSearchRoleLabel(searchRole),
+      jobCount: stats.jobCount,
+      lastScrapedAt: stats.lastScrapedAt,
+    }))
+    .sort((a, b) => b.lastScrapedAt.localeCompare(a.lastScrapedAt));
+}
+
+export async function loadCandidateJobsForStoredRole(
+  candidateId: string,
+  storedSearchRole: string,
+): Promise<{
+  jobs: CandidateJobListing[];
+  searchRole: string;
+  cacheStatus: RoleScrapeCacheStatus[];
+  label: string;
+}> {
+  const searchRole = normalizeSearchRole(storedSearchRole);
+  const [jobs, cacheStatus] = await Promise.all([
+    getCandidateJobListings(candidateId, searchRole, { exactRoleOnly: true }),
+    getRoleScrapeCache(candidateId, searchRole, ["indeed", "linkedin"]),
+  ]);
+
+  return {
+    jobs,
+    searchRole,
+    cacheStatus,
+    label: formatSearchRoleLabel(searchRole),
+  };
+}
+
+export async function getCandidateAppliedJobs(
+  candidateId: string,
+): Promise<CandidateAppliedJob[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("scraped_jobs")
+    .select(JOB_SELECT)
+    .eq("candidate_id", candidateId)
+    .eq("applied", true)
+    .order("applied_at", { ascending: false });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return (data as ScrapedJobRow[])
+    .filter((row) => row.applied_at)
+    .map((row) => ({
+      id: row.id,
+      company: row.company,
+      role: row.role,
+      jobUrl: row.job_url,
+      location: row.location ?? "United States",
+      jdText: row.jd_text,
+      appliedAt: row.applied_at as string,
+      source: row.source ?? "Apify",
+    }));
+}
+
+export async function loadCandidateJobsForRole(
+  candidateId: string,
+  interestedRole: string,
+): Promise<{
+  jobs: CandidateJobListing[];
+  searchRole: string;
+  cacheStatus: RoleScrapeCacheStatus[];
+}> {
+  const searchRole = normalizeSearchRole(interestedRole);
+  const [jobs, cacheStatus] = await Promise.all([
+    getCandidateJobListings(candidateId, searchRole),
+    getRoleScrapeCache(candidateId, searchRole, ["indeed", "linkedin"]),
+  ]);
+
+  return { jobs, searchRole, cacheStatus };
 }
 
 export async function refreshCandidateJobListings(
   candidate: AdminCandidate,
   adminUserId: string,
-): Promise<{ jobs: CandidateJobListing[]; searchTerms: string[] }> {
-  const supabase = await createClient();
-  const scraped = await scrapeJobsForCandidate(candidate);
-  const searchTerms = buildCandidateSearchTerms(candidate);
-
-  await supabase.from("scraped_jobs").delete().eq("candidate_id", candidate.id);
-
-  if (scraped.length === 0) {
-    return { jobs: [], searchTerms };
-  }
-
-  const scrapedAt = new Date().toISOString();
-  const rows = scraped.map((job) => ({
-    candidate_id: candidate.id,
-    employee_id: adminUserId,
-    company: job.company,
-    role: job.role,
-    job_url: job.jobUrl,
-    jd_text: job.jdText,
-    relevance_score: job.relevanceScore,
-    selected: false,
-    scraped_at: scrapedAt,
-  }));
-
-  const { data, error } = await supabase
-    .from("scraped_jobs")
-    .insert(rows)
-    .select(
-      "id, company, role, job_url, jd_text, relevance_score, selected, scraped_at",
-    );
-
-  if (error || !data) {
+  sources: JobMarketSource[] = ["indeed", "linkedin"],
+  interestedRole?: string | null,
+): Promise<{
+  jobs: CandidateJobListing[];
+  searchTerms: string[];
+  searchQuery: string;
+  searchRole: string;
+  cacheStatus: RoleScrapeCacheStatus[];
+  apifyCalled: boolean;
+  newJobsAdded: number;
+  error?: string;
+  warning?: string;
+  info?: string;
+}> {
+  const roleInput = interestedRole?.trim();
+  if (!roleInput) {
     return {
-      jobs: scraped.map((job, index) =>
-        mapSearchResult(job, `temp-${index}`, scrapedAt),
-      ),
-      searchTerms,
+      jobs: [],
+      searchTerms: [],
+      searchQuery: "",
+      searchRole: "",
+      cacheStatus: [],
+      apifyCalled: false,
+      newJobsAdded: 0,
+      error: "Enter an interested role before searching.",
     };
   }
 
+  const searchRole = normalizeSearchRole(roleInput);
+  const searchTerms = buildCandidateSearchTerms(candidate, roleInput);
+  const { position, location } = buildCandidateJobSearchQuery(candidate, roleInput);
+  const searchQuery = `${position} · ${location}`;
+
+  const cacheStatus = await getRoleScrapeCache(candidate.id, searchRole, sources);
+  const sourcesToScrape = cacheStatus
+    .filter((entry) => !entry.fresh)
+    .map((entry) => entry.source);
+
+  let scrapeErrors: string[] = [];
+  let newJobsAdded = 0;
+  let apifyCalled = false;
+
+  if (sourcesToScrape.length > 0) {
+    apifyCalled = true;
+    const scraped = await scrapeJobsForCandidate(
+      candidate,
+      sourcesToScrape,
+      roleInput,
+    );
+    scrapeErrors = scraped.errors;
+
+    const appendResult = await appendJobsForRole(
+      candidate.id,
+      adminUserId,
+      searchRole,
+      scraped.jobs,
+    );
+    newJobsAdded = appendResult.inserted;
+
+    if (appendResult.error) {
+      return {
+        jobs: await getCandidateJobListings(candidate.id, searchRole),
+        searchTerms,
+        searchQuery,
+        searchRole,
+        cacheStatus,
+        apifyCalled,
+        newJobsAdded,
+        error: appendResult.error,
+        warning: scrapeErrors.length > 0 ? scrapeErrors.join(" ") : undefined,
+      };
+    }
+
+    for (const source of sourcesToScrape) {
+      if (!sourceScrapeHadError(source, scrapeErrors)) {
+        await markRoleScraped(candidate.id, searchRole, source);
+      }
+    }
+  }
+
+  const updatedCacheStatus = await getRoleScrapeCache(
+    candidate.id,
+    searchRole,
+    sources,
+  );
+  const jobs = await getCandidateJobListings(candidate.id, searchRole);
+
+  if (jobs.length === 0) {
+    return {
+      jobs: [],
+      searchTerms,
+      searchQuery,
+      searchRole,
+      cacheStatus: updatedCacheStatus,
+      apifyCalled,
+      newJobsAdded,
+      error:
+        scrapeErrors.join(" ") ||
+        "No jobs found for this role yet. Try again after 24 hours or adjust the role.",
+    };
+  }
+
+  const info = describeCacheStatus(updatedCacheStatus, sources);
+  let warning = scrapeErrors.length > 0 ? scrapeErrors.join(" ") : undefined;
+
+  if (!apifyCalled && info) {
+    return {
+      jobs,
+      searchTerms,
+      searchQuery,
+      searchRole,
+      cacheStatus: updatedCacheStatus,
+      apifyCalled,
+      newJobsAdded,
+      info,
+    };
+  }
+
+  if (apifyCalled && newJobsAdded === 0 && !warning) {
+    warning =
+      "Apify scrape completed but no new unique jobs were found for this role.";
+  }
+
   return {
-    jobs: data.map((row) => ({
-      ...mapDbRow(row),
-      location:
-        scraped.find((job) => job.jobUrl === row.job_url)?.location ?? "Remote",
-      source:
-        scraped.find((job) => job.jobUrl === row.job_url)?.source ?? "Scraped",
-    })),
+    jobs,
     searchTerms,
+    searchQuery,
+    searchRole,
+    cacheStatus: updatedCacheStatus,
+    apifyCalled,
+    newJobsAdded,
+    info: info || undefined,
+    warning,
   };
 }
 
 export async function setCandidateJobSelected(
   jobId: string,
+  candidateId: string,
   selected: boolean,
 ): Promise<boolean> {
   const supabase = await createClient();
   const { error } = await supabase
     .from("scraped_jobs")
     .update({ selected })
-    .eq("id", jobId);
+    .eq("id", jobId)
+    .eq("candidate_id", candidateId);
+
+  return !error;
+}
+
+export async function setCandidateJobApplied(
+  jobId: string,
+  candidateId: string,
+  applied: boolean,
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("scraped_jobs")
+    .update({
+      applied,
+      applied_at: applied ? new Date().toISOString() : null,
+    })
+    .eq("id", jobId)
+    .eq("candidate_id", candidateId);
 
   return !error;
 }

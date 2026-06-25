@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import { getAuthUserDisplayName } from "@/lib/auth/user-display-name";
 import { createAdminClient } from "@/server/db/supabase-admin";
 
 export async function ensurePublicUserRecord(
@@ -16,8 +17,7 @@ export async function ensurePublicUserRecord(
     return {};
   }
 
-  const name =
-    typeof user.user_metadata?.name === "string" ? user.user_metadata.name : null;
+  const name = getAuthUserDisplayName(user);
 
   const { error } = await admin.from("users").insert({
     id: user.id,

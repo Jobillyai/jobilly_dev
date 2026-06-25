@@ -36,6 +36,50 @@ const features = [
     ),
   },
   {
+    slug: "ats-resume-score",
+    iconClass: styles.fiGreen,
+    badgeClass: styles.badgeFree,
+    badge: "Free",
+    title: "ATS Resume Score",
+    description:
+      "Upload your resume as PDF or Word and get a 0–100 ATS score with missing keywords and improvement tips powered by Apify.",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+        <path
+          d="M8 6H20C21.105 6 22 6.895 22 8V20C22 21.105 21.105 22 20 22H8C6.895 22 6 21.105 6 20V8C6 6.895 6.895 6 8 6Z"
+          stroke="#059669"
+          strokeWidth="2"
+        />
+        <path d="M10 11H18M10 15H16" stroke="#059669" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="21" cy="7" r="4" fill="#059669" />
+        <path
+          d="M20 7H22M21 6V8"
+          stroke="white"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    slug: "calendar",
+    iconClass: styles.fiBlue,
+    badgeClass: styles.badgeFree,
+    badge: "Free",
+    title: "My Calendar",
+    description:
+      "See your booked career advisory sessions on a calendar and join Google Meet when it's time.",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+        <rect x="4" y="6" width="20" height="18" rx="3" stroke="#1877F2" strokeWidth="2" />
+        <path d="M4 11H24" stroke="#1877F2" strokeWidth="2" />
+        <path d="M10 4V8M18 4V8" stroke="#1877F2" strokeWidth="2" strokeLinecap="round" />
+        <rect x="9" y="14" width="4" height="4" rx="1" fill="#1877F2" />
+        <rect x="15" y="14" width="4" height="4" rx="1" fill="#4A9FFF" />
+      </svg>
+    ),
+  },
+  {
     slug: null,
     iconClass: styles.fiGreen,
     badgeClass: styles.badgeFree,

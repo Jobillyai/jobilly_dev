@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { AbstractBackground } from "@/components/layout/abstract-background";
 import styles from "./welcome-page.module.css";
@@ -11,6 +12,18 @@ import { useCounterAnimation } from "./use-counter-animation";
 export function WelcomePage() {
   const revealRef = useScrollReveal<HTMLDivElement>();
   const statsRef = useCounterAnimation<HTMLDivElement>();
+
+  useEffect(() => {
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash) {
+      return;
+    }
+
+    const target = document.getElementById(hash);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
 
   return (
     <div className={styles.page} ref={revealRef}>
@@ -156,7 +169,7 @@ export function WelcomePage() {
       </div>
 
       {/* FEATURES */}
-      <section className={styles.section}>
+      <section id="products" className={styles.section}>
         <AbstractBackground />
         <div className={styles.sectionContent}>
         <div className={`${styles.label} ${styles.reveal}`} data-reveal data-reveal-visible-class={styles.revealVisible}>
@@ -247,7 +260,7 @@ export function WelcomePage() {
       </div>
 
       {/* INSTITUTIONS */}
-      <div className={styles.instSection}>
+      <div id="community" className={styles.instSection}>
         <div className={styles.instInner}>
           <div className={styles.revealLeft} data-reveal data-reveal-visible-class={styles.revealLeftVisible}>
             <div className={`${styles.label} ${styles.instLabel}`}>
@@ -334,7 +347,7 @@ export function WelcomePage() {
       </div>
 
       {/* BOTTOM CTA */}
-      <div className={styles.ctaSection}>
+      <div id="contact" className={styles.ctaSection}>
         <AbstractBackground />
         <div className={styles.sectionContent}>
         <div

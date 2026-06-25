@@ -7,8 +7,9 @@ import styles from "./site-footer.module.css";
 export function SiteFooter() {
   const pathname = usePathname();
   const isAdminRoute = pathname.startsWith("/admin");
+  const isDashboardRoute = pathname.startsWith("/dashboard");
 
-  if (isAdminRoute) {
+  if (isAdminRoute || isDashboardRoute) {
     return null;
   }
 

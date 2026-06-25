@@ -7,6 +7,7 @@ import { loginAction, type LoginState } from "@/server/actions/auth";
 import { FormField } from "@/components/auth/form-field";
 import { PasswordField } from "@/components/auth/password-field";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { AuthDivider, GoogleAuthButton } from "@/components/auth/google-auth-button";
 import styles from "@/components/auth/auth-page.module.css";
 
 const initialState: LoginState = {};
@@ -51,6 +52,9 @@ export default function LoginPage() {
           Pick up where you left off on your path to your first job.
         </p>
       </div>
+
+      <GoogleAuthButton label="Sign in with Google" />
+      <AuthDivider />
 
       <form action={handleSubmit} className={styles.form}>
         <FormField

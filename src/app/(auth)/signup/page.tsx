@@ -6,6 +6,7 @@ import { signupAction, type SignupState } from "@/server/actions/auth";
 import { FormField } from "@/components/auth/form-field";
 import { PasswordField } from "@/components/auth/password-field";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { AuthDivider, GoogleAuthButton } from "@/components/auth/google-auth-button";
 import styles from "@/components/auth/auth-page.module.css";
 
 const initialState: SignupState = {};
@@ -44,6 +45,9 @@ export default function SignupPage() {
           Start your path from graduation to your first job — guided by AI.
         </p>
       </div>
+
+      <GoogleAuthButton label="Sign up with Google" />
+      <AuthDivider />
 
       <form action={handleSubmit} className={styles.form}>
         <FormField

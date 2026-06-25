@@ -58,7 +58,7 @@ export function CareerAdvisoryForm({
     }
 
     if (redirectCountdown <= 0) {
-      router.push("/dashboard");
+      router.replace("/dashboard");
       return;
     }
 

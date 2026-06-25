@@ -11,13 +11,26 @@ function isInternalNavigationLink(anchor: HTMLAnchorElement) {
   }
 
   const href = anchor.getAttribute("href");
-  if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) {
+  if (!href || href.startsWith("mailto:") || href.startsWith("tel:")) {
+    return false;
+  }
+
+  if (href.startsWith("#")) {
     return false;
   }
 
   try {
     const url = new URL(anchor.href, window.location.origin);
-    return url.origin === window.location.origin;
+    if (url.origin !== window.location.origin) {
+      return false;
+    }
+
+    // Hash-only changes on the current page are not route navigations.
+    if (url.pathname === window.location.pathname && url.hash) {
+      return false;
+    }
+
+    return true;
   } catch {
     return false;
   }
@@ -45,7 +58,6 @@ export function RouteLoader() {
     clearTimers();
     setLoading(true);
 
-    // Never block the UI indefinitely if navigation or a redirect fails.
     safetyTimerRef.current = setTimeout(() => {
       setLoading(false);
       safetyTimerRef.current = null;
@@ -100,18 +112,17 @@ export function RouteLoader() {
     };
   }, [pathname]);
 
-  if (!loading) {
-    return null;
-  }
-
   return (
-    <>
-      <div className={styles.routeLoaderBar} aria-hidden>
+    <div
+      className={`${styles.routeLoaderRoot} ${loading ? styles.routeLoaderVisible : ""}`}
+      aria-hidden={!loading}
+    >
+      <div className={styles.routeLoaderBar}>
         <div className={styles.routeLoaderBarInner} />
       </div>
-      <div className={styles.routeLoaderOverlay} aria-live="polite" aria-busy="true">
+      <div className={styles.routeLoaderOverlay} aria-live="polite" aria-busy={loading}>
         <JobillyLoader variant="default" size="md" />
       </div>
-    </>
+    </div>
   );
 }

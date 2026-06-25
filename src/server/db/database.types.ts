@@ -120,6 +120,42 @@ export type Database = {
         >;
         Relationships: [];
       };
+      resume_ats_checks: {
+        Row: {
+          id: string;
+          candidate_id: string;
+          target_role: string;
+          job_description: string | null;
+          resume_text: string;
+          resume_url: string | null;
+          ats_score: number | null;
+          grade: string | null;
+          result_json: Record<string, unknown>;
+          status: "pending" | "processing" | "completed" | "failed";
+          error_message: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          candidate_id: string;
+          target_role: string;
+          job_description?: string | null;
+          resume_text: string;
+          resume_url?: string | null;
+          ats_score?: number | null;
+          grade?: string | null;
+          result_json?: Record<string, unknown>;
+          status?: "pending" | "processing" | "completed" | "failed";
+          error_message?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["resume_ats_checks"]["Insert"]
+        >;
+        Relationships: [];
+      };
       scraped_jobs: {
         Row: {
           id: string;
@@ -131,6 +167,11 @@ export type Database = {
           jd_text: string | null;
           relevance_score: number | null;
           selected: boolean;
+          applied: boolean;
+          applied_at: string | null;
+          location: string | null;
+          source: string;
+          search_role: string;
           scraped_at: string;
         };
         Insert: {
@@ -143,9 +184,30 @@ export type Database = {
           jd_text?: string | null;
           relevance_score?: number | null;
           selected?: boolean;
+          applied?: boolean;
+          applied_at?: string | null;
+          location?: string | null;
+          source?: string;
+          search_role?: string;
           scraped_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["scraped_jobs"]["Insert"]>;
+        Relationships: [];
+      };
+      job_role_scrapes: {
+        Row: {
+          candidate_id: string;
+          search_role: string;
+          source: string;
+          last_scraped_at: string;
+        };
+        Insert: {
+          candidate_id: string;
+          search_role: string;
+          source: string;
+          last_scraped_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["job_role_scrapes"]["Insert"]>;
         Relationships: [];
       };
       // Remaining tables (mentor_profiles, institutions, advisory_sessions,

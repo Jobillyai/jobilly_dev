@@ -368,6 +368,7 @@
   padding: 100px 24px;
   max-width: 1100px;
   margin: 0 auto;
+  scroll-margin-top: 84px;
 }
 .sectionFull {
   position: relative;
@@ -621,6 +622,7 @@
   z-index: 1;
   background: var(--blue-900);
   padding: 100px 24px;
+  scroll-margin-top: 84px;
 }
 .instInner {
   max-width: 1100px;
@@ -723,6 +725,7 @@
   background: transparent;
   padding: 120px 24px;
   text-align: center;
+  scroll-margin-top: 84px;
 }
 .ctaSection h2 {
   font-size: clamp(32px, 5vw, 56px);

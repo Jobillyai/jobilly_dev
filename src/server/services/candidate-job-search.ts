@@ -1,4 +1,10 @@
 import type { AdminCandidate } from "@/server/services/admin-dashboard";
+import {
+  buildJobSearchFromInterests,
+  searchJobsBySources,
+  type ApifyJobListing,
+  type JobMarketSource,
+} from "@/server/services/apify-job-search";
 
 export type JobSearchResult = {
   company: string;
@@ -8,22 +14,7 @@ export type JobSearchResult = {
   jdText: string;
   relevanceScore: number;
   resumeMatch: "high" | "medium" | "low";
-  source: string;
-};
-
-type RemotiveJob = {
-  id: number;
-  title: string;
-  company_name: string;
-  url: string;
-  candidate_required_location: string;
-  description: string;
-  tags: string[];
-  job_type: string;
-};
-
-type RemotiveResponse = {
-  jobs: RemotiveJob[];
+  source: JobMarketSource;
 };
 
 function tokenize(value: string): string[] {
@@ -34,8 +25,35 @@ function tokenize(value: string): string[] {
     .filter((token) => token.length > 2);
 }
 
-export function buildCandidateSearchTerms(candidate: AdminCandidate): string[] {
+export function buildCandidateJobSearchQuery(
+  candidate: AdminCandidate,
+  interestedRole?: string | null,
+): {
+  position: string;
+  location: string;
+} {
+  const roleOverride = interestedRole?.trim();
+  if (roleOverride) {
+    return {
+      position: roleOverride,
+      location: "United States",
+    };
+  }
+
+  return buildJobSearchFromInterests({
+    interestedTechnology: candidate.submission?.interestedTechnology,
+    branch: candidate.submission?.branch,
+    graduationDetails: candidate.submission?.graduationDetails,
+    careerGoals: candidate.careerGoals,
+  });
+}
+
+export function buildCandidateSearchTerms(
+  candidate: AdminCandidate,
+  interestedRole?: string | null,
+): string[] {
   const parts = [
+    interestedRole?.trim(),
     candidate.submission?.interestedTechnology,
     candidate.submission?.branch,
     candidate.submission?.graduationDetails,
@@ -54,19 +72,12 @@ export function buildCandidateSearchTerms(candidate: AdminCandidate): string[] {
   return [...tokens].slice(0, 24);
 }
 
-function scoreJob(
-  job: RemotiveJob,
+function scoreJobListing(
+  job: ApifyJobListing,
   searchTerms: string[],
   hasResume: boolean,
 ): { score: number; resumeMatch: "high" | "medium" | "low" } {
-  const haystack = [
-    job.title,
-    job.company_name,
-    job.description,
-    job.candidate_required_location,
-    job.job_type,
-    ...(job.tags ?? []),
-  ]
+  const haystack = [job.role, job.company, job.location, job.jdText]
     .join(" ")
     .toLowerCase();
 
@@ -79,7 +90,7 @@ function scoreJob(
 
   const maxPossible = Math.max(searchTerms.length * 2, 1);
   const normalized = Math.min(100, Math.round((hits / maxPossible) * 100));
-  const score = Math.max(normalized, hits > 0 ? 35 : 15);
+  const score = Math.max(normalized, hits > 0 ? 40 : 20);
 
   let resumeMatch: "high" | "medium" | "low" = "low";
   if (hasResume) {
@@ -95,65 +106,43 @@ function scoreJob(
   return { score, resumeMatch };
 }
 
-function truncate(text: string, max = 220): string {
-  const cleaned = text.replace(/\s+/g, " ").trim();
-  if (cleaned.length <= max) {
-    return cleaned;
-  }
-  return `${cleaned.slice(0, max - 1)}…`;
-}
-
 export async function scrapeJobsForCandidate(
   candidate: AdminCandidate,
-): Promise<JobSearchResult[]> {
-  const searchTerms = buildCandidateSearchTerms(candidate);
+  sources: JobMarketSource[] = ["indeed", "linkedin"],
+  interestedRole?: string | null,
+): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[] }> {
+  const searchTerms = buildCandidateSearchTerms(candidate, interestedRole);
   const hasResume = Boolean(candidate.resumeUrl);
+  const { position, location } = buildCandidateJobSearchQuery(candidate, interestedRole);
+  const searchQuery = `${position} · ${location}`;
 
-  let jobs: RemotiveJob[] = [];
+  const apifyResult = await searchJobsBySources({
+    position,
+    location,
+    sources,
+    maxItemsPerSource: 20,
+  });
 
-  try {
-    const response = await fetch("https://remotive.com/api/remote-jobs", {
-      next: { revalidate: 3600 },
-    });
-
-    if (response.ok) {
-      const payload = (await response.json()) as RemotiveResponse;
-      jobs = payload.jobs ?? [];
-    }
-  } catch {
-    jobs = [];
-  }
-
-  const ranked = jobs
+  const ranked = apifyResult.jobs
     .map((job) => {
-      const { score, resumeMatch } = scoreJob(job, searchTerms, hasResume);
+      const { score, resumeMatch } = scoreJobListing(job, searchTerms, hasResume);
       return {
-        company: job.company_name,
-        role: job.title,
-        jobUrl: job.url,
-        location: job.candidate_required_location || "Remote",
-        jdText: truncate(job.description),
+        company: job.company,
+        role: job.role,
+        jobUrl: job.jobUrl,
+        location: job.location,
+        jdText: job.jdText,
         relevanceScore: score,
         resumeMatch,
-        source: "Remotive",
+        source: job.source,
       };
     })
-    .filter((job) => job.relevanceScore >= 30)
     .sort((a, b) => b.relevanceScore - a.relevanceScore)
-    .slice(0, 30);
+    .slice(0, 40);
 
-  if (ranked.length > 0) {
-    return ranked;
-  }
-
-  return jobs.slice(0, 12).map((job) => ({
-    company: job.company_name,
-    role: job.title,
-    jobUrl: job.url,
-    location: job.candidate_required_location || "Remote",
-    jdText: truncate(job.description),
-    relevanceScore: 25,
-    resumeMatch: hasResume ? "medium" : "low",
-    source: "Remotive",
-  }));
+  return {
+    jobs: ranked,
+    searchQuery,
+    errors: apifyResult.errors,
+  };
 }

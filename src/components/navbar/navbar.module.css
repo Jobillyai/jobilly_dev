@@ -55,6 +55,32 @@
   color: var(--blue-900);
 }
 
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  min-width: 0;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.navLink {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue-900);
+  text-decoration: none;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  color: var(--blue-500);
+}
+
 .navRight {
   display: flex;
   align-items: center;
@@ -281,6 +307,14 @@
 @media (max-width: 900px) {
   .nav {
     padding: 0 24px;
+  }
+
+  .navLinks {
+    display: none;
+  }
+
+  .navLeft {
+    gap: 0;
   }
 }
 

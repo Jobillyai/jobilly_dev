@@ -3,13 +3,18 @@ import { notFound, redirect } from "next/navigation";
 import { CandidateJobsSheet } from "@/components/admin/candidate-jobs-sheet";
 import { getAdminUser } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
-import { buildCandidateSearchTerms } from "@/server/services/candidate-job-search";
+import {
+  buildCandidateJobSearchQuery,
+  buildCandidateSearchTerms,
+} from "@/server/services/candidate-job-search";
 import {
   getCandidateJobListings,
-  refreshCandidateJobListings,
+  getCandidatePreviousSearches,
 } from "@/server/services/candidate-jobs";
 import { getAdminCandidateById } from "@/server/services/admin-dashboard";
 import styles from "@/app/admin/admin.module.css";
+
+export const maxDuration = 300;
 
 type AdminCandidateJobsPageProps = {
   params: {
@@ -32,14 +37,14 @@ export default async function AdminCandidateJobsPage({
     notFound();
   }
 
-  let jobs = await getCandidateJobListings(candidate.id);
-  let searchTerms = buildCandidateSearchTerms(candidate);
+  const profileSearchQuery = buildCandidateJobSearchQuery(candidate);
+  const defaultInterestedRole =
+    candidate.submission?.interestedTechnology?.trim() || profileSearchQuery.position;
 
-  if (jobs.length === 0) {
-    const refreshed = await refreshCandidateJobListings(candidate, admin.id);
-    jobs = refreshed.jobs;
-    searchTerms = refreshed.searchTerms;
-  }
+  const jobs = await getCandidateJobListings(candidate.id, defaultInterestedRole);
+  const previousSearches = await getCandidatePreviousSearches(candidate.id);
+  const searchTerms = buildCandidateSearchTerms(candidate, defaultInterestedRole);
+  const searchQuery = buildCandidateJobSearchQuery(candidate, defaultInterestedRole);
 
   const displayName = candidate.name
     ? formatDisplayName(candidate.name)
@@ -71,8 +76,11 @@ export default async function AdminCandidateJobsPage({
             candidateId={candidate.id}
             candidateName={displayName}
             searchTerms={searchTerms}
+            searchQuery={`${searchQuery.position} · ${searchQuery.location}`}
+            defaultInterestedRole={defaultInterestedRole}
             hasResume={Boolean(candidate.resumeUrl)}
             initialJobs={jobs}
+            initialPreviousSearches={previousSearches}
           />
         </section>
       </main>

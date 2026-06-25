@@ -187,6 +187,7 @@ export async function submitCareerAdvisoryAction(
   revalidatePath("/admin/candidates");
   revalidatePath("/admin/calendar");
   revalidatePath("/admin/tasks");
+  revalidatePath("/dashboard/calendar");
 
   if ("skipped" in inviteResult && inviteResult.skipped) {
     return {

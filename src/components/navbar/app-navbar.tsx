@@ -32,6 +32,46 @@ function toSessionUser(authUser: User): SessionUser | null {
   };
 }
 
+const NAV_LINKS = [
+  { href: "/#products", hash: "products", label: "Products" },
+  { href: "/#community", hash: "community", label: "Community" },
+  { href: "/#contact", hash: "contact", label: "Contact Us" },
+] as const;
+
+function scrollToSection(hash: string) {
+  document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+  window.history.replaceState(null, "", `#${hash}`);
+}
+
+function NavLinks() {
+  const pathname = usePathname();
+  const onHomePage = pathname === "/";
+
+  return (
+    <div className={styles.navLinks}>
+      {NAV_LINKS.map((link) =>
+        onHomePage ? (
+          <a
+            key={link.hash}
+            href={`#${link.hash}`}
+            className={styles.navLink}
+            onClick={(event) => {
+              event.preventDefault();
+              scrollToSection(link.hash);
+            }}
+          >
+            {link.label}
+          </a>
+        ) : (
+          <Link key={link.hash} href={link.href} className={styles.navLink}>
+            {link.label}
+          </Link>
+        ),
+      )}
+    </div>
+  );
+}
+
 function GuestNavActions() {
   const pathname = usePathname();
 
@@ -111,22 +151,25 @@ export function AppNavbar({ user: serverUser }: AppNavbarProps) {
 
   return (
     <nav className={`${styles.nav} ${scrolled ? styles.navScrolled : ""}`}>
-      <Link href={user ? "/dashboard" : "/"} className={styles.navLogo}>
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
-          <rect width="28" height="28" rx="8" fill="#1877F2" />
-          <path
-            d="M8 14C8 10.686 10.686 8 14 8C17.314 8 20 10.686 20 14C20 17.314 17.314 20 14 20"
-            stroke="white"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-          />
-          <circle cx="14" cy="14" r="2.5" fill="white" />
-          <path d="M14 20V22" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
-        </svg>
-        <span className={styles.navLogoText}>
-          jobilly<span className={styles.navLogoTextDark}>.ai</span>
-        </span>
-      </Link>
+      <div className={styles.navLeft}>
+        <Link href={user ? "/dashboard" : "/"} className={styles.navLogo}>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+            <rect width="28" height="28" rx="8" fill="#1877F2" />
+            <path
+              d="M8 14C8 10.686 10.686 8 14 8C17.314 8 20 10.686 20 14C20 17.314 17.314 20 14 20"
+              stroke="white"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+            <circle cx="14" cy="14" r="2.5" fill="white" />
+            <path d="M14 20V22" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+          <span className={styles.navLogoText}>
+            jobilly<span className={styles.navLogoTextDark}>.ai</span>
+          </span>
+        </Link>
+        <NavLinks />
+      </div>
 
       <div className={styles.navRight}>
         {user ? (

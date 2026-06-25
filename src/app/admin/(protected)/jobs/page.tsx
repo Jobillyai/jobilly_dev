@@ -18,14 +18,21 @@ export default async function AdminJobsPage() {
   const supabase = await createClient();
   const { data: scrapedRows } = await supabase
     .from("scraped_jobs")
-    .select("candidate_id, selected");
+    .select("candidate_id, selected, applied");
 
-  const counts = new Map<string, { total: number; selected: number }>();
+  const counts = new Map<string, { total: number; selected: number; applied: number }>();
   for (const row of scrapedRows ?? []) {
-    const current = counts.get(row.candidate_id) ?? { total: 0, selected: 0 };
+    const current = counts.get(row.candidate_id) ?? {
+      total: 0,
+      selected: 0,
+      applied: 0,
+    };
     current.total += 1;
     if (row.selected) {
       current.selected += 1;
+    }
+    if (row.applied) {
+      current.applied += 1;
     }
     counts.set(row.candidate_id, current);
   }
@@ -34,6 +41,7 @@ export default async function AdminJobsPage() {
     candidate,
     totalJobs: counts.get(candidate.id)?.total ?? 0,
     selectedJobs: counts.get(candidate.id)?.selected ?? 0,
+    appliedJobs: counts.get(candidate.id)?.applied ?? 0,
   }));
 
   return (
@@ -44,8 +52,8 @@ export default async function AdminJobsPage() {
             Job <em className={styles.titleEm}>scraping</em>
           </h1>
           <p className={styles.subtitle}>
-            Scrape roles for each candidate and manage applications in the Excel-style
-            job sheet.
+            Search Indeed jobs via Apify using each candidate&apos;s interests, then mark
+            applications so candidates can track them.
           </p>
         </div>
 
@@ -62,12 +70,13 @@ export default async function AdminJobsPage() {
                     <th>Email</th>
                     <th>Advisory</th>
                     <th>Scraped jobs</th>
-                    <th>Selected</th>
+                    <th>Shortlisted</th>
+                    <th>Applied</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {jobCounts.map(({ candidate, totalJobs, selectedJobs }) => {
+                  {jobCounts.map(({ candidate, totalJobs, selectedJobs, appliedJobs }) => {
                     const displayName = candidate.name
                       ? formatDisplayName(candidate.name)
                       : formatDisplayName(
@@ -91,6 +100,7 @@ export default async function AdminJobsPage() {
                         </td>
                         <td>{totalJobs}</td>
                         <td>{selectedJobs}</td>
+                        <td>{appliedJobs}</td>
                         <td>
                           <Link
                             href={`/admin/candidates/${candidate.id}/jobs`}
