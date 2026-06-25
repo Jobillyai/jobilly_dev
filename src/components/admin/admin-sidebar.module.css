@@ -1,107 +1,57 @@
 .adminSidebar {
-  --blue-900: #0a1628;
-  --blue-500: #1877f2;
-  --blue-50: #f0f6ff;
-  --white: #ffffff;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --text-muted: #6b7280;
-  --text-secondary: #374151;
-
   position: relative;
-  width: 240px;
+  width: 260px;
   flex-shrink: 0;
-  min-height: calc(100vh - 68px);
-  padding: 24px 16px;
+  min-height: 100vh;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  overflow: hidden;
-  background: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.94) 0%,
-    rgba(240, 246, 255, 0.82) 45%,
-    rgba(232, 241, 255, 0.88) 100%
-  );
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-right: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow:
-    inset 1px 0 0 rgba(255, 255, 255, 0.95),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    10px 0 36px rgba(10, 22, 40, 0.06);
-}
-
-.adminSidebar::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 160px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
-  pointer-events: none;
-}
-
-.adminSidebar::after {
-  content: "";
-  position: absolute;
-  top: -35%;
-  left: -25%;
-  width: 90%;
-  height: 55%;
-  background: radial-gradient(circle, rgba(24, 119, 242, 0.1) 0%, transparent 68%);
-  pointer-events: none;
+  font-family: var(--jb-font-sans);
+  background: var(--jb-surface);
+  border-right: 1px solid var(--jb-border);
 }
 
 .brand {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 12px 24px;
+  gap: 12px;
+  padding: 4px 8px 20px;
   margin-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.55);
 }
 
 .brandMark {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: linear-gradient(145deg, #3d8ff7 0%, #1877f2 55%, #0f5fd0 100%);
-  color: var(--white);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--jb-radius-sm);
+  background: var(--jb-brand);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  font-weight: 800;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 6px 16px rgba(24, 119, 242, 0.35);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .brandText {
   font-size: 15px;
-  font-weight: 800;
-  color: var(--blue-900);
-  letter-spacing: -0.3px;
+  font-weight: 700;
+  color: var(--jb-ink);
+  letter-spacing: -0.02em;
 }
 
 .brandSub {
   display: block;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-top: 2px;
+  font-weight: 500;
+  color: var(--jb-ink-muted);
+  margin-top: 1px;
 }
 
 .nav {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   flex: 1;
 }
 
@@ -109,39 +59,32 @@
 .signOutBtn {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 12px 14px;
-  border-radius: 12px;
+  padding: 10px 12px;
+  border-radius: var(--jb-radius-sm);
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 500;
+  color: var(--jb-ink-secondary);
   text-decoration: none;
-  border: 1px solid transparent;
+  border: none;
   background: transparent;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s, border-color 0.2s;
+  transition: background 0.15s, color 0.15s;
   font-family: inherit;
   text-align: left;
 }
 
 .navLink:hover,
 .signOutBtn:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(240, 246, 255, 0.9) 100%);
-  color: var(--blue-900);
-  border-color: rgba(24, 119, 242, 0.1);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    0 4px 14px rgba(24, 119, 242, 0.08);
+  background: var(--jb-surface-subtle);
+  color: var(--jb-ink);
 }
 
 .navLinkActive {
-  background: linear-gradient(135deg, rgba(24, 119, 242, 0.16) 0%, rgba(255, 255, 255, 0.55) 100%);
-  color: var(--blue-500);
-  border-color: rgba(24, 119, 242, 0.18);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 6px 18px rgba(24, 119, 242, 0.12);
+  background: var(--jb-brand-soft);
+  color: var(--jb-brand);
+  font-weight: 600;
 }
 
 .navIcon {
@@ -149,49 +92,109 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.navLinkActive .navIcon {
+  opacity: 1;
 }
 
 .footer {
-  position: relative;
-  z-index: 1;
   margin-top: auto;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.55);
+  border-top: 1px solid var(--jb-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.userBlock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  min-width: 0;
+}
+
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--jb-brand-soft);
+  color: var(--jb-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.userAvatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userMeta {
+  min-width: 0;
+}
+
+.userName {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jb-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userEmail {
+  display: block;
+  font-size: 11px;
+  color: var(--jb-ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .signOutBtn {
-  color: #dc2626;
+  color: var(--jb-ink-muted);
 }
 
 .signOutBtn:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(254, 242, 242, 0.9) 100%);
-  color: #b91c1c;
-  border-color: rgba(239, 68, 68, 0.15);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    0 4px 14px rgba(239, 68, 68, 0.08);
+  background: var(--jb-danger-soft);
+  color: var(--jb-danger);
 }
 
 @media (max-width: 900px) {
   .adminSidebar {
     width: 72px;
-    padding: 20px 10px;
+    padding: 16px 10px;
   }
 
   .brandText,
   .navLabel,
-  .brandSub {
+  .brandSub,
+  .userMeta {
     display: none;
   }
 
   .brand {
     justify-content: center;
-    padding: 0 0 20px;
+    padding: 4px 0 16px;
   }
 
   .navLink,
   .signOutBtn {
     justify-content: center;
-    padding: 12px;
+    padding: 10px;
+  }
+
+  .userBlock {
+    justify-content: center;
+    padding: 8px;
   }
 }

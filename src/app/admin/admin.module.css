@@ -1,17 +1,8 @@
 .adminPage {
-  --blue-900: #0a1628;
-  --blue-500: #1877f2;
-  --blue-50: #f0f6ff;
-  --white: #ffffff;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --text-muted: #6b7280;
-  --text-secondary: #374151;
-
-  min-height: calc(100vh - 68px);
-  font-family: "Plus Jakarta Sans", sans-serif;
-  background: #ffffff;
-  color: var(--blue-900);
+  min-height: 100vh;
+  font-family: var(--jb-font-sans);
+  background: var(--jb-surface-subtle);
+  color: var(--jb-ink);
 }
 
 .main {
@@ -33,16 +24,16 @@
 }
 
 .titleEm {
-  font-family: "Instrument Serif", serif;
+  font-family: var(--jb-font-display);
   font-style: italic;
   font-weight: 400;
-  color: var(--blue-500);
+  color: var(--jb-brand);
 }
 
 .subtitle {
   font-size: 15px;
   line-height: 1.6;
-  color: var(--text-secondary);
+  color: var(--jb-ink-secondary);
 }
 
 .statsGrid {

@@ -1,27 +1,58 @@
 import { getSessionUser } from "@/lib/auth/session";
-import { formatDisplayName } from "@/lib/format-display-name";
-import { FeatureCards } from "@/components/marketing/feature-cards";
+import { DashboardHome } from "@/components/dashboard/dashboard-home";
+import { getCareerAdvisoryIntakeForCandidate } from "@/server/services/career-advisory-intake";
+import { getCandidateAppliedJobs } from "@/server/services/candidate-jobs";
+import { listResumeAtsChecks } from "@/server/services/resume-ats-check";
 import styles from "./dashboard.module.css";
+
+function formatSessionLabel(
+  sessionScheduledAt: string | null,
+  inviteSentAt: string | null,
+): string {
+  if (!inviteSentAt) {
+    return "Not booked";
+  }
+
+  if (!sessionScheduledAt) {
+    return "Invite sent";
+  }
+
+  const sessionTime = new Date(sessionScheduledAt);
+  if (sessionTime.getTime() >= Date.now()) {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(sessionTime);
+  }
+
+  return "Completed";
+}
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
 
+  const [applications, atsChecks, advisory] = await Promise.all([
+    user ? getCandidateAppliedJobs(user.id) : Promise.resolve([]),
+    user ? listResumeAtsChecks(user.id) : Promise.resolve([]),
+    user ? getCareerAdvisoryIntakeForCandidate(user.id) : Promise.resolve(null),
+  ]);
+
+  const latestCompleted = atsChecks.find((check) => check.status === "completed");
+  const latestAtsScore = latestCompleted?.atsScore ?? null;
+
   return (
     <div className={styles.page}>
-      <main className={styles.main}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            <em className={styles.titleEm}>Welcome</em>
-            {user?.name ? `, ${formatDisplayName(user.name)}` : ""}
-          </h1>
-          <p className={styles.subtitle}>
-            Everything you need to go from graduate to hired — pick a feature to get
-            started.
-          </p>
-        </div>
-
-        <FeatureCards developmentInProgress enableFeatureLinks />
-      </main>
+      <DashboardHome
+        userName={user?.name}
+        applicationCount={applications.length}
+        latestAtsScore={latestAtsScore}
+        nextSessionLabel={formatSessionLabel(
+          advisory?.sessionScheduledAt ?? null,
+          advisory?.inviteSentAt ?? null,
+        )}
+      />
     </div>
   );
 }

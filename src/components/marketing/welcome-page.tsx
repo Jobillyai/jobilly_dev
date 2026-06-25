@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { AbstractBackground } from "@/components/layout/abstract-background";
 import styles from "./welcome-page.module.css";
+import { CompaniesMarquee } from "./companies-marquee";
 import { EmailCaptureForm } from "./email-capture-form";
 import { FeatureCards } from "./feature-cards";
 import { useScrollReveal } from "./use-scroll-reveal";
@@ -33,8 +34,7 @@ export function WelcomePage() {
         <AbstractBackground />
 
         <div className={styles.heroEyebrow}>
-          <div className={styles.pulseDot} />
-          We&#x2019;re building something crazy you haven&#x2019;t seen before
+          AI-powered career platform for graduates
         </div>
 
         <h1 className={styles.h1}>
@@ -156,15 +156,7 @@ export function WelcomePage() {
       <div className={styles.companiesStrip}>
         <AbstractBackground />
         <div className={styles.sectionContent}>
-        <div className={styles.companiesLabel}>Practice interviewing for roles at</div>
-        <div className={styles.companiesLogos}>
-          <div className={styles.companyLogo}>Meta</div>
-          <div className={styles.companyLogo}>Google</div>
-          <div className={styles.companyLogo}>Amazon</div>
-          <div className={styles.companyLogo}>Apple</div>
-          <div className={styles.companyLogo}>Microsoft</div>
-          <div className={styles.companyLogo}>Startups</div>
-        </div>
+        <CompaniesMarquee />
         </div>
       </div>
 
@@ -189,6 +181,21 @@ export function WelcomePage() {
         </p>
 
         <FeatureCards />
+
+        <div className={styles.productsCta}>
+          <Link href="/products" className={styles.btnOutlineBlue}>
+            Explore all candidate services
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path
+                d="M3 8H13M9 4L13 8L9 12"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Link>
+        </div>
         </div>
       </section>
 

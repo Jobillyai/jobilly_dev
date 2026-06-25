@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatPlanPriceMonthly } from "@/lib/candidate-services";
 import styles from "./welcome-page.module.css";
 
 type FeatureCardsProps = {
@@ -106,11 +107,11 @@ const features = [
   {
     slug: null,
     iconClass: styles.fiViolet,
-    badgeClass: styles.badgeSoon,
-    badge: "Coming Soon",
+    badgeClass: styles.badgePremium,
+    badge: formatPlanPriceMonthly(79.99),
     title: "Mock Interviews",
     description:
-      "Voice AI interviews with real company personas — Meta, Google, Amazon, Apple. The system gets smarter with every candidate who shares their real interview experience.",
+      "Voice AI interviews with real company personas — Meta, Google, Amazon, Apple. Practice until behavioral and technical rounds feel natural.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
         <rect x="4" y="8" width="20" height="14" rx="3" stroke="#7C3AED" strokeWidth="2" />
@@ -131,7 +132,7 @@ const features = [
     slug: null,
     iconClass: styles.fiOrange,
     badgeClass: styles.badgePremium,
-    badge: "Premium",
+    badge: formatPlanPriceMonthly(99.99),
     title: "Job Applications",
     description:
       "Subscribe and let us handle it. Our team applies to matched roles, tailors your resume for each one, and keeps you updated — while you focus entirely on learning.",

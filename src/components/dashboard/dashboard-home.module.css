@@ -1,0 +1,167 @@
+.home {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 32px 64px;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.greeting {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--jb-ink-muted);
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--jb-ink);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--jb-ink-secondary);
+  max-width: 560px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.statCard {
+  background: var(--jb-surface);
+  border: 1px solid var(--jb-border);
+  border-radius: var(--jb-radius-md);
+  padding: 20px;
+  box-shadow: var(--jb-shadow-sm);
+}
+
+.statLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--jb-ink-muted);
+  margin-bottom: 8px;
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--jb-ink);
+  line-height: 1;
+}
+
+.statValueAccent {
+  color: var(--jb-brand);
+}
+
+.statHint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--jb-ink-subtle);
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jb-ink);
+  margin-bottom: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--jb-surface);
+  border: 1px solid var(--jb-border);
+  border-radius: var(--jb-radius-md);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: var(--jb-shadow-sm);
+}
+
+.card:hover {
+  border-color: var(--jb-brand-border);
+  box-shadow: var(--jb-shadow-md);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--jb-radius-sm);
+  background: var(--jb-brand-soft);
+  color: var(--jb-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--jb-ink);
+  margin-bottom: 4px;
+}
+
+.cardDesc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--jb-ink-muted);
+}
+
+.statValueText {
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.cardAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jb-brand);
+  margin-top: auto;
+}
+
+@media (max-width: 768px) {
+  .home {
+    padding: 24px 20px 48px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

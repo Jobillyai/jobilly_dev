@@ -12,6 +12,8 @@ import {
   UserCircle,
 } from "lucide-react";
 import { logoutAction } from "@/server/actions/auth";
+import { formatDisplayName } from "@/lib/format-display-name";
+import type { SessionUser } from "@/lib/auth/session";
 import styles from "../admin/admin-sidebar.module.css";
 
 const navItems = [
@@ -51,9 +53,24 @@ const navItems = [
     icon: UserCircle,
     exact: false,
   },
-];
+] as const;
 
-export function CandidateSidebar() {
+type CandidateSidebarProps = {
+  user: SessionUser;
+};
+
+function getInitials(name: string | undefined, email: string): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2 && parts[0] && parts[parts.length - 1]) {
+      return `${parts[0][0]}${parts[parts.length - 1]![0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+  return email.slice(0, 2).toUpperCase();
+}
+
+export function CandidateSidebar({ user }: CandidateSidebarProps) {
   const pathname = usePathname();
 
   function isActive(href: string, exact: boolean) {
@@ -94,6 +111,26 @@ export function CandidateSidebar() {
       </nav>
 
       <div className={styles.footer}>
+        <div className={styles.userBlock}>
+          <div className={styles.userAvatar}>
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.avatarUrl}
+                alt=""
+                className={styles.userAvatarImage}
+              />
+            ) : (
+              getInitials(user.name, user.email)
+            )}
+          </div>
+          <div className={styles.userMeta}>
+            <span className={styles.userName}>
+              {user.name ? formatDisplayName(user.name) : user.email.split("@")[0]}
+            </span>
+            <span className={styles.userEmail}>{user.email}</span>
+          </div>
+        </div>
         <form action={logoutAction}>
           <button type="submit" className={styles.signOutBtn}>
             <span className={styles.navIcon} aria-hidden>

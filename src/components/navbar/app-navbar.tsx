@@ -33,10 +33,12 @@ function toSessionUser(authUser: User): SessionUser | null {
 }
 
 const NAV_LINKS = [
-  { href: "/#products", hash: "products", label: "Products" },
-  { href: "/#community", hash: "community", label: "Community" },
+  { href: "/products", label: "Products" },
+  { href: "/communities", label: "Communities" },
   { href: "/#contact", hash: "contact", label: "Contact Us" },
 ] as const;
+
+type NavLinkItem = (typeof NAV_LINKS)[number];
 
 function scrollToSection(hash: string) {
   document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
@@ -47,29 +49,31 @@ function NavLinks() {
   const pathname = usePathname();
   const onHomePage = pathname === "/";
 
-  return (
-    <div className={styles.navLinks}>
-      {NAV_LINKS.map((link) =>
-        onHomePage ? (
-          <a
-            key={link.hash}
-            href={`#${link.hash}`}
-            className={styles.navLink}
-            onClick={(event) => {
-              event.preventDefault();
-              scrollToSection(link.hash);
-            }}
-          >
-            {link.label}
-          </a>
-        ) : (
-          <Link key={link.hash} href={link.href} className={styles.navLink}>
-            {link.label}
-          </Link>
-        ),
-      )}
-    </div>
-  );
+  function renderLink(link: NavLinkItem) {
+    if ("hash" in link && link.hash && onHomePage) {
+      return (
+        <a
+          key={link.label}
+          href={`#${link.hash}`}
+          className={styles.navLink}
+          onClick={(event) => {
+            event.preventDefault();
+            scrollToSection(link.hash!);
+          }}
+        >
+          {link.label}
+        </a>
+      );
+    }
+
+    return (
+      <Link key={link.label} href={link.href} className={styles.navLink}>
+        {link.label}
+      </Link>
+    );
+  }
+
+  return <div className={styles.navLinks}>{NAV_LINKS.map(renderLink)}</div>;
 }
 
 function GuestNavActions() {

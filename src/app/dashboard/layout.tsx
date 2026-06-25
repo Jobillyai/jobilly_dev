@@ -16,7 +16,7 @@ export default async function DashboardLayout({
 
   return (
     <div className={shellStyles.adminShell}>
-      <CandidateSidebar />
+      <CandidateSidebar user={user} />
       <div className={shellStyles.adminContent}>{children}</div>
     </div>
   );
