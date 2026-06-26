@@ -52,8 +52,8 @@ export default async function AdminJobsPage() {
             Job <em className={styles.titleEm}>scraping</em>
           </h1>
           <p className={styles.subtitle}>
-            Search Indeed jobs via Apify using each candidate&apos;s interests, then mark
-            applications so candidates can track them.
+            Search Indeed, LinkedIn, and Google Jobs using each candidate&apos;s
+            interests, then mark applications so candidates can track them.
           </p>
         </div>
 

@@ -14,7 +14,7 @@ import {
   formatJobSourceLabel,
   jobListingMatchesSource,
   resolveJobSource,
-} from "@/server/services/apify-job-search";
+} from "@/server/services/job-market-search";
 import type {
   CandidateJobListing,
   PreviousSearchRole,
@@ -41,6 +41,9 @@ type SourceFilter = JobSearchSourceMode;
 
 function sourceBadgeClass(source: string, jobUrl: string): string {
   const resolved = resolveJobSource(source, jobUrl);
+  if (resolved === "google_jobs") {
+    return styles.sourceGoogle ?? "";
+  }
   if (resolved === "linkedin") {
     return styles.sourceLinkedin ?? "";
   }
@@ -62,7 +65,7 @@ function formatDate(value: string): string {
 
 function formatCacheExpiry(status: RoleScrapeCacheStatus): string {
   if (!status.fresh || !status.lastScrapedAt) {
-    return "Needs Apify scrape";
+    return "Needs scrape";
   }
 
   return `Cached until ${formatDate(cacheExpiresAt(status.lastScrapedAt))}`;
@@ -85,9 +88,7 @@ export function CandidateJobsSheet({
   >("error");
   const [pending, startTransition] = useTransition();
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
-  const [pendingSource, setPendingSource] = useState<JobSearchSourceMode | null>(
-    null,
-  );
+  const [pendingSource, setPendingSource] = useState<JobSearchSourceMode | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [loadingStored, setLoadingStored] = useState(false);
   const [interestedRole, setInterestedRole] = useState(defaultInterestedRole);
@@ -186,17 +187,29 @@ export function CandidateJobsSheet({
   );
 
   const sourceCounts = useMemo(() => {
-    const counts = { indeed: 0, linkedin: 0 };
+    const counts = { indeed: 0, linkedin: 0, google_jobs: 0 };
     for (const job of jobs) {
       const resolved = resolveJobSource(job.source, job.jobUrl);
       if (resolved === "linkedin") {
         counts.linkedin += 1;
       } else if (resolved === "indeed") {
         counts.indeed += 1;
+      } else if (resolved === "google_jobs") {
+        counts.google_jobs += 1;
       }
     }
     return counts;
   }, [jobs]);
+
+  function searchSourceLabel(sourceMode: JobSearchSourceMode): string {
+    if (sourceMode === "all") {
+      return "Indeed, LinkedIn & Google Jobs";
+    }
+    if (sourceMode === "google_jobs") {
+      return "Google Jobs";
+    }
+    return sourceMode.charAt(0).toUpperCase() + sourceMode.slice(1);
+  }
 
   async function handleSearch(sourceMode: JobSearchSourceMode) {
     const role = interestedRole.trim();
@@ -228,7 +241,7 @@ export function CandidateJobsSheet({
         setSelectedPreviousSearch(result.searchRole);
         void refreshPreviousSearchesList();
 
-        if (result.info && !result.apifyCalled) {
+        if (result.info && !result.scrapeCalled) {
           setMessageKind("info");
           setMessage(`${result.info} Showing ${result.count} stored job${result.count === 1 ? "" : "s"}.`);
         } else if (result.warning) {
@@ -277,6 +290,8 @@ export function CandidateJobsSheet({
   }
 
   function handleToggleApplied(jobId: string, applied: boolean) {
+    const job = jobs.find((entry) => entry.id === jobId);
+
     startTransition(async () => {
       const result = await toggleCandidateJobAppliedAction(
         candidateId,
@@ -284,20 +299,27 @@ export function CandidateJobsSheet({
         applied,
       );
       if (result.error) {
+        setMessageKind("error");
         setMessage(result.error);
         return;
       }
       setJobs((current) =>
-        current.map((job) =>
-          job.id === jobId
+        current.map((entry) =>
+          entry.id === jobId
             ? {
-                ...job,
+                ...entry,
                 applied,
                 appliedAt: applied ? new Date().toISOString() : null,
               }
-            : job,
+            : entry,
         ),
       );
+      if (applied && job) {
+        setMessageKind("success");
+        setMessage(
+          `Marked as applied — the candidate will see only "${job.role}" at ${job.company} with its job description and preparation tips.`,
+        );
+      }
     });
   }
 
@@ -305,6 +327,7 @@ export function CandidateJobsSheet({
   const searchBusy = isSearching || loadingPrevious;
   const indeedCache = cacheStatus.find((entry) => entry.source === "indeed");
   const linkedinCache = cacheStatus.find((entry) => entry.source === "linkedin");
+  const googleCache = cacheStatus.find((entry) => entry.source === "google_jobs");
 
   return (
     <div className={styles.sheet}>
@@ -326,7 +349,7 @@ export function CandidateJobsSheet({
         />
         <span className={styles.roleHint}>
           Jobs are stored per role for 24 hours. Use <strong>Previous searches</strong> to
-          reload an earlier role without calling Apify again.
+          reload an earlier role without searching again.
         </span>
         <label htmlFor="previousSearch" className={styles.previousSearchLabel}>
           Previous searches
@@ -354,7 +377,7 @@ export function CandidateJobsSheet({
 
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <span className={styles.toolbarLabel}>Apify job search</span>
+          <span className={styles.toolbarLabel}>Job search</span>
           <span className={styles.toolbarFile}>{fileName}</span>
         </div>
         <div className={styles.toolbarActions}>
@@ -379,6 +402,14 @@ export function CandidateJobsSheet({
           </button>
           <button
             type="button"
+            className={`${styles.refreshBtn} ${styles.refreshBtnGoogle}`}
+            onClick={() => handleSearch("google_jobs")}
+            disabled={searchBusy}
+          >
+            {pendingSource === "google_jobs" ? "Searching Google…" : "Search Google Jobs"}
+          </button>
+          <button
+            type="button"
             className={`${styles.refreshBtn} ${styles.refreshBtnAll}`}
             onClick={() => handleSearch("all")}
             disabled={searchBusy}
@@ -395,11 +426,15 @@ export function CandidateJobsSheet({
         </p>
         <p>
           <strong>Indeed cache:</strong>{" "}
-          {indeedCache ? formatCacheExpiry(indeedCache) : "Not scraped yet for this role"}
+          {indeedCache ? formatCacheExpiry(indeedCache) : "Not searched yet for this role"}
         </p>
         <p>
           <strong>LinkedIn cache:</strong>{" "}
-          {linkedinCache ? formatCacheExpiry(linkedinCache) : "Not scraped yet for this role"}
+          {linkedinCache ? formatCacheExpiry(linkedinCache) : "Not searched yet for this role"}
+        </p>
+        <p>
+          <strong>Google Jobs cache:</strong>{" "}
+          {googleCache ? formatCacheExpiry(googleCache) : "Not searched yet for this role"}
         </p>
         <p>
           <strong>Search query:</strong> {activeSearchQuery}
@@ -414,7 +449,7 @@ export function CandidateJobsSheet({
         </p>
         <p>
           <strong>Sources in sheet:</strong> Indeed {sourceCounts.indeed} · LinkedIn{" "}
-          {sourceCounts.linkedin}
+          {sourceCounts.linkedin} · Google Jobs {sourceCounts.google_jobs}
         </p>
         <p>
           <strong>Last search:</strong>{" "}
@@ -436,6 +471,7 @@ export function CandidateJobsSheet({
           <option value="all">All sources ({jobs.length})</option>
           <option value="indeed">Indeed ({sourceCounts.indeed})</option>
           <option value="linkedin">LinkedIn ({sourceCounts.linkedin})</option>
+          <option value="google_jobs">Google Jobs ({sourceCounts.google_jobs})</option>
         </select>
       </div>
 
@@ -461,7 +497,7 @@ export function CandidateJobsSheet({
           <div className={styles.loadingOverlay} role="status" aria-live="polite">
             <span className={styles.loadingSpinner} aria-hidden />
             <p className={styles.loadingTitle}>
-              Searching {pendingSource === "all" ? "Indeed & LinkedIn" : pendingSource}…
+              Searching {pendingSource ? searchSourceLabel(pendingSource) : "jobs"}…
             </p>
             <p className={styles.loadingText}>
               Looking for &ldquo;{interestedRole.trim()}&rdquo; — usually takes 1–2 minutes.
@@ -472,7 +508,7 @@ export function CandidateJobsSheet({
       {jobs.length === 0 ? (
         <div className={styles.empty}>
           <p>
-            No jobs yet. Enter an interested role above, then search Indeed and/or LinkedIn.
+            No jobs yet. Enter an interested role above, then search Indeed, LinkedIn, or Google Jobs.
           </p>
           <div className={styles.emptyActions}>
             <button
@@ -496,7 +532,6 @@ export function CandidateJobsSheet({
               <tr>
                 <th className={styles.rowNumHead}>#</th>
                 <th>Shortlist</th>
-                <th>Applied</th>
                 <th>Source</th>
                 <th>Match %</th>
                 <th>Resume fit</th>
@@ -506,6 +541,7 @@ export function CandidateJobsSheet({
                 <th>Job URL</th>
                 <th>Description</th>
                 <th>Scraped at</th>
+                <th className={styles.appliedHead}>Applied</th>
               </tr>
             </thead>
             <tbody>
@@ -529,16 +565,7 @@ export function CandidateJobsSheet({
                         handleToggleSelected(job.id, event.target.checked)
                       }
                       aria-label={`Shortlist ${job.role} at ${job.company}`}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={job.applied}
-                      onChange={(event) =>
-                        handleToggleApplied(job.id, event.target.checked)
-                      }
-                      aria-label={`Mark applied ${job.role} at ${job.company}`}
+                      disabled={job.applied}
                     />
                   </td>
                   <td>
@@ -564,6 +591,21 @@ export function CandidateJobsSheet({
                   </td>
                   <td className={styles.cellWide}>{job.jdText ?? "—"}</td>
                   <td className={styles.cellDate}>{formatDate(job.scrapedAt)}</td>
+                  <td className={styles.appliedCell}>
+                    <label className={styles.appliedControl}>
+                      <input
+                        type="checkbox"
+                        checked={job.applied}
+                        onChange={(event) =>
+                          handleToggleApplied(job.id, event.target.checked)
+                        }
+                        aria-label={`Mark applied ${job.role} at ${job.company}`}
+                      />
+                      <span className={job.applied ? styles.appliedLabelOn : styles.appliedLabelOff}>
+                        {job.applied ? "Applied" : "Mark applied"}
+                      </span>
+                    </label>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -575,10 +617,9 @@ export function CandidateJobsSheet({
 
       <p className={styles.footerNote}>
         Each <strong>interested role</strong> (e.g. Data Scientist vs Full Stack) keeps its
-        own job list in the database. Apify runs at most once per source every 24 hours per
-        role; after that, new daily jobs are merged in. Use the{" "}
-        <strong>Source</strong> column and filter to review each market separately. Check{" "}
-        <strong>Applied</strong> when you submit — the candidate sees it in Applications.
+        own job list in the database. Each source runs at most once every 24 hours per role.
+        Check <strong>Applied</strong> at the end of a row when you submit — the candidate
+        receives only that job&apos;s description and preparation tips in Applications.
       </p>
     </div>
   );

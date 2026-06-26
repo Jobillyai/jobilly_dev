@@ -1,0 +1,153 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card {
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 18px rgba(10, 22, 40, 0.04);
+  overflow: hidden;
+}
+
+.updateBanner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(90deg, #eff6ff 0%, #f0fdf4 100%);
+  border-bottom: 1px solid rgba(24, 119, 242, 0.12);
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.newBadge {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #1877f2;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 0;
+}
+
+.role {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0a1628;
+}
+
+.company {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.appliedBadge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.meta {
+  margin: 8px 0 0;
+  padding: 0 20px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.section {
+  padding: 18px 20px 0;
+}
+
+.sectionTitle {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.jdText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #374151;
+  white-space: pre-wrap;
+}
+
+.jdEmpty {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.tipsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tipsList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #334155;
+}
+
+.tipsList li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #1877f2;
+}
+
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  margin: 20px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #1877f2;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.linkBtn:hover {
+  background: #0f5fd0;
+}

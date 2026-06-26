@@ -57,6 +57,7 @@ const navItems = [
 
 type CandidateSidebarProps = {
   user: SessionUser;
+  unreadApplications?: number;
 };
 
 function getInitials(name: string | undefined, email: string): string {
@@ -70,7 +71,7 @@ function getInitials(name: string | undefined, email: string): string {
   return email.slice(0, 2).toUpperCase();
 }
 
-export function CandidateSidebar({ user }: CandidateSidebarProps) {
+export function CandidateSidebar({ user, unreadApplications = 0 }: CandidateSidebarProps) {
   const pathname = usePathname();
 
   function isActive(href: string, exact: boolean) {
@@ -105,6 +106,9 @@ export function CandidateSidebar({ user }: CandidateSidebarProps) {
                 <Icon size={18} strokeWidth={2} />
               </span>
               <span className={styles.navLabel}>{item.label}</span>
+              {item.href === "/dashboard/applications" && unreadApplications > 0 ? (
+                <span className={styles.navBadge}>{unreadApplications}</span>
+              ) : null}
             </Link>
           );
         })}

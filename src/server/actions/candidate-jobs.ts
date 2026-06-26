@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { getAdminUser } from "@/lib/auth/admin";
 import { getAdminCandidateById } from "@/server/services/admin-dashboard";
-import type { JobMarketSource } from "@/server/services/apify-job-search";
+import {
+  JOB_MARKET_SOURCES,
+  type JobMarketSource,
+} from "@/server/services/job-market-search";
 import {
   getCandidatePreviousSearches,
   loadCandidateJobsForRole,
@@ -20,7 +23,7 @@ export type JobSearchSourceMode = JobMarketSource | "all";
 
 function sourcesFromMode(mode: JobSearchSourceMode): JobMarketSource[] {
   if (mode === "all") {
-    return ["indeed", "linkedin"];
+    return [...JOB_MARKET_SOURCES];
   }
   return [mode];
 }
@@ -33,7 +36,7 @@ type JobSearchSuccess = {
   searchQuery: string;
   searchRole: string;
   cacheStatus: RoleScrapeCacheStatus[];
-  apifyCalled: boolean;
+  scrapeCalled: boolean;
   newJobsAdded: number;
   info?: string;
   warning?: string;
@@ -159,7 +162,7 @@ export async function refreshCandidateJobsAction(
     searchQuery: result.searchQuery,
     searchRole: result.searchRole,
     cacheStatus: result.cacheStatus,
-    apifyCalled: result.apifyCalled,
+    scrapeCalled: result.scrapeCalled,
     newJobsAdded: result.newJobsAdded,
     info: result.info,
     warning: result.warning ?? result.error,
@@ -203,5 +206,6 @@ export async function toggleCandidateJobAppliedAction(
   revalidatePath(`/admin/candidates/${candidateId}/jobs`);
   revalidatePath("/admin/jobs");
   revalidatePath("/dashboard/applications");
+  revalidatePath("/dashboard");
   return { success: true };
 }

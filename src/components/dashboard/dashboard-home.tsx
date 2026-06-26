@@ -13,6 +13,8 @@ import styles from "./dashboard-home.module.css";
 type DashboardHomeProps = {
   userName?: string;
   applicationCount: number;
+  unreadApplicationCount: number;
+  latestApplicationLabel: string | null;
   latestAtsScore: number | null;
   nextSessionLabel: string;
 };
@@ -64,6 +66,8 @@ function getGreeting(): string {
 export function DashboardHome({
   userName,
   applicationCount,
+  unreadApplicationCount,
+  latestApplicationLabel,
   latestAtsScore,
   nextSessionLabel,
 }: DashboardHomeProps) {
@@ -82,6 +86,16 @@ export function DashboardHome({
           on top of advisory sessions.
         </p>
       </header>
+
+      {unreadApplicationCount > 0 && latestApplicationLabel ? (
+        <Link href="/dashboard/applications" className={styles.updateBanner}>
+          <span className={styles.updateBannerLabel}>New application update</span>
+          <span className={styles.updateBannerText}>{latestApplicationLabel}</span>
+          <span className={styles.updateBannerAction}>
+            View JD &amp; prep tips <ArrowRight size={14} aria-hidden />
+          </span>
+        </Link>
+      ) : null}
 
       <section className={styles.stats} aria-label="Overview">
         <article className={styles.statCard}>

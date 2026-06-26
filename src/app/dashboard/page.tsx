@@ -42,11 +42,19 @@ export default async function DashboardPage() {
   const latestCompleted = atsChecks.find((check) => check.status === "completed");
   const latestAtsScore = latestCompleted?.atsScore ?? null;
 
+  const latestApplication = applications[0];
+  const unreadApplicationCount = applications.filter((job) => job.isNew).length;
+  const latestApplicationLabel = latestApplication
+    ? `${latestApplication.role} at ${latestApplication.company}`
+    : null;
+
   return (
     <div className={styles.page}>
       <DashboardHome
         userName={user?.name}
         applicationCount={applications.length}
+        unreadApplicationCount={unreadApplicationCount}
+        latestApplicationLabel={latestApplicationLabel}
         latestAtsScore={latestAtsScore}
         nextSessionLabel={formatSessionLabel(
           advisory?.sessionScheduledAt ?? null,

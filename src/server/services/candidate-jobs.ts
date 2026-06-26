@@ -1,12 +1,20 @@
 import { createClient } from "@/server/db/supabase-server";
 import type { AdminCandidate } from "@/server/services/admin-dashboard";
-import type { JobMarketSource } from "@/server/services/apify-job-search";
+import {
+  JOB_MARKET_SOURCES,
+  type JobMarketSource,
+} from "@/server/services/job-market-search";
 import {
   buildCandidateJobSearchQuery,
   buildCandidateSearchTerms,
   scrapeJobsForCandidate,
   type JobSearchResult,
 } from "@/server/services/candidate-job-search";
+import {
+  buildJobPreparationTips,
+  parsePreparationTips,
+  serializePreparationTips,
+} from "@/server/services/job-preparation-tips";
 import {
   describeCacheStatus,
   isScrapeCacheFresh,
@@ -43,6 +51,8 @@ export type CandidateAppliedJob = {
   jdText: string | null;
   appliedAt: string;
   source: string;
+  preparationTips: string[];
+  isNew: boolean;
 };
 
 type ScrapedJobRow = {
@@ -59,10 +69,12 @@ type ScrapedJobRow = {
   location: string | null;
   source: string | null;
   search_role: string;
+  preparation_tips: string | null;
+  candidate_viewed_at: string | null;
 };
 
 const JOB_SELECT =
-  "id, company, role, job_url, jd_text, relevance_score, selected, applied, applied_at, scraped_at, location, source, search_role";
+  "id, company, role, job_url, jd_text, relevance_score, selected, applied, applied_at, scraped_at, location, source, search_role, preparation_tips, candidate_viewed_at";
 
 function mapDbRow(row: ScrapedJobRow): CandidateJobListing {
   const score = row.relevance_score ?? 0;
@@ -79,7 +91,7 @@ function mapDbRow(row: ScrapedJobRow): CandidateJobListing {
     applied: row.applied,
     appliedAt: row.applied_at,
     scrapedAt: row.scraped_at,
-    source: row.source ?? "Apify",
+    source: row.source ?? "Indeed",
     searchRole: row.search_role,
   };
 }
@@ -278,7 +290,7 @@ export async function loadCandidateJobsForStoredRole(
   const searchRole = normalizeSearchRole(storedSearchRole);
   const [jobs, cacheStatus] = await Promise.all([
     getCandidateJobListings(candidateId, searchRole, { exactRoleOnly: true }),
-    getRoleScrapeCache(candidateId, searchRole, ["indeed", "linkedin"]),
+    getRoleScrapeCache(candidateId, searchRole, [...JOB_MARKET_SOURCES]),
   ]);
 
   return {
@@ -306,16 +318,56 @@ export async function getCandidateAppliedJobs(
 
   return (data as ScrapedJobRow[])
     .filter((row) => row.applied_at)
-    .map((row) => ({
-      id: row.id,
-      company: row.company,
-      role: row.role,
-      jobUrl: row.job_url,
-      location: row.location ?? "United States",
-      jdText: row.jd_text,
-      appliedAt: row.applied_at as string,
-      source: row.source ?? "Apify",
-    }));
+    .map((row) => mapAppliedJobRow(row));
+}
+
+function mapAppliedJobRow(row: ScrapedJobRow): CandidateAppliedJob {
+  const tips = parsePreparationTips(row.preparation_tips);
+  return {
+    id: row.id,
+    company: row.company,
+    role: row.role,
+    jobUrl: row.job_url,
+    location: row.location ?? "United States",
+    jdText: row.jd_text,
+    appliedAt: row.applied_at as string,
+    source: row.source ?? "Indeed",
+    preparationTips:
+      tips.length > 0
+        ? tips
+        : buildJobPreparationTips({
+            role: row.role,
+            company: row.company,
+            jdText: row.jd_text,
+          }),
+    isNew: row.applied && !row.candidate_viewed_at,
+  };
+}
+
+export async function getUnreadAppliedJobCount(candidateId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("scraped_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("candidate_id", candidateId)
+    .eq("applied", true)
+    .is("candidate_viewed_at", null);
+
+  if (error) {
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
+export async function markAppliedJobsAsViewed(candidateId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("scraped_jobs")
+    .update({ candidate_viewed_at: new Date().toISOString() })
+    .eq("candidate_id", candidateId)
+    .eq("applied", true)
+    .is("candidate_viewed_at", null);
 }
 
 export async function loadCandidateJobsForRole(
@@ -329,7 +381,7 @@ export async function loadCandidateJobsForRole(
   const searchRole = normalizeSearchRole(interestedRole);
   const [jobs, cacheStatus] = await Promise.all([
     getCandidateJobListings(candidateId, searchRole),
-    getRoleScrapeCache(candidateId, searchRole, ["indeed", "linkedin"]),
+    getRoleScrapeCache(candidateId, searchRole, [...JOB_MARKET_SOURCES]),
   ]);
 
   return { jobs, searchRole, cacheStatus };
@@ -338,7 +390,7 @@ export async function loadCandidateJobsForRole(
 export async function refreshCandidateJobListings(
   candidate: AdminCandidate,
   adminUserId: string,
-  sources: JobMarketSource[] = ["indeed", "linkedin"],
+  sources: JobMarketSource[] = [...JOB_MARKET_SOURCES],
   interestedRole?: string | null,
 ): Promise<{
   jobs: CandidateJobListing[];
@@ -346,7 +398,7 @@ export async function refreshCandidateJobListings(
   searchQuery: string;
   searchRole: string;
   cacheStatus: RoleScrapeCacheStatus[];
-  apifyCalled: boolean;
+  scrapeCalled: boolean;
   newJobsAdded: number;
   error?: string;
   warning?: string;
@@ -360,7 +412,7 @@ export async function refreshCandidateJobListings(
       searchQuery: "",
       searchRole: "",
       cacheStatus: [],
-      apifyCalled: false,
+      scrapeCalled: false,
       newJobsAdded: 0,
       error: "Enter an interested role before searching.",
     };
@@ -378,10 +430,10 @@ export async function refreshCandidateJobListings(
 
   let scrapeErrors: string[] = [];
   let newJobsAdded = 0;
-  let apifyCalled = false;
+  let scrapeCalled = false;
 
   if (sourcesToScrape.length > 0) {
-    apifyCalled = true;
+    scrapeCalled = true;
     const scraped = await scrapeJobsForCandidate(
       candidate,
       sourcesToScrape,
@@ -404,7 +456,7 @@ export async function refreshCandidateJobListings(
         searchQuery,
         searchRole,
         cacheStatus,
-        apifyCalled,
+        scrapeCalled,
         newJobsAdded,
         error: appendResult.error,
         warning: scrapeErrors.length > 0 ? scrapeErrors.join(" ") : undefined,
@@ -432,7 +484,7 @@ export async function refreshCandidateJobListings(
       searchQuery,
       searchRole,
       cacheStatus: updatedCacheStatus,
-      apifyCalled,
+      scrapeCalled,
       newJobsAdded,
       error:
         scrapeErrors.join(" ") ||
@@ -443,22 +495,22 @@ export async function refreshCandidateJobListings(
   const info = describeCacheStatus(updatedCacheStatus, sources);
   let warning = scrapeErrors.length > 0 ? scrapeErrors.join(" ") : undefined;
 
-  if (!apifyCalled && info) {
+  if (!scrapeCalled && info) {
     return {
       jobs,
       searchTerms,
       searchQuery,
       searchRole,
       cacheStatus: updatedCacheStatus,
-      apifyCalled,
+      scrapeCalled,
       newJobsAdded,
       info,
     };
   }
 
-  if (apifyCalled && newJobsAdded === 0 && !warning) {
+  if (scrapeCalled && newJobsAdded === 0 && !warning) {
     warning =
-      "Apify scrape completed but no new unique jobs were found for this role.";
+      "Job search completed but no new unique jobs were found for this role.";
   }
 
   return {
@@ -467,7 +519,7 @@ export async function refreshCandidateJobListings(
     searchQuery,
     searchRole,
     cacheStatus: updatedCacheStatus,
-    apifyCalled,
+    scrapeCalled,
     newJobsAdded,
     info: info || undefined,
     warning,
@@ -495,11 +547,46 @@ export async function setCandidateJobApplied(
   applied: boolean,
 ): Promise<boolean> {
   const supabase = await createClient();
+
+  if (applied) {
+    const { data: job } = await supabase
+      .from("scraped_jobs")
+      .select("role, company, jd_text")
+      .eq("id", jobId)
+      .eq("candidate_id", candidateId)
+      .maybeSingle();
+
+    if (!job) {
+      return false;
+    }
+
+    const tips = buildJobPreparationTips({
+      role: job.role,
+      company: job.company,
+      jdText: job.jd_text,
+    });
+
+    const { error } = await supabase
+      .from("scraped_jobs")
+      .update({
+        applied: true,
+        applied_at: new Date().toISOString(),
+        preparation_tips: serializePreparationTips(tips),
+        candidate_viewed_at: null,
+      })
+      .eq("id", jobId)
+      .eq("candidate_id", candidateId);
+
+    return !error;
+  }
+
   const { error } = await supabase
     .from("scraped_jobs")
     .update({
-      applied,
-      applied_at: applied ? new Date().toISOString() : null,
+      applied: false,
+      applied_at: null,
+      preparation_tips: null,
+      candidate_viewed_at: null,
     })
     .eq("id", jobId)
     .eq("candidate_id", candidateId);

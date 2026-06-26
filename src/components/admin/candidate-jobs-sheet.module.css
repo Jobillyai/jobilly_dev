@@ -306,7 +306,60 @@
 }
 
 .rowApplied td {
-  background: rgba(5, 150, 105, 0.1) !important;
+  background: #d1fae5 !important;
+  border-top: 1px solid #6ee7b7;
+  border-bottom: 1px solid #6ee7b7;
+}
+
+.rowApplied td:first-child {
+  box-shadow: inset 4px 0 0 #059669;
+}
+
+.rowApplied .appliedLabelOn {
+  color: #047857;
+}
+
+.appliedHead,
+.appliedCell {
+  width: 108px;
+  text-align: center;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: #ffffff;
+  box-shadow: -4px 0 8px rgba(15, 23, 42, 0.04);
+}
+
+.excelTable thead .appliedHead {
+  background: #f3f4f6;
+  z-index: 3;
+}
+
+.rowApplied .appliedCell {
+  background: #bbf7d0 !important;
+}
+
+.appliedControl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.appliedLabelOff {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.appliedLabelOn {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #047857;
 }
 
 .rowNumHead,
@@ -406,6 +459,14 @@
   background: #004182;
 }
 
+.refreshBtnGoogle {
+  background: #ea4335;
+}
+
+.refreshBtnGoogle:hover:not(:disabled) {
+  background: #c5221f;
+}
+
 .refreshBtnAll {
   background: #0a1628;
 }
@@ -455,6 +516,11 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
+}
+
+.sourceGoogle {
+  background: #ea4335;
+  color: #ffffff;
 }
 
 .sourceIndeed {

@@ -2,9 +2,10 @@ import type { AdminCandidate } from "@/server/services/admin-dashboard";
 import {
   buildJobSearchFromInterests,
   searchJobsBySources,
-  type ApifyJobListing,
+  type JobListing,
   type JobMarketSource,
-} from "@/server/services/apify-job-search";
+  JOB_MARKET_SOURCES,
+} from "@/server/services/job-market-search";
 
 export type JobSearchResult = {
   company: string;
@@ -73,7 +74,7 @@ export function buildCandidateSearchTerms(
 }
 
 function scoreJobListing(
-  job: ApifyJobListing,
+  job: JobListing,
   searchTerms: string[],
   hasResume: boolean,
 ): { score: number; resumeMatch: "high" | "medium" | "low" } {
@@ -108,7 +109,7 @@ function scoreJobListing(
 
 export async function scrapeJobsForCandidate(
   candidate: AdminCandidate,
-  sources: JobMarketSource[] = ["indeed", "linkedin"],
+  sources: JobMarketSource[] = [...JOB_MARKET_SOURCES],
   interestedRole?: string | null,
 ): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[] }> {
   const searchTerms = buildCandidateSearchTerms(candidate, interestedRole);
@@ -120,7 +121,7 @@ export async function scrapeJobsForCandidate(
     position,
     location,
     sources,
-    maxItemsPerSource: 20,
+    maxItemsPerSource: 30,
   });
 
   const ranked = apifyResult.jobs

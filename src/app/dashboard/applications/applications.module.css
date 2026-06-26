@@ -15,6 +15,18 @@
   margin: 0;
 }
 
+.unreadNotice {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid rgba(24, 119, 242, 0.2);
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d4ed8;
+  max-width: 620px;
+}
+
 .emptyCard {
   padding: 32px;
   border: 1.5px solid rgba(24, 119, 242, 0.12);

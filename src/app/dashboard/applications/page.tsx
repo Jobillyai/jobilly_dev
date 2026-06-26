@@ -1,18 +1,9 @@
 import { redirect } from "next/navigation";
-import { formatJobSourceLabel } from "@/server/services/apify-job-search";
+import { AppliedJobsList } from "@/components/dashboard/applied-jobs-list";
 import { getSessionUser } from "@/lib/auth/session";
 import { getCandidateAppliedJobs } from "@/server/services/candidate-jobs";
 import styles from "../dashboard.module.css";
 import pageStyles from "./applications.module.css";
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
-}
 
 export default async function CandidateApplicationsPage() {
   const user = await getSessionUser();
@@ -22,6 +13,7 @@ export default async function CandidateApplicationsPage() {
   }
 
   const applications = await getCandidateAppliedJobs(user.id);
+  const unreadCount = applications.filter((job) => job.isNew).length;
 
   return (
     <div className={styles.page}>
@@ -31,9 +23,15 @@ export default async function CandidateApplicationsPage() {
             My <em className={styles.titleEm}>Applications</em>
           </h1>
           <p className={pageStyles.subtitle}>
-            Jobs your Jobilly team has applied to on your behalf. New applications appear
-            here after admin marks them as applied.
+            When our team applies to a role on your behalf, you&apos;ll see the job
+            description and tailored preparation tips here.
           </p>
+          {unreadCount > 0 ? (
+            <p className={pageStyles.unreadNotice}>
+              {unreadCount} new application update{unreadCount === 1 ? "" : "s"} from your
+              Jobilly team.
+            </p>
+          ) : null}
         </div>
 
         {applications.length === 0 ? (
@@ -41,36 +39,11 @@ export default async function CandidateApplicationsPage() {
             <p className={pageStyles.emptyTitle}>No applications yet</p>
             <p className={pageStyles.emptyText}>
               Once our team applies to matched roles for you, they will show up here with
-              the company, role, and job link.
+              the job description, company details, and interview prep tips.
             </p>
           </div>
         ) : (
-          <ul className={pageStyles.list}>
-            {applications.map((job) => (
-              <li key={job.id} className={pageStyles.card}>
-                <div className={pageStyles.cardHeader}>
-                  <div>
-                    <p className={pageStyles.role}>{job.role}</p>
-                    <p className={pageStyles.company}>{job.company}</p>
-                  </div>
-                  <span className={pageStyles.badge}>Applied</span>
-                </div>
-                <p className={pageStyles.meta}>
-                  {job.location} · {formatJobSourceLabel(job.source, job.jobUrl)} · Applied{" "}
-                  {formatDate(job.appliedAt)}
-                </p>
-                {job.jdText ? <p className={pageStyles.description}>{job.jdText}</p> : null}
-                <a
-                  href={job.jobUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={pageStyles.linkBtn}
-                >
-                  View job posting
-                </a>
-              </li>
-            ))}
-          </ul>
+          <AppliedJobsList applications={applications} />
         )}
       </main>
     </div>
