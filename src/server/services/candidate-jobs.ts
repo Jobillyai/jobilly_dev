@@ -445,7 +445,7 @@ export async function refreshCandidateJobListings(
     ? sources
     : cacheStatus.filter((entry) => !entry.fresh).map((entry) => entry.source);
 
-  let scrapeErrors: string[] = [];
+  const scrapeErrors: string[] = [];
   let newJobsAdded = 0;
   let scrapeCalled = false;
 

@@ -92,7 +92,7 @@ export function CandidateJobsSheet({
   const [messageKind, setMessageKind] = useState<
     "error" | "success" | "warning" | "info"
   >("error");
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [pendingSource, setPendingSource] = useState<JobSearchSourceMode | null>(null);
   const [isSearching, setIsSearching] = useState(false);
