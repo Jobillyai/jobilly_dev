@@ -33,6 +33,16 @@
   max-width: 560px;
 }
 
+.memberIdRow {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--jb-ink-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .updateBanner {
   display: flex;
   flex-direction: column;

@@ -1,7 +1,20 @@
+.adminShellWithNav {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--jb-surface-subtle);
+}
+
 .adminShell {
   display: flex;
   min-height: 100vh;
   background: var(--jb-surface-subtle);
+}
+
+.adminBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .adminContent {

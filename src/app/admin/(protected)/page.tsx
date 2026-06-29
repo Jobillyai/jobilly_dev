@@ -4,8 +4,14 @@ import { AdminDashboardCharts } from "@/components/admin/admin-dashboard-charts"
 import { AdminMeetingTasks } from "@/components/admin/admin-meeting-tasks";
 import { AdminQuickActions } from "@/components/admin/admin-quick-actions";
 import { AdminRecentActivity } from "@/components/admin/admin-recent-activity";
-import { getAdminUser } from "@/lib/auth/admin";
+import { ManagerTeamOverview } from "@/components/admin/manager-team-overview";
+import {
+  getAdminUser,
+  staffCanScrapeJobs,
+  toStaffContext,
+} from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
+import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import { getAdminDashboardOverview } from "@/server/services/admin-dashboard";
 import styles from "../admin.module.css";
 
@@ -16,35 +22,64 @@ export default async function AdminDashboardPage() {
     redirect("/admin/login");
   }
 
-  const { stats, recentCandidates, recentSubmissions, upcomingMeetings } =
-    await getAdminDashboardOverview();
+  const staff = toStaffContext(admin);
+  const isManager = staffCanScrapeJobs(staff);
+  const { stats, recentCandidates, recentSubmissions, upcomingMeetings, mentorActivity } =
+    await getAdminDashboardOverview(staff);
 
   const candidatesWithSubmission =
     stats.totalCandidates - stats.candidatesWithoutSubmission;
   const invitesSent = Math.max(0, stats.advisorySubmissions - stats.pendingInvites);
   const unselectedJobs = Math.max(0, stats.scrapedJobs - stats.selectedJobs);
 
-  const statCards = [
-    { label: "Total users", value: stats.totalUsers },
-    { label: "Free candidates", value: stats.freeCandidates },
-    { label: "Premium candidates", value: stats.premiumCandidates },
+  const managerStatCards = [
+    { label: "Total candidates", value: stats.totalCandidates },
+    { label: "Mentor admins", value: stats.mentorCount },
+    { label: "Applications submitted", value: stats.appliedJobs },
+    { label: "Scraped jobs", value: stats.scrapedJobs },
+    { label: "Shortlisted", value: stats.selectedJobs },
     { label: "Advisory submissions", value: stats.advisorySubmissions },
     { label: "Pending Meet invites", value: stats.pendingInvites },
-    { label: "Scraped jobs", value: stats.scrapedJobs },
-    { label: "Jobs marked to apply", value: stats.selectedJobs },
-    { label: "Candidates without submission", value: stats.candidatesWithoutSubmission },
+    { label: "Unassigned submissions", value: stats.candidatesWithoutSubmission },
   ];
+
+  const mentorStatCards = [
+    { label: "My candidates", value: stats.totalCandidates },
+    { label: "Applications submitted", value: stats.appliedJobs },
+    { label: "Scraped jobs", value: stats.scrapedJobs },
+    { label: "Shortlisted", value: stats.selectedJobs },
+    { label: "Advisory submissions", value: stats.advisorySubmissions },
+    { label: "Pending Meet invites", value: stats.pendingInvites },
+  ];
+
+  const statCards = isManager ? managerStatCards : mentorStatCards;
 
   return (
     <div className={styles.adminPage}>
       <main className={styles.main}>
         <div className={styles.header}>
           <h1 className={styles.title}>
-            Admin <em className={styles.titleEm}>dashboard</em>
+            {isManager ? (
+              <>
+                Manager <em className={styles.titleEm}>dashboard</em>
+              </>
+            ) : (
+              <>
+                Admin <em className={styles.titleEm}>dashboard</em>
+              </>
+            )}
           </h1>
           <p className={styles.subtitle}>
-            Welcome back{admin.name ? `, ${formatDisplayName(admin.name)}` : ""}. Monitor
-            candidates, advisory intakes, and job scraping from one place.
+            Welcome back{admin.name ? `, ${formatDisplayName(admin.name)}` : ""}.
+            {admin.memberId ? (
+              <>
+                {" "}
+                Your member ID is <MemberIdBadge memberId={admin.memberId} size="sm" />.
+              </>
+            ) : null}{" "}
+            {isManager
+              ? "Full access — monitor all mentors, candidates, job scraping, and applications across the team."
+              : "Track your assigned candidates, shortlist roles, and submit applications."}
           </p>
         </div>
 
@@ -56,6 +91,13 @@ export default async function AdminDashboardPage() {
             </div>
           ))}
         </div>
+
+        {isManager && mentorActivity ? (
+          <ManagerTeamOverview
+            mentors={mentorActivity}
+            totalApplications={stats.appliedJobs}
+          />
+        ) : null}
 
         <AdminDashboardCharts
           freeCandidates={stats.freeCandidates}

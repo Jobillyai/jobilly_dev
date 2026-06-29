@@ -6,6 +6,8 @@ import {
   adminLoginAction,
   type AdminLoginState,
 } from "@/server/actions/admin-auth";
+import { lookupMemberIdByEmailAction } from "@/server/actions/member-id";
+import { LoginMemberIdPreview } from "@/components/auth/login-member-id-preview";
 import { FormField } from "@/components/auth/form-field";
 import { PasswordField } from "@/components/auth/password-field";
 import { SubmitButton } from "@/components/auth/submit-button";
@@ -16,6 +18,24 @@ const initialState: AdminLoginState = {};
 export default function AdminLoginPage() {
   const [state, setState] = useState<AdminLoginState>(initialState);
   const [pending, startTransition] = useTransition();
+  const [memberId, setMemberId] = useState<string | null>(null);
+  const [memberIdLoading, setMemberIdLoading] = useState(false);
+
+  async function handleEmailBlur(event: React.FocusEvent<HTMLInputElement>) {
+    const email = event.target.value.trim();
+    if (!email.includes("@")) {
+      setMemberId(null);
+      return;
+    }
+
+    setMemberIdLoading(true);
+    try {
+      const result = await lookupMemberIdByEmailAction(email);
+      setMemberId(result.memberId);
+    } finally {
+      setMemberIdLoading(false);
+    }
+  }
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -61,6 +81,13 @@ export default function AdminLoginPage() {
           placeholder="Enter your admin email"
           autoComplete="email"
           error={state?.fieldErrors?.email}
+          onBlur={handleEmailBlur}
+        />
+
+        <LoginMemberIdPreview
+          hintExample="JAE0001 or JAM0001"
+          memberId={memberId}
+          loading={memberIdLoading}
         />
 
         <PasswordField

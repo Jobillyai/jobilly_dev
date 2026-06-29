@@ -7,11 +7,9 @@ import {
   Calendar,
   ClipboardList,
   LayoutDashboard,
-  LogOut,
   UserCircle,
   Users,
 } from "lucide-react";
-import { adminLogoutAction } from "@/server/actions/admin-auth";
 import styles from "./admin-sidebar.module.css";
 
 const navItems = [
@@ -47,7 +45,7 @@ const navItems = [
   },
   {
     href: "/admin/profile" as const,
-    label: "Admin Profile",
+    label: "My profile",
     icon: UserCircle,
     exact: false,
   },
@@ -65,14 +63,6 @@ export function AdminSidebar() {
 
   return (
     <aside className={styles.adminSidebar}>
-      <div className={styles.brand}>
-        <div className={styles.brandMark}>Jb</div>
-        <div>
-          <span className={styles.brandText}>jobilly.ai</span>
-          <span className={styles.brandSub}>Admin panel</span>
-        </div>
-      </div>
-
       <nav className={styles.nav} aria-label="Admin navigation">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -92,17 +82,6 @@ export function AdminSidebar() {
           );
         })}
       </nav>
-
-      <div className={styles.footer}>
-        <form action={adminLogoutAction}>
-          <button type="submit" className={styles.signOutBtn}>
-            <span className={styles.navIcon} aria-hidden>
-              <LogOut size={18} strokeWidth={2} />
-            </span>
-            <span className={styles.navLabel}>Sign out</span>
-          </button>
-        </form>
-      </div>
     </aside>
   );
 }

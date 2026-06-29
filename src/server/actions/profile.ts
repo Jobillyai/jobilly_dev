@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { combineFirstLastName } from "@/lib/format-person-name";
+import { parseExperienceYears } from "@/lib/format-experience-years";
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
 
@@ -33,9 +35,14 @@ async function ensureAvatarsBucket() {
 }
 
 const profileSchema = z.object({
-  name: z.string().min(1, "Enter your name").max(200),
+  firstName: z.string().min(1, "Enter your first name").max(100),
+  lastName: z.string().min(1, "Enter your last name").max(100),
   education: z.string().max(500).optional(),
   careerGoals: z.string().max(1000).optional(),
+  experienceYears: z
+    .string()
+    .optional()
+    .transform((value) => parseExperienceYears(value ?? "")),
   linkedinUrl: z
     .string()
     .max(300)
@@ -58,7 +65,10 @@ export type ProfileState = {
   success?: boolean;
   error?: string;
   fieldErrors?: Partial<
-    Record<"name" | "education" | "careerGoals" | "linkedinUrl", string>
+    Record<
+      "firstName" | "lastName" | "education" | "careerGoals" | "experienceYears" | "linkedinUrl",
+      string
+    >
   >;
 };
 
@@ -129,9 +139,11 @@ export async function updateProfileAction(
   formData: FormData,
 ): Promise<ProfileState> {
   const parsed = profileSchema.safeParse({
-    name: formData.get("name"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     education: formData.get("education") || undefined,
     careerGoals: formData.get("careerGoals") || undefined,
+    experienceYears: formData.get("experienceYears")?.toString() || undefined,
     linkedinUrl: formData.get("linkedinUrl") || undefined,
     avatarUrl: formData.get("avatarUrl") || undefined,
   });
@@ -141,9 +153,11 @@ export async function updateProfileAction(
     for (const issue of parsed.error.issues) {
       const key = issue.path[0];
       if (
-        key === "name" ||
+        key === "firstName" ||
+        key === "lastName" ||
         key === "education" ||
         key === "careerGoals" ||
+        key === "experienceYears" ||
         key === "linkedinUrl"
       ) {
         fieldErrors[key] = issue.message;
@@ -160,7 +174,9 @@ export async function updateProfileAction(
   }
 
   const userId = authData.user.id;
-  const { name, education, careerGoals, linkedinUrl, avatarUrl } = parsed.data;
+  const { firstName, lastName, education, careerGoals, experienceYears, linkedinUrl, avatarUrl } =
+    parsed.data;
+  const name = combineFirstLastName(firstName, lastName);
 
   const existingAvatar =
     typeof authData.user.user_metadata?.avatar_url === "string"
@@ -169,6 +185,8 @@ export async function updateProfileAction(
 
   const { error: authError } = await supabase.auth.updateUser({
     data: {
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
       name,
       avatar_url: avatarUrl || existingAvatar || null,
     },
@@ -180,7 +198,11 @@ export async function updateProfileAction(
 
   const { error: userError } = await supabase
     .from("users")
-    .update({ name })
+    .update({
+      name,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+    })
     .eq("id", userId);
 
   if (userError) {
@@ -192,6 +214,7 @@ export async function updateProfileAction(
       user_id: userId,
       education: education || null,
       career_goals: careerGoals || null,
+      experience_years: experienceYears,
       linkedin_url: linkedinUrl || null,
     },
     { onConflict: "user_id" },
@@ -203,6 +226,7 @@ export async function updateProfileAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/profile");
+  revalidatePath("/dashboard/jobs");
   revalidatePath("/admin");
   revalidatePath("/admin/profile");
 

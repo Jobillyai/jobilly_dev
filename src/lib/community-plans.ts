@@ -77,29 +77,6 @@ export const communityPlans: CommunityPlan[] = [
     ctaLabel: "Join Pro Community",
     ctaHref: "/signup",
   },
-  {
-    id: "campus",
-    name: "Jobilly Campus Chapter",
-    tagline: "Built for students & fresh graduates.",
-    description:
-      "University-focused community for interns, campus hires, and early-career grads — with India & US chapter options and peer groups by major.",
-    pricing: [{ label: "Student", priceUsd: 0, period: "with .edu email" }],
-    included: [
-      "Campus hiring & off-campus drive alerts",
-      "Internship + fresher role postings",
-      "Peer study groups by major & target role",
-      "Scholarship & certification updates",
-      "Resume clinics tailored to campus recruiting",
-      "Chapter leads & local meetup coordination",
-    ],
-    extras: [
-      "Monthly campus mock interview nights",
-      "Alumni mentor matching within your chapter",
-      "Offer negotiation office hours for new grads",
-    ],
-    ctaLabel: "Start a chapter",
-    ctaHref: "/signup",
-  },
 ];
 
 export const communityStories: CommunityStory[] = [
@@ -110,14 +87,6 @@ export const communityStories: CommunityStory[] = [
     summary:
       "Forty-two members completed six weeks of weekly AI mock rooms focused on FAANG-style behavioral and system design prompts.",
     stat: "12 offers in 6 weeks",
-  },
-  {
-    id: "campus-hyderabad",
-    title: "Campus chapter launch — Hyderabad",
-    date: "April 2026",
-    summary:
-      "120 students joined the first Jobilly campus chapter with weekly peer resume reviews and off-campus drive alerts.",
-    stat: "120 founding members",
   },
   {
     id: "stripe-ama",

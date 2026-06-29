@@ -68,6 +68,7 @@ export function buildJobSearchFromInterests(input: {
   branch?: string | null;
   graduationDetails?: string | null;
   careerGoals?: string | null;
+  experienceYears?: number | null;
 }): { position: string; location: string } {
   const position =
     input.interestedTechnology?.trim() ||

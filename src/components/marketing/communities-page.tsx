@@ -108,7 +108,7 @@ export function CommunitiesPage() {
           </p>
           <h1 className={styles.heroTitle}>Communities</h1>
           <p className={styles.heroSub}>
-            Pick your lane: go all-in with Pro, join a campus chapter, or just get the news.
+            Pick your lane: go all-in with Pro or just get the news with the free digest.
           </p>
         </div>
       </section>

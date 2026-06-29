@@ -78,6 +78,18 @@
   gap: 20px;
 }
 
+.nameRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 520px) {
+  .nameRow {
+    grid-template-columns: 1fr;
+  }
+}
+
 .googleAuthBlock {
   display: flex;
   flex-direction: column;
@@ -364,6 +376,19 @@
 
 .backLink:hover {
   color: var(--accent-dark);
+}
+
+.memberIdHint {
+  margin: -4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.memberIdPreview {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
 }
 
 .confirmIcon {

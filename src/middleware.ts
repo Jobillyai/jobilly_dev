@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminPortalRole } from "@/lib/auth/roles";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
     userRole = profile?.role ?? null;
   }
 
-  const isAdmin = isAdminRole(userRole);
+  const isAdmin = isAdminPortalRole(userRole);
   const isAdminLogin = pathname === "/admin/login";
   const isAdminRoute = pathname.startsWith("/admin");
   const isAuthEntryPage = pathname === "/login" || pathname === "/signup";

@@ -1,0 +1,89 @@
+.topNav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--jb-border);
+  backdrop-filter: blur(12px);
+  font-family: var(--jb-font-sans);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logoMark {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--jb-radius-sm);
+  background: var(--jb-brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.logoText {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--jb-ink);
+}
+
+.logoSub {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--jb-ink-muted);
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.userBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+}
+
+.userName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--jb-ink);
+  line-height: 1.2;
+}
+
+.logoutBtn {
+  padding: 8px 14px;
+  border: 1.5px solid var(--jb-border);
+  border-radius: 10px;
+  background: var(--jb-surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jb-ink-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.logoutBtn:hover {
+  border-color: rgba(29, 78, 216, 0.25);
+  color: var(--jb-brand);
+  background: rgba(29, 78, 216, 0.04);
+}

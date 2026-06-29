@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { AdminCandidate } from "@/server/services/admin-dashboard";
 import { formatDisplayName } from "@/lib/format-display-name";
+import { formatExperienceYears } from "@/lib/format-experience-years";
+import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
+import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import styles from "@/app/admin/admin.module.css";
 
 type CandidatesListProps = {
@@ -61,10 +64,23 @@ export function CandidatesList({ candidates }: CandidatesListProps) {
               <div>
                 <h3 className={styles.candidateName}>{displayName}</h3>
                 <p className={styles.candidateMeta}>
+                  {candidate.memberId ? (
+                    <>
+                      <MemberIdBadge memberId={candidate.memberId} size="sm" />
+                      {" · "}
+                    </>
+                  ) : null}
                   {candidate.email} · {formatRole(candidate.role)}
                 </p>
                 <p className={styles.candidateMetaMuted}>
                   Registered {formatDate(candidate.createdAt)}
+                </p>
+                <p className={styles.candidateScrapeMeta}>
+                  Target role:{" "}
+                  {resolveCandidateJobRole(candidate) || "—"}
+                  {" · "}
+                  Years exp.:{" "}
+                  {formatExperienceYears(candidate.experienceYears) || "—"}
                 </p>
               </div>
               <div className={styles.candidateActions}>

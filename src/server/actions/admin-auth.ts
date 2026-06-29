@@ -2,7 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminPortalRole } from "@/lib/auth/roles";
+import {
+  enforceLoginRateLimits,
+  rateLimitErrorMessage,
+} from "@/lib/rate-limit";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { createClient } from "@/server/db/supabase-server";
 
@@ -36,6 +40,11 @@ export async function adminLoginAction(
     return { fieldErrors };
   }
 
+  const rateLimit = await enforceLoginRateLimits("admin", parsed.data.email);
+  if (!rateLimit.allowed) {
+    return { error: rateLimitErrorMessage(rateLimit.retryAfterSeconds) };
+  }
+
   const supabase = await createClient();
   const { data: authData, error } = await supabase.auth.signInWithPassword(
     parsed.data,
@@ -58,9 +67,9 @@ export async function adminLoginAction(
     .eq("id", userId)
     .maybeSingle();
 
-  if (!isAdminRole(profile?.role)) {
+  if (!isAdminPortalRole(profile?.role)) {
     await supabase.auth.signOut();
-    return { error: "This account does not have admin access." };
+    return { error: "This account does not have admin portal access." };
   }
 
   redirect("/admin");

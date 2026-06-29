@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminPortalRole } from "@/lib/auth/roles";
 import { sanitizeInternalRedirectPath } from "@/lib/auth/safe-redirect";
 import { ensurePublicUserRecord } from "@/server/services/ensure-public-user";
 
@@ -29,7 +29,7 @@ async function resolvePostAuthRedirect(
     .eq("id", user.id)
     .maybeSingle();
 
-  if (isAdminRole(profile?.role) && !options?.preserveFallbackForAdmin) {
+  if (isAdminPortalRole(profile?.role) && !options?.preserveFallbackForAdmin) {
     return "/admin";
   }
 

@@ -6,6 +6,7 @@ import {
   Calendar,
   Compass,
   FileText,
+  Search,
   Briefcase,
   LayoutDashboard,
   LogOut,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { logoutAction } from "@/server/actions/auth";
 import { formatDisplayName } from "@/lib/format-display-name";
+import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import type { SessionUser } from "@/lib/auth/session";
 import styles from "../admin/admin-sidebar.module.css";
 
@@ -33,6 +35,12 @@ const navItems = [
     href: "/dashboard/ats-resume-score" as const,
     label: "ATS Score",
     icon: FileText,
+    exact: false,
+  },
+  {
+    href: "/dashboard/jobs" as const,
+    label: "Matched roles",
+    icon: Search,
     exact: false,
   },
   {
@@ -132,6 +140,11 @@ export function CandidateSidebar({ user, unreadApplications = 0 }: CandidateSide
             <span className={styles.userName}>
               {user.name ? formatDisplayName(user.name) : user.email.split("@")[0]}
             </span>
+            {user.memberId ? (
+              <span className={styles.userMemberId}>
+                <MemberIdBadge memberId={user.memberId} size="sm" />
+              </span>
+            ) : null}
             <span className={styles.userEmail}>{user.email}</span>
           </div>
         </div>

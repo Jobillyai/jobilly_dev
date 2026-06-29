@@ -8,14 +8,17 @@ import {
   type CareerAdvisoryState,
 } from "@/server/actions/career-advisory";
 import type { CandidateCareerAdvisoryIntake } from "@/server/services/career-advisory-intake";
+import { PersonNameFields } from "@/components/auth/person-name-fields";
 import { FormField } from "@/components/auth/form-field";
+import { splitFullName } from "@/lib/format-person-name";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { SessionBookingPicker } from "@/components/career-advisory/session-booking-picker";
 import authStyles from "@/components/auth/auth-page.module.css";
 import styles from "./career-advisory-form.module.css";
 
 type CareerAdvisoryFormProps = {
-  defaultName?: string;
+  defaultFirstName?: string;
+  defaultLastName?: string;
   defaultEmail?: string;
   existingIntake?: CandidateCareerAdvisoryIntake | null;
 };
@@ -31,7 +34,8 @@ function intakeToSuccessState(
 }
 
 export function CareerAdvisoryForm({
-  defaultName = "",
+  defaultFirstName = "",
+  defaultLastName = "",
   defaultEmail = "",
   existingIntake = null,
 }: CareerAdvisoryFormProps) {
@@ -145,14 +149,19 @@ export function CareerAdvisoryForm({
       </div>
 
       <form action={handleSubmit} className={authStyles.form}>
-        <FormField
-          id="name"
-          name="name"
-          label="Name"
-          placeholder="Your full name"
-          autoComplete="name"
-          defaultValue={defaultName}
-          error={state.fieldErrors?.name}
+        <PersonNameFields
+          firstName={{
+            defaultValue: existingIntake
+              ? splitFullName(existingIntake.name).firstName
+              : defaultFirstName,
+            error: state.fieldErrors?.firstName,
+          }}
+          lastName={{
+            defaultValue: existingIntake
+              ? splitFullName(existingIntake.name).lastName
+              : defaultLastName,
+            error: state.fieldErrors?.lastName,
+          }}
         />
 
         <FormField

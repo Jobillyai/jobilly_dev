@@ -8,10 +8,12 @@ import {
   UserCircle,
 } from "lucide-react";
 import { formatDisplayName } from "@/lib/format-display-name";
+import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import styles from "./dashboard-home.module.css";
 
 type DashboardHomeProps = {
   userName?: string;
+  memberId?: string | null;
   applicationCount: number;
   unreadApplicationCount: number;
   latestApplicationLabel: string | null;
@@ -65,6 +67,7 @@ function getGreeting(): string {
 
 export function DashboardHome({
   userName,
+  memberId,
   applicationCount,
   unreadApplicationCount,
   latestApplicationLabel,
@@ -81,6 +84,11 @@ export function DashboardHome({
         <h1 className={styles.title}>
           {displayName ? `Welcome back, ${displayName}` : "Welcome back"}
         </h1>
+        {memberId ? (
+          <p className={styles.memberIdRow}>
+            Signed in as <MemberIdBadge memberId={memberId} />
+          </p>
+        ) : null}
         <p className={styles.subtitle}>
           Your career workspace — track applications, improve your resume, and stay
           on top of advisory sessions.

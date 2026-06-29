@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAdminUser } from "@/lib/auth/admin";
+import { getAdminUser, toStaffContext } from "@/lib/auth/admin";
 import { getAdminCandidates } from "@/server/services/admin-dashboard";
 import { CandidatesList } from "@/components/admin/candidates-list";
 import styles from "../../admin.module.css";
@@ -11,7 +11,8 @@ export default async function AdminCandidatesPage() {
     redirect("/admin/login");
   }
 
-  const candidates = await getAdminCandidates();
+  const staff = toStaffContext(admin);
+  const candidates = await getAdminCandidates(staff);
   const submissionCount = candidates.filter((candidate) => candidate.submission).length;
 
   return (

@@ -2,12 +2,18 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminPortalRole } from "@/lib/auth/roles";
+import { combineFirstLastName } from "@/lib/format-person-name";
+import {
+  enforceLoginRateLimits,
+  rateLimitErrorMessage,
+} from "@/lib/rate-limit";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { createClient } from "@/server/db/supabase-server";
 
 const signupSchema = z.object({
-  name: z.string().min(1, "Enter your name").max(200),
+  firstName: z.string().min(1, "Enter your first name").max(100),
+  lastName: z.string().min(1, "Enter your last name").max(100),
   email: z.string().email("Enter a valid email"),
   password: z.string().min(8, "Use at least 8 characters"),
 });
@@ -32,9 +38,20 @@ function shouldAutoConfirmSignup(): boolean {
   );
 }
 
+function buildUserMetadata(firstName: string, lastName: string) {
+  const fullName = combineFirstLastName(firstName, lastName);
+  return {
+    first_name: firstName.trim(),
+    last_name: lastName.trim(),
+    name: fullName,
+  };
+}
+
 export type SignupState = {
   error?: string;
-  fieldErrors?: Partial<Record<"name" | "email" | "password", string>>;
+  fieldErrors?: Partial<
+    Record<"firstName" | "lastName" | "email" | "password", string>
+  >;
 };
 
 export async function signupAction(
@@ -42,7 +59,8 @@ export async function signupAction(
   formData: FormData,
 ): Promise<SignupState> {
   const parsed = signupSchema.safeParse({
-    name: formData.get("name"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     email: formData.get("email"),
     password: formData.get("password"),
   });
@@ -51,14 +69,20 @@ export async function signupAction(
     const fieldErrors: NonNullable<SignupState["fieldErrors"]> = {};
     for (const issue of parsed.error.issues) {
       const key = issue.path[0];
-      if (key === "name" || key === "email" || key === "password") {
+      if (
+        key === "firstName" ||
+        key === "lastName" ||
+        key === "email" ||
+        key === "password"
+      ) {
         fieldErrors[key] = issue.message;
       }
     }
     return { fieldErrors };
   }
 
-  const { name, email, password } = parsed.data;
+  const { firstName, lastName, email, password } = parsed.data;
+  const userMetadata = buildUserMetadata(firstName, lastName);
 
   if (shouldAutoConfirmSignup()) {
     const admin = createAdminClient();
@@ -66,7 +90,7 @@ export async function signupAction(
       email,
       password,
       email_confirm: true,
-      user_metadata: { name },
+      user_metadata: userMetadata,
     });
 
     if (createError) {
@@ -82,7 +106,7 @@ export async function signupAction(
     email,
     password,
     options: {
-      data: { name },
+      data: userMetadata,
       emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
     },
   });
@@ -119,6 +143,11 @@ export async function loginAction(
     return { fieldErrors };
   }
 
+  const rateLimit = await enforceLoginRateLimits("candidate", parsed.data.email);
+  if (!rateLimit.allowed) {
+    return { error: rateLimitErrorMessage(rateLimit.retryAfterSeconds) };
+  }
+
   const supabase = await createClient();
   const { data: authData, error } = await supabase.auth.signInWithPassword(parsed.data);
 
@@ -134,7 +163,7 @@ export async function loginAction(
       .eq("id", userId)
       .single();
 
-    if (isAdminRole(profile?.role)) {
+    if (isAdminPortalRole(profile?.role)) {
       redirect("/admin");
     }
   }

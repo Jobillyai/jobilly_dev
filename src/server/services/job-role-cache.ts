@@ -1,6 +1,9 @@
 import type { JobMarketSource } from "@/server/services/job-market-search";
+import { normalizeSearchRole as normalizeSearchRoleFromLib } from "@/lib/normalize-search-role";
 
-export const JOB_SCRAPE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+export { normalizeSearchRoleFromLib as normalizeSearchRole };
+
+export const JOB_SCRAPE_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 
 const SOURCE_ERROR_PREFIX: Record<JobMarketSource, string> = {
   indeed: "Indeed:",
@@ -27,10 +30,6 @@ export function formatSearchRoleLabel(searchRole: string): string {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
-}
-
-export function normalizeSearchRole(role: string): string {
-  return role.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 export function isScrapeCacheFresh(lastScrapedAt: string | null | undefined): boolean {
@@ -77,7 +76,7 @@ export function describeCacheStatus(
     .map((entry) => formatSourceLabel(entry.source));
 
   if (freshSources.length === requestedSources.length) {
-    return "Showing jobs cached in the last 24 hours — no new scrape needed.";
+    return "Showing jobs cached in the last 3 hours — no new scrape needed.";
   }
 
   if (freshSources.length > 0 && scrapedSources.length > 0) {

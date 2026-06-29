@@ -1,9 +1,18 @@
 import { createClient } from "@/server/db/supabase-server";
 import { getSessionUser, type SessionUser } from "@/lib/auth/session";
-import { isAdminRole } from "@/lib/auth/roles";
+import {
+  canScrapeJobs,
+  isAdminPortalRole,
+  type AdminPortalRole,
+} from "@/lib/auth/roles";
 
 export type AdminUser = SessionUser & {
-  role: "admin";
+  role: AdminPortalRole;
+};
+
+export type StaffContext = {
+  userId: string;
+  role: AdminPortalRole;
 };
 
 export async function getUserRole(userId: string): Promise<string | null> {
@@ -23,10 +32,28 @@ export async function getAdminUser(): Promise<AdminUser | null> {
     return null;
   }
 
-  const role = await getUserRole(user.id);
-  if (!isAdminRole(role)) {
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role, member_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || !isAdminPortalRole(profile.role)) {
     return null;
   }
 
-  return { ...user, role: "admin" };
+  return {
+    ...user,
+    role: profile.role as AdminPortalRole,
+    memberId: profile.member_id ?? user.memberId ?? null,
+  };
+}
+
+export function toStaffContext(admin: AdminUser): StaffContext {
+  return { userId: admin.id, role: admin.role };
+}
+
+export function staffCanScrapeJobs(staff: StaffContext): boolean {
+  return canScrapeJobs(staff.role);
 }

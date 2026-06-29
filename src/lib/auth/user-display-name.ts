@@ -1,15 +1,15 @@
 import type { User } from "@supabase/supabase-js";
+import { getNameFromMetadata } from "@/lib/format-person-name";
 
 export function getAuthUserDisplayName(user: User): string | null {
-  const metadata = user.user_metadata;
+  const { fullName } = getNameFromMetadata(user.user_metadata);
+  return fullName || null;
+}
 
-  if (typeof metadata?.name === "string" && metadata.name.trim()) {
-    return metadata.name.trim();
-  }
-
-  if (typeof metadata?.full_name === "string" && metadata.full_name.trim()) {
-    return metadata.full_name.trim();
-  }
-
-  return null;
+export function getAuthUserFirstLastName(user: User): {
+  firstName: string;
+  lastName: string;
+} {
+  const { firstName, lastName } = getNameFromMetadata(user.user_metadata);
+  return { firstName, lastName };
 }

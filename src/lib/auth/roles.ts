@@ -3,9 +3,32 @@ export type UserRole =
   | "free_candidate"
   | "employee"
   | "admin"
+  | "manager"
   | "institution_admin"
   | "institution_candidate";
 
-export function isAdminRole(role: string | null | undefined): boolean {
+export type AdminPortalRole = "admin" | "manager";
+
+/** Mentor admins who apply on behalf of assigned candidates. */
+export function isMentorAdminRole(role: string | null | undefined): boolean {
   return role === "admin";
+}
+
+/** Managers run job scraping for all candidates. */
+export function isManagerRole(role: string | null | undefined): boolean {
+  return role === "manager";
+}
+
+/** Can access the /admin portal (mentors + managers). */
+export function isAdminPortalRole(role: string | null | undefined): boolean {
+  return isMentorAdminRole(role) || isManagerRole(role);
+}
+
+/** @deprecated Use isAdminPortalRole — kept for minimal call-site churn. */
+export function isAdminRole(role: string | null | undefined): boolean {
+  return isAdminPortalRole(role);
+}
+
+export function canScrapeJobs(role: string | null | undefined): boolean {
+  return isManagerRole(role);
 }

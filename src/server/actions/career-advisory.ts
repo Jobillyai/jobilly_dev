@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { combineFirstLastName } from "@/lib/format-person-name";
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { sendCareerAdvisoryMeetInvite } from "@/server/services/send-career-advisory-invite";
@@ -12,7 +13,8 @@ import {
 } from "@/lib/career-advisory/booking-window";
 
 const intakeSchema = z.object({
-  name: z.string().min(1, "Enter your name").max(200),
+  firstName: z.string().min(1, "Enter your first name").max(100),
+  lastName: z.string().min(1, "Enter your last name").max(100),
   email: z.string().email("Enter a valid email"),
   phone: z
     .string()
@@ -43,7 +45,8 @@ export type CareerAdvisoryState = {
   error?: string;
   fieldErrors?: Partial<
     Record<
-      | "name"
+      | "firstName"
+      | "lastName"
       | "email"
       | "phone"
       | "graduationDetails"
@@ -61,7 +64,8 @@ export async function submitCareerAdvisoryAction(
   formData: FormData,
 ): Promise<CareerAdvisoryState> {
   const parsed = intakeSchema.safeParse({
-    name: formData.get("name"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     email: formData.get("email"),
     phone: formData.get("phone"),
     graduationDetails: formData.get("graduationDetails"),
@@ -76,7 +80,8 @@ export async function submitCareerAdvisoryAction(
     for (const issue of parsed.error.issues) {
       const key = issue.path[0];
       if (
-        key === "name" ||
+        key === "firstName" ||
+        key === "lastName" ||
         key === "email" ||
         key === "phone" ||
         key === "graduationDetails" ||
@@ -126,9 +131,10 @@ export async function submitCareerAdvisoryAction(
   }
 
   const admin = createAdminClient();
+  const fullName = combineFirstLastName(parsed.data.firstName, parsed.data.lastName);
   const intakePayload = {
     candidate_id: authData.user.id,
-    name: parsed.data.name,
+    name: fullName,
     email: parsed.data.email,
     phone: parsed.data.phone,
     graduation_details: parsed.data.graduationDetails,
@@ -162,7 +168,7 @@ export async function submitCareerAdvisoryAction(
 
   const inviteResult = await sendCareerAdvisoryMeetInvite({
     candidateId: authData.user.id,
-    candidateName: parsed.data.name,
+    candidateName: fullName,
     candidateEmail: parsed.data.email,
     candidatePhone: parsed.data.phone,
     branch: parsed.data.branch,

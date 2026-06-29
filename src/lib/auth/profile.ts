@@ -1,10 +1,14 @@
 import { createClient } from "@/server/db/supabase-server";
+import { splitFullName } from "@/lib/format-person-name";
 import type { SessionUser } from "@/lib/auth/session";
 
 export type UserProfile = SessionUser & {
+  firstName: string;
+  lastName: string;
   education: string;
   careerGoals: string;
   linkedinUrl: string;
+  experienceYears: number | null;
 };
 
 export async function getUserProfile(): Promise<UserProfile | null> {
@@ -19,21 +23,20 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
   const { data: dbUser } = await supabase
     .from("users")
-    .select("name, email")
+    .select("name, email, first_name, last_name, member_id")
     .eq("id", userId)
     .single();
 
   const { data: candidateProfile } = await supabase
     .from("candidate_profiles")
-    .select("education, career_goals, linkedin_url")
+    .select("education, career_goals, linkedin_url, experience_years")
     .eq("user_id", userId)
     .maybeSingle();
 
-  const name =
-    dbUser?.name ??
-    (typeof authData.user.user_metadata?.name === "string"
-      ? authData.user.user_metadata.name
-      : undefined);
+  const name = dbUser?.name ?? undefined;
+  const split = splitFullName(name);
+  const firstName = dbUser?.first_name?.trim() || split.firstName;
+  const lastName = dbUser?.last_name?.trim() || split.lastName;
 
   const avatarUrl =
     typeof authData.user.user_metadata?.avatar_url === "string"
@@ -43,10 +46,14 @@ export async function getUserProfile(): Promise<UserProfile | null> {
   return {
     id: userId,
     email: dbUser?.email ?? authData.user.email,
-    name,
+    name: name ?? (firstName || lastName ? `${firstName} ${lastName}`.trim() : undefined),
+    memberId: dbUser?.member_id ?? null,
     avatarUrl,
+    firstName,
+    lastName,
     education: candidateProfile?.education ?? "",
     careerGoals: candidateProfile?.career_goals ?? "",
     linkedinUrl: candidateProfile?.linkedin_url ?? "",
+    experienceYears: candidateProfile?.experience_years ?? null,
   };
 }

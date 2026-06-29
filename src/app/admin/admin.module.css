@@ -97,6 +97,48 @@
   text-decoration: underline;
 }
 
+.sectionLead {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--jb-ink-secondary);
+  max-width: 640px;
+}
+
+.statsGridCompact {
+  margin-bottom: 20px;
+}
+
+.statCardInline {
+  background: var(--jb-surface-subtle);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.statValueSm {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--blue-900);
+}
+
+.tableSubtext {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.appliedCountActive {
+  display: inline-flex;
+  min-width: 28px;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #166534;
+  background: #dcfce7;
+}
+
 .quickActionsSection {
   margin-bottom: 28px;
 }
@@ -441,6 +483,13 @@
   margin-top: 4px;
   font-size: 13px;
   color: var(--text-muted);
+}
+
+.candidateScrapeMeta {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
 }
 
 .candidateSection {

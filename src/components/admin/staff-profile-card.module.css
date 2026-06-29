@@ -1,0 +1,70 @@
+.card {
+  max-width: 480px;
+}
+
+.title {
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--jb-ink);
+  margin-bottom: 8px;
+}
+
+.titleEm {
+  font-family: var(--jb-font-display);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--jb-brand);
+}
+
+.subtitle {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--jb-ink-secondary);
+  margin-bottom: 28px;
+}
+
+.fieldList {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--jb-ink-muted);
+}
+
+.value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--jb-ink);
+}
+
+.valueMuted {
+  font-size: 15px;
+  color: var(--jb-ink-secondary);
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jb-brand);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}

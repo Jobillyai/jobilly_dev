@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CandidateJobsSheet } from "@/components/admin/candidate-jobs-sheet";
-import { getAdminUser } from "@/lib/auth/admin";
+import {
+  getAdminUser,
+  staffCanScrapeJobs,
+  toStaffContext,
+} from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
+import { formatExperienceYears } from "@/lib/format-experience-years";
+import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import {
   buildCandidateJobSearchQuery,
   buildCandidateSearchTerms,
@@ -31,15 +37,14 @@ export default async function AdminCandidateJobsPage({
     redirect("/admin/login");
   }
 
-  const candidate = await getAdminCandidateById(params.candidateId);
+  const staff = toStaffContext(admin);
+  const candidate = await getAdminCandidateById(params.candidateId, staff);
 
   if (!candidate) {
     notFound();
   }
 
-  const profileSearchQuery = buildCandidateJobSearchQuery(candidate);
-  const defaultInterestedRole =
-    candidate.submission?.interestedTechnology?.trim() || profileSearchQuery.position;
+  const defaultInterestedRole = resolveCandidateJobRole(candidate) ?? "";
 
   const jobs = await getCandidateJobListings(candidate.id, defaultInterestedRole);
   const previousSearches = await getCandidatePreviousSearches(candidate.id);
@@ -59,13 +64,21 @@ export default async function AdminCandidateJobsPage({
 
         <div className={styles.header}>
           <h1 className={styles.title}>
-            Job scraper for <em className={styles.titleEm}>{displayName}</em>
+            {staffCanScrapeJobs(staff) ? "Job scraper" : "Job listings"} for{" "}
+            <em className={styles.titleEm}>{displayName}</em>
           </h1>
           <p className={styles.subtitle}>
-            Scraped roles matched to {candidate.email}
+            {staffCanScrapeJobs(staff)
+              ? "Scrape and review roles matched to"
+              : "Review manager-scraped roles for"}{" "}
+            {candidate.email}
             {candidate.submission?.branch ? ` · ${candidate.submission.branch}` : ""}
             {candidate.submission?.interestedTechnology
               ? ` · ${candidate.submission.interestedTechnology}`
+              : ""}
+            {defaultInterestedRole ? ` · Target role: ${defaultInterestedRole}` : ""}
+            {candidate.experienceYears !== null
+              ? ` · ${formatExperienceYears(candidate.experienceYears)} exp.`
               : ""}
             {candidate.resumeUrl ? " · Resume on file" : ""}.
           </p>
@@ -75,12 +88,14 @@ export default async function AdminCandidateJobsPage({
           <CandidateJobsSheet
             candidateId={candidate.id}
             candidateName={displayName}
+            candidateExperienceYears={candidate.experienceYears}
             searchTerms={searchTerms}
             searchQuery={`${searchQuery.position} · ${searchQuery.location}`}
             defaultInterestedRole={defaultInterestedRole}
             hasResume={Boolean(candidate.resumeUrl)}
             initialJobs={jobs}
             initialPreviousSearches={previousSearches}
+            canScrape={staffCanScrapeJobs(staff)}
           />
         </section>
       </main>

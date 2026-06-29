@@ -17,22 +17,29 @@ export type Database = {
           id: string;
           email: string;
           name: string | null;
+          first_name: string | null;
+          last_name: string | null;
           role:
             | "subscribed_candidate"
             | "free_candidate"
             | "employee"
             | "admin"
+            | "manager"
             | "institution_admin"
             | "institution_candidate";
           mfa_enabled: boolean;
           created_at: string;
+          member_id: string | null;
         };
         Insert: {
           id: string;
           email: string;
           name?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
           role?: Database["public"]["Tables"]["users"]["Row"]["role"];
           mfa_enabled?: boolean;
+          member_id?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["users"]["Insert"]>;
         Relationships: [];
@@ -48,6 +55,8 @@ export type Database = {
           linkedin_url: string | null;
           subscription_status: "none" | "active" | "past_due" | "cancelled";
           assigned_employee_id: string | null;
+          job_search_role: string | null;
+          experience_years: number | null;
           updated_at: string;
         };
         Insert: {
@@ -60,6 +69,8 @@ export type Database = {
           linkedin_url?: string | null;
           subscription_status?: Database["public"]["Tables"]["candidate_profiles"]["Row"]["subscription_status"];
           assigned_employee_id?: string | null;
+          job_search_role?: string | null;
+          experience_years?: number | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["candidate_profiles"]["Insert"]
@@ -212,6 +223,32 @@ export type Database = {
           last_scraped_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["job_role_scrapes"]["Insert"]>;
+        Relationships: [];
+      };
+      job_scrape_runs: {
+        Row: {
+          id: string;
+          triggered_by: string | null;
+          trigger_type: string;
+          candidates_processed: number;
+          candidates_scraped: number;
+          new_jobs_added: number;
+          errors: string[];
+          started_at: string;
+          finished_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          triggered_by?: string | null;
+          trigger_type: string;
+          candidates_processed?: number;
+          candidates_scraped?: number;
+          new_jobs_added?: number;
+          errors?: string[];
+          started_at?: string;
+          finished_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["job_scrape_runs"]["Insert"]>;
         Relationships: [];
       };
       // Remaining tables (mentor_profiles, institutions, advisory_sessions,

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { signupAction, type SignupState } from "@/server/actions/auth";
+import { PersonNameFields } from "@/components/auth/person-name-fields";
 import { FormField } from "@/components/auth/form-field";
 import { PasswordField } from "@/components/auth/password-field";
 import { SubmitButton } from "@/components/auth/submit-button";
@@ -50,13 +51,9 @@ export default function SignupPage() {
       <AuthDivider />
 
       <form action={handleSubmit} className={styles.form}>
-        <FormField
-          id="name"
-          name="name"
-          label="Full name"
-          placeholder="Your full name"
-          autoComplete="name"
-          error={state?.fieldErrors?.name}
+        <PersonNameFields
+          firstName={{ error: state?.fieldErrors?.firstName }}
+          lastName={{ error: state?.fieldErrors?.lastName }}
         />
         <FormField
           id="email"

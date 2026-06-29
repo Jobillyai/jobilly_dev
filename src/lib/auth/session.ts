@@ -5,6 +5,7 @@ export type SessionUser = {
   email: string;
   name?: string;
   avatarUrl?: string;
+  memberId?: string | null;
 };
 
 /**
@@ -29,10 +30,17 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       ? data.user.user_metadata.avatar_url
       : undefined;
 
+  const { data: profile } = await supabase
+    .from("users")
+    .select("member_id")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
   return {
     id: data.user.id,
     email: data.user.email,
     name,
     avatarUrl,
+    memberId: profile?.member_id ?? null,
   };
 }

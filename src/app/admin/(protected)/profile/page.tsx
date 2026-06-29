@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { getAdminUser } from "@/lib/auth/admin";
+import { getAdminUser, staffCanScrapeJobs } from "@/lib/auth/admin";
 import { getUserProfile } from "@/lib/auth/profile";
-import { ProfileForm } from "@/components/profile/profile-form";
+import { StaffProfileCard } from "@/components/admin/staff-profile-card";
 import styles from "../../admin.module.css";
 
 export default async function AdminProfilePage() {
@@ -17,14 +17,15 @@ export default async function AdminProfilePage() {
     redirect("/admin/login");
   }
 
+  const isManager = staffCanScrapeJobs({ userId: admin.id, role: admin.role });
+
   return (
     <div className={styles.adminPage}>
       <main className={styles.main}>
         <section className={styles.section}>
-          <ProfileForm
+          <StaffProfileCard
             profile={profile}
-            backHref="/admin"
-            backLabel="Back to dashboard"
+            roleLabel={isManager ? "Manager" : "Admin"}
           />
         </section>
       </main>

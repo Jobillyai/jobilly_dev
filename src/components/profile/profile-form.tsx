@@ -7,9 +7,11 @@ import {
   uploadAvatarAction,
   type ProfileState,
 } from "@/server/actions/profile";
+import { PersonNameFields } from "@/components/auth/person-name-fields";
 import { FormField } from "@/components/auth/form-field";
 import { SubmitButton } from "@/components/auth/submit-button";
 import type { UserProfile } from "@/lib/auth/profile";
+import { combineFirstLastName } from "@/lib/format-person-name";
 import authStyles from "@/components/auth/auth-page.module.css";
 import styles from "./profile-form.module.css";
 
@@ -20,6 +22,10 @@ type ProfileFormProps = {
 };
 
 const initialState: ProfileState = {};
+
+function combineDisplayName(firstName: string, lastName: string) {
+  return combineFirstLastName(firstName, lastName);
+}
 
 function getInitials(name: string | undefined, email: string) {
   const source = name?.trim() || email;
@@ -42,8 +48,12 @@ export function ProfileForm({
   const [photoPending, setPhotoPending] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
-  const [name, setName] = useState(profile.name ?? "");
+  const [firstName, setFirstName] = useState(profile.firstName);
+  const [lastName, setLastName] = useState(profile.lastName);
   const [education, setEducation] = useState(profile.education);
+  const [experienceYears, setExperienceYears] = useState(
+    profile.experienceYears?.toString() ?? "",
+  );
   const [careerGoals, setCareerGoals] = useState(profile.careerGoals);
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedinUrl);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? "");
@@ -57,8 +67,10 @@ export function ProfileForm({
   }, [state.success]);
 
   function resetForm() {
-    setName(profile.name ?? "");
+    setFirstName(profile.firstName);
+    setLastName(profile.lastName);
     setEducation(profile.education);
+    setExperienceYears(profile.experienceYears?.toString() ?? "");
     setCareerGoals(profile.careerGoals);
     setLinkedinUrl(profile.linkedinUrl);
     setAvatarUrl(profile.avatarUrl ?? "");
@@ -153,7 +165,10 @@ export function ProfileForm({
             <img src={avatarUrl} alt="" className={styles.avatarImage} />
           ) : (
             <div className={styles.avatarFallback}>
-              {getInitials(name, profile.email)}
+              {getInitials(
+                combineDisplayName(firstName, lastName),
+                profile.email,
+              )}
             </div>
           )}
         </div>
@@ -187,17 +202,21 @@ export function ProfileForm({
       <form action={handleSubmit} className={authStyles.form}>
         <input type="hidden" name="avatarUrl" value={avatarUrl} />
 
-        <FormField
-          id="name"
-          name="name"
-          label="Full name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Your full name"
-          autoComplete="name"
-          readOnly={!isEditing}
-          className={inputClassName}
-          error={state.fieldErrors?.name}
+        <PersonNameFields
+          firstName={{
+            value: firstName,
+            onChange: (event) => setFirstName(event.target.value),
+            readOnly: !isEditing,
+            className: inputClassName,
+            error: state.fieldErrors?.firstName,
+          }}
+          lastName={{
+            value: lastName,
+            onChange: (event) => setLastName(event.target.value),
+            readOnly: !isEditing,
+            className: inputClassName,
+            error: state.fieldErrors?.lastName,
+          }}
         />
 
         <div className={authStyles.field}>
@@ -224,6 +243,19 @@ export function ProfileForm({
           readOnly={!isEditing}
           className={inputClassName}
           error={state.fieldErrors?.education}
+        />
+
+        <FormField
+          id="experienceYears"
+          name="experienceYears"
+          type="number"
+          label="Years of experience"
+          value={experienceYears}
+          onChange={(event) => setExperienceYears(event.target.value)}
+          placeholder="e.g. 2"
+          readOnly={!isEditing}
+          className={inputClassName}
+          error={state.fieldErrors?.experienceYears}
         />
 
         <div className={authStyles.field}>

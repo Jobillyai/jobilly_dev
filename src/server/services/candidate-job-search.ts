@@ -1,5 +1,9 @@
 import type { AdminCandidate } from "@/server/services/admin-dashboard";
 import {
+  experienceYearsSearchHint,
+  formatExperienceYears,
+} from "@/lib/format-experience-years";
+import {
   buildJobSearchFromInterests,
   searchJobsBySources,
   type JobListing,
@@ -46,7 +50,23 @@ export function buildCandidateJobSearchQuery(
     branch: candidate.submission?.branch,
     graduationDetails: candidate.submission?.graduationDetails,
     careerGoals: candidate.careerGoals,
+    experienceYears: candidate.experienceYears,
   });
+}
+
+function experienceSearchTokens(years: number | null | undefined): string[] {
+  if (years === null || years === undefined) {
+    return [];
+  }
+
+  const hint = experienceYearsSearchHint(years);
+  return [
+    String(years),
+    `${years} years`,
+    `${years} year`,
+    formatExperienceYears(years),
+    hint ?? "",
+  ].filter((token) => token.length > 0);
 }
 
 export function buildCandidateSearchTerms(
@@ -59,6 +79,7 @@ export function buildCandidateSearchTerms(
     candidate.submission?.branch,
     candidate.submission?.graduationDetails,
     candidate.profileEducation,
+    ...experienceSearchTokens(candidate.experienceYears),
     candidate.careerGoals,
     candidate.role.replace(/_/g, " "),
   ].filter(Boolean) as string[];
