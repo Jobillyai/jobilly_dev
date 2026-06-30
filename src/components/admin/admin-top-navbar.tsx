@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { adminLogoutAction } from "@/server/actions/admin-auth";
+import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import { formatDisplayName } from "@/lib/format-display-name";
 import styles from "./admin-top-navbar.module.css";
@@ -34,11 +35,9 @@ export function AdminTopNavbar({
           <span className={styles.userName}>{displayName}</span>
           {memberId ? <MemberIdBadge memberId={memberId} size="sm" /> : null}
         </div>
-        <form action={adminLogoutAction}>
-          <button type="submit" className={styles.logoutBtn}>
-            Log out
-          </button>
-        </form>
+        <LogoutForm action={adminLogoutAction}>
+          <LogoutSubmitButton className={styles.logoutBtn}>Log out</LogoutSubmitButton>
+        </LogoutForm>
       </div>
     </header>
   );

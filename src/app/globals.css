@@ -39,13 +39,16 @@
   --jb-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
   --jb-shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.08);
 
-  /* Legacy aliases for existing CSS modules */
-  --blue-900: var(--jb-ink);
-  --blue-500: var(--jb-brand);
-  --blue-50: var(--jb-brand-soft);
+  /* Legacy aliases for auth + marketing CSS modules (must live on :root) */
+  --blue-900: #0a1628;
+  --blue-500: #1877f2;
+  --blue-50: #f0f6ff;
   --white: var(--jb-surface);
   --gray-100: #f1f5f9;
   --gray-200: var(--jb-border);
+  --gray-300: #d1d5db;
+  --accent-dark: #0f5fd0;
+  --text-primary: var(--jb-ink);
   --text-muted: var(--jb-ink-muted);
   --text-secondary: var(--jb-ink-secondary);
 

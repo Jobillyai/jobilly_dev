@@ -35,45 +35,19 @@ function toSessionUser(authUser: User): SessionUser | null {
 const NAV_LINKS = [
   { href: "/products", label: "Products" },
   { href: "/communities", label: "Communities" },
-  { href: "/#contact", hash: "contact", label: "Contact Us" },
+  { href: "/contact", label: "Contact Us" },
 ] as const;
 
-type NavLinkItem = (typeof NAV_LINKS)[number];
-
-function scrollToSection(hash: string) {
-  document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
-  window.history.replaceState(null, "", `#${hash}`);
-}
-
 function NavLinks() {
-  const pathname = usePathname();
-  const onHomePage = pathname === "/";
-
-  function renderLink(link: NavLinkItem) {
-    if ("hash" in link && link.hash && onHomePage) {
-      return (
-        <a
-          key={link.label}
-          href={`#${link.hash}`}
-          className={styles.navLink}
-          onClick={(event) => {
-            event.preventDefault();
-            scrollToSection(link.hash!);
-          }}
-        >
+  return (
+    <div className={styles.navLinks}>
+      {NAV_LINKS.map((link) => (
+        <Link key={link.label} href={link.href} className={styles.navLink}>
           {link.label}
-        </a>
-      );
-    }
-
-    return (
-      <Link key={link.label} href={link.href} className={styles.navLink}>
-        {link.label}
-      </Link>
-    );
-  }
-
-  return <div className={styles.navLinks}>{NAV_LINKS.map(renderLink)}</div>;
+        </Link>
+      ))}
+    </div>
+  );
 }
 
 function GuestNavActions() {
@@ -100,17 +74,14 @@ function GuestNavActions() {
   }
 
   return (
-    <>
-      <div className={styles.navBadge}>&#x2726; Launching Soon</div>
-      <div className={styles.navActions}>
-        <Link href="/login" className={styles.navBtnGhost}>
-          Log in
-        </Link>
-        <Link href="/signup" className={styles.navBtnPrimary}>
-          Sign up
-        </Link>
-      </div>
-    </>
+    <div className={styles.navActions}>
+      <Link href="/login" className={styles.navBtnGhost}>
+        Log in
+      </Link>
+      <Link href="/signup" className={styles.navBtnPrimary}>
+        Sign up
+      </Link>
+    </div>
   );
 }
 

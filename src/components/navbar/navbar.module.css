@@ -79,17 +79,6 @@
   gap: 20px;
 }
 
-.navBadge {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--jb-brand);
-  background: var(--jb-brand-soft);
-  border: 1px solid var(--jb-brand-border);
-  padding: 5px 12px;
-  border-radius: 100px;
-}
-
 .navActions {
   display: flex;
   align-items: center;
@@ -309,10 +298,6 @@
 @media (max-width: 600px) {
   .nav {
     padding: 0 20px;
-  }
-
-  .navBadge {
-    display: none;
   }
 
   .userName {

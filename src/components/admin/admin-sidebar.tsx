@@ -6,6 +6,7 @@ import {
   Briefcase,
   Calendar,
   ClipboardList,
+  Inbox,
   LayoutDashboard,
   UserCircle,
   Users,
@@ -29,6 +30,12 @@ const navItems = [
     href: "/admin/jobs" as const,
     label: "Job Scraping",
     icon: Briefcase,
+    exact: false,
+  },
+  {
+    href: "/admin/requests" as const,
+    label: "Service Requests",
+    icon: Inbox,
     exact: false,
   },
   {

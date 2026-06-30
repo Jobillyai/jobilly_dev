@@ -1,0 +1,159 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary {
+  margin: 0;
+  font-size: 14px;
+  color: var(--jb-ink-secondary, #64748b);
+}
+
+.empty {
+  padding: 32px;
+  border: 1.5px dashed var(--jb-border, #e2e8f0);
+  border-radius: 16px;
+  font-size: 14px;
+  color: var(--jb-ink-secondary, #64748b);
+  text-align: center;
+}
+
+.success,
+.error {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1.5px solid var(--jb-border, #e2e8f0);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.name {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.meta {
+  margin: 0;
+  font-size: 14px;
+  color: var(--jb-ink-secondary, #475569);
+}
+
+.metaMuted {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--jb-ink-muted, #94a3b8);
+}
+
+.badge {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badgeOpen {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.badgeAssigned {
+  background: #fefce8;
+  color: #a16207;
+}
+
+.badgeClosed {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.enquiry {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #0f172a;
+  white-space: pre-wrap;
+}
+
+.assignee {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.select {
+  min-width: 220px;
+  flex: 1;
+  padding: 10px 12px;
+  border: 1.5px solid var(--jb-border, #e2e8f0);
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primaryBtn {
+  border: none;
+  background: var(--jb-brand, #1877f2);
+  color: #fff;
+}
+
+.secondaryBtn {
+  border: 1.5px solid var(--jb-border, #e2e8f0);
+  background: #fff;
+  color: #334155;
+}
+
+.primaryBtn:disabled,
+.secondaryBtn:disabled,
+.select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -21,7 +21,7 @@ export function SiteFooter() {
       <div className={styles.footerLinks}>
         <a href="#">Privacy</a>
         <a href="#">Terms</a>
-        <a href="#">Contact</a>
+        <Link href="/contact">Contact</Link>
         {!isAdminRoute && <Link href="/admin/login">Admin</Link>}
       </div>
       <div className={styles.footerCopy}>

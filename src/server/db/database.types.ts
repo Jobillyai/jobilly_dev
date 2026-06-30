@@ -57,6 +57,11 @@ export type Database = {
           assigned_employee_id: string | null;
           job_search_role: string | null;
           experience_years: number | null;
+          gender: string | null;
+          graduation_college: string | null;
+          graduation_year: number | null;
+          specialization: string | null;
+          work_experience: string | null;
           updated_at: string;
         };
         Insert: {
@@ -71,6 +76,11 @@ export type Database = {
           assigned_employee_id?: string | null;
           job_search_role?: string | null;
           experience_years?: number | null;
+          gender?: string | null;
+          graduation_college?: string | null;
+          graduation_year?: number | null;
+          specialization?: string | null;
+          work_experience?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["candidate_profiles"]["Insert"]
@@ -225,6 +235,38 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["job_role_scrapes"]["Insert"]>;
         Relationships: [];
       };
+      service_requests: {
+        Row: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string;
+          enquiry: string;
+          status: "open" | "assigned" | "closed";
+          assigned_mentor_id: string | null;
+          assigned_at: string | null;
+          assigned_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string;
+          enquiry: string;
+          status?: "open" | "assigned" | "closed";
+          assigned_mentor_id?: string | null;
+          assigned_at?: string | null;
+          assigned_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["service_requests"]["Insert"]>;
+        Relationships: [];
+      };
       job_scrape_runs: {
         Row: {
           id: string;
@@ -277,6 +319,7 @@ export type Database = {
         | "free_candidate"
         | "employee"
         | "admin"
+        | "manager"
         | "institution_admin"
         | "institution_candidate";
       subscription_status: "none" | "active" | "past_due" | "cancelled";

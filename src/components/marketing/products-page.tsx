@@ -331,7 +331,7 @@ export function ProductsPage() {
 
           <p className={styles.contactNote}>
             Questions?{" "}
-            <Link href="/#contact" className={styles.contactLink}>
+            <Link href="/contact" className={styles.contactLink}>
               Contact us
             </Link>{" "}
             or{" "}

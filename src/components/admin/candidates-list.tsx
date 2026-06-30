@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { AdminCandidate } from "@/server/services/admin-dashboard";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { formatExperienceYears } from "@/lib/format-experience-years";
+import { formatCandidateGender } from "@/lib/candidate-profile-options";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import styles from "@/app/admin/admin.module.css";
@@ -57,6 +58,16 @@ export function CandidatesList({ candidates }: CandidatesListProps) {
           ? formatDisplayName(candidate.name)
           : formatDisplayName(candidate.email.split("@")[0] ?? candidate.email);
         const submission = candidate.submission;
+        const hasProfileDetails =
+          candidate.gender ||
+          candidate.graduationCollege ||
+          candidate.graduationYear ||
+          candidate.specialization ||
+          candidate.workExperience ||
+          candidate.profileEducation ||
+          candidate.careerGoals ||
+          candidate.linkedinUrl ||
+          candidate.resumeUrl;
 
         return (
           <article key={candidate.id} id={`candidate-${candidate.id}`} className={styles.candidateCard}>
@@ -100,23 +111,67 @@ export function CandidatesList({ candidates }: CandidatesListProps) {
               </div>
             </div>
 
-            {(candidate.profileEducation || candidate.careerGoals || candidate.linkedinUrl) && (
+            {(hasProfileDetails || candidate.memberId) && (
               <div className={styles.candidateSection}>
                 <h4 className={styles.candidateSectionTitle}>Profile</h4>
                 <dl className={styles.detailGrid}>
-                  {candidate.profileEducation && (
+                  {candidate.memberId ? (
                     <>
-                      <dt>Profile education</dt>
+                      <dt>Candidate ID</dt>
+                      <dd>
+                        <MemberIdBadge memberId={candidate.memberId} size="sm" />
+                      </dd>
+                    </>
+                  ) : null}
+                  {candidate.gender ? (
+                    <>
+                      <dt>Gender</dt>
+                      <dd>{formatCandidateGender(candidate.gender)}</dd>
+                    </>
+                  ) : null}
+                  {candidate.graduationCollege ? (
+                    <>
+                      <dt>Graduation college</dt>
+                      <dd>{candidate.graduationCollege}</dd>
+                    </>
+                  ) : null}
+                  {candidate.graduationYear ? (
+                    <>
+                      <dt>Graduated year</dt>
+                      <dd>{candidate.graduationYear}</dd>
+                    </>
+                  ) : null}
+                  {candidate.specialization ? (
+                    <>
+                      <dt>Specialization</dt>
+                      <dd>{candidate.specialization}</dd>
+                    </>
+                  ) : null}
+                  {candidate.profileEducation ? (
+                    <>
+                      <dt>Education summary</dt>
                       <dd>{candidate.profileEducation}</dd>
                     </>
-                  )}
-                  {candidate.careerGoals && (
+                  ) : null}
+                  {candidate.experienceYears != null ? (
+                    <>
+                      <dt>Years of experience</dt>
+                      <dd>{formatExperienceYears(candidate.experienceYears)}</dd>
+                    </>
+                  ) : null}
+                  {candidate.workExperience ? (
+                    <>
+                      <dt>Work experience</dt>
+                      <dd className={styles.detailWide}>{candidate.workExperience}</dd>
+                    </>
+                  ) : null}
+                  {candidate.careerGoals ? (
                     <>
                       <dt>Career goals</dt>
-                      <dd>{candidate.careerGoals}</dd>
+                      <dd className={styles.detailWide}>{candidate.careerGoals}</dd>
                     </>
-                  )}
-                  {candidate.linkedinUrl && (
+                  ) : null}
+                  {candidate.linkedinUrl ? (
                     <>
                       <dt>LinkedIn</dt>
                       <dd>
@@ -130,7 +185,24 @@ export function CandidatesList({ candidates }: CandidatesListProps) {
                         </a>
                       </dd>
                     </>
-                  )}
+                  ) : null}
+                  <dt>Resume</dt>
+                  <dd>
+                    {candidate.resumeDownloadUrl ? (
+                      <a
+                        href={candidate.resumeDownloadUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.detailLink}
+                      >
+                        View {candidate.resumeFileName ?? "resume"}
+                      </a>
+                    ) : candidate.resumeUrl ? (
+                      "On file — download link unavailable"
+                    ) : (
+                      "Not uploaded"
+                    )}
+                  </dd>
                 </dl>
               </div>
             )}

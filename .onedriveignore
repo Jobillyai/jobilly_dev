@@ -1,0 +1,5 @@
+# Keep build caches local-only — OneDrive sync corrupts them and breaks CSS/chunks.
+.next/
+node_modules/
+out/
+.vercel/

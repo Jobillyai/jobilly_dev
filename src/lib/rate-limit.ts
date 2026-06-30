@@ -16,7 +16,9 @@ type LimiterKey =
   | "adminLoginEmail"
   | "passwordResetIp"
   | "passwordResetEmail"
-  | "updatePasswordIp";
+  | "updatePasswordIp"
+  | "contactFormIp"
+  | "contactFormEmail";
 
 const LIMITER_CONFIG: Record<
   LimiterKey,
@@ -29,6 +31,8 @@ const LIMITER_CONFIG: Record<
   passwordResetIp: { requests: 5, window: "1 h" },
   passwordResetEmail: { requests: 3, window: "1 h" },
   updatePasswordIp: { requests: 10, window: "1 h" },
+  contactFormIp: { requests: 5, window: "1 h" },
+  contactFormEmail: { requests: 3, window: "1 h" },
 };
 
 function isUpstashConfigured(): boolean {

@@ -1,5 +1,6 @@
 import { createClient } from "@/server/db/supabase-server";
 import { splitFullName } from "@/lib/format-person-name";
+import { getFreshCandidateResumeUrl } from "@/server/services/resume-ats-check";
 import type { SessionUser } from "@/lib/auth/session";
 
 export type UserProfile = SessionUser & {
@@ -9,6 +10,14 @@ export type UserProfile = SessionUser & {
   careerGoals: string;
   linkedinUrl: string;
   experienceYears: number | null;
+  gender: string;
+  graduationCollege: string;
+  graduationYear: number | null;
+  specialization: string;
+  workExperience: string;
+  hasResume: boolean;
+  resumePreviewUrl: string | null;
+  resumeFileName: string | null;
 };
 
 export async function getUserProfile(): Promise<UserProfile | null> {
@@ -29,9 +38,13 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
   const { data: candidateProfile } = await supabase
     .from("candidate_profiles")
-    .select("education, career_goals, linkedin_url, experience_years")
+    .select(
+      "education, career_goals, linkedin_url, experience_years, gender, graduation_college, graduation_year, specialization, work_experience, resume_url",
+    )
     .eq("user_id", userId)
     .maybeSingle();
+
+  const freshResume = await getFreshCandidateResumeUrl(userId);
 
   const name = dbUser?.name ?? undefined;
   const split = splitFullName(name);
@@ -55,5 +68,13 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     careerGoals: candidateProfile?.career_goals ?? "",
     linkedinUrl: candidateProfile?.linkedin_url ?? "",
     experienceYears: candidateProfile?.experience_years ?? null,
+    gender: candidateProfile?.gender ?? "",
+    graduationCollege: candidateProfile?.graduation_college ?? "",
+    graduationYear: candidateProfile?.graduation_year ?? null,
+    specialization: candidateProfile?.specialization ?? "",
+    workExperience: candidateProfile?.work_experience ?? "",
+    hasResume: Boolean(candidateProfile?.resume_url) || Boolean(freshResume),
+    resumePreviewUrl: freshResume?.resumeUrl ?? null,
+    resumeFileName: freshResume?.fileName ?? null,
   };
 }

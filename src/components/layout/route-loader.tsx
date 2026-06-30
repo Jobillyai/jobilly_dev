@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { ROUTE_LOADING_START } from "@/lib/route-loading";
 import { JobillyLoader } from "./jobilly-loader";
 import styles from "./route-loader.module.css";
 
@@ -85,6 +86,18 @@ export function RouteLoader() {
       stopLoading();
     }
   }, [pathname]);
+
+  useEffect(() => {
+    function handleRouteLoadingStart() {
+      startLoading();
+    }
+
+    window.addEventListener(ROUTE_LOADING_START, handleRouteLoadingStart);
+
+    return () => {
+      window.removeEventListener(ROUTE_LOADING_START, handleRouteLoadingStart);
+    };
+  }, []);
 
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {

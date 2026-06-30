@@ -11,16 +11,25 @@ type FieldConfig = {
   readOnly?: boolean;
   onChange?: ChangeEventHandler<HTMLInputElement>;
   className?: string;
+  fieldClassName?: string;
+  labelClassName?: string;
+  errorClassName?: string;
+  inputErrorClassName?: string;
 };
 
 type PersonNameFieldsProps = {
   firstName: FieldConfig;
   lastName: FieldConfig;
+  rowClassName?: string;
 };
 
-export function PersonNameFields({ firstName, lastName }: PersonNameFieldsProps) {
+export function PersonNameFields({
+  firstName,
+  lastName,
+  rowClassName,
+}: PersonNameFieldsProps) {
   return (
-    <div className={authStyles.nameRow}>
+    <div className={rowClassName ?? authStyles.nameRow}>
       <FormField
         id={firstName.id ?? "firstName"}
         name={firstName.name ?? "firstName"}
@@ -33,6 +42,10 @@ export function PersonNameFields({ firstName, lastName }: PersonNameFieldsProps)
         readOnly={firstName.readOnly}
         onChange={firstName.onChange}
         className={firstName.className}
+        fieldClassName={firstName.fieldClassName}
+        labelClassName={firstName.labelClassName}
+        errorClassName={firstName.errorClassName}
+        inputErrorClassName={firstName.inputErrorClassName}
       />
       <FormField
         id={lastName.id ?? "lastName"}
@@ -46,6 +59,10 @@ export function PersonNameFields({ firstName, lastName }: PersonNameFieldsProps)
         readOnly={lastName.readOnly}
         onChange={lastName.onChange}
         className={lastName.className}
+        fieldClassName={lastName.fieldClassName}
+        labelClassName={lastName.labelClassName}
+        errorClassName={lastName.errorClassName}
+        inputErrorClassName={lastName.inputErrorClassName}
       />
     </div>
   );

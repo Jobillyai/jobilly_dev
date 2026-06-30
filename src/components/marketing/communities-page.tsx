@@ -160,8 +160,8 @@ export function CommunitiesPage() {
           <div className={styles.bottomNote}>
             <p>
               Questions about chapters or group pricing?{" "}
-              <Link href="/#contact" className={styles.bottomLink}>
-                Contact us
+            <Link href="/contact" className={styles.bottomLink}>
+              Contact us
               </Link>
               .
             </p>

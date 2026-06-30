@@ -4,8 +4,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { combineFirstLastName } from "@/lib/format-person-name";
 import { parseExperienceYears } from "@/lib/format-experience-years";
+import {
+  CANDIDATE_GENDER_OPTIONS,
+  parseGraduationYear,
+} from "@/lib/candidate-profile-options";
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
+import { saveCandidateResumeFile } from "@/server/services/resume-ats-check";
+import { RESUME_MIME_TYPES } from "@/server/services/apify-ats-score";
 
 const AVATAR_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -34,15 +40,47 @@ async function ensureAvatarsBucket() {
   return {};
 }
 
+const genderValues = CANDIDATE_GENDER_OPTIONS.map((option) => option.value);
+
+function buildEducationSummary(input: {
+  specialization?: string;
+  graduationCollege?: string;
+  graduationYear?: number | null;
+}): string | null {
+  const parts = [
+    input.specialization?.trim(),
+    input.graduationCollege?.trim(),
+    input.graduationYear ? `Class of ${input.graduationYear}` : null,
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 const profileSchema = z.object({
   firstName: z.string().min(1, "Enter your first name").max(100),
   lastName: z.string().min(1, "Enter your last name").max(100),
-  education: z.string().max(500).optional(),
   careerGoals: z.string().max(1000).optional(),
   experienceYears: z
     .string()
     .optional()
     .transform((value) => parseExperienceYears(value ?? "")),
+  gender: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() ?? "")
+    .refine((value) => (genderValues as string[]).includes(value), "Select a valid gender option"),
+  graduationCollege: z.string().max(200).optional(),
+  graduationYear: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() ?? "")
+    .refine(
+      (value) => !value || parseGraduationYear(value) !== null,
+      `Enter a valid year between 1950 and ${new Date().getFullYear() + 1}`,
+    )
+    .transform((value) => (value ? parseGraduationYear(value) : null)),
+  specialization: z.string().max(200).optional(),
+  workExperience: z.string().max(2000).optional(),
   linkedinUrl: z
     .string()
     .max(300)
@@ -66,7 +104,16 @@ export type ProfileState = {
   error?: string;
   fieldErrors?: Partial<
     Record<
-      "firstName" | "lastName" | "education" | "careerGoals" | "experienceYears" | "linkedinUrl",
+      | "firstName"
+      | "lastName"
+      | "careerGoals"
+      | "experienceYears"
+      | "gender"
+      | "graduationCollege"
+      | "graduationYear"
+      | "specialization"
+      | "workExperience"
+      | "linkedinUrl",
       string
     >
   >;
@@ -134,6 +181,50 @@ export async function uploadAvatarAction(
   return { avatarUrl };
 }
 
+export async function uploadProfileResumeAction(
+  formData: FormData,
+): Promise<{ resumeUrl?: string; fileName?: string; error?: string }> {
+  const file = formData.get("resume");
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a PDF or Word resume to upload." };
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    return { error: "Resume must be 5 MB or smaller." };
+  }
+
+  if (!(RESUME_MIME_TYPES as readonly string[]).includes(file.type)) {
+    return { error: "Use a PDF or Word document (.pdf, .doc, .docx)." };
+  }
+
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+
+  if (!authData.user) {
+    return { error: "You must be logged in to upload a resume." };
+  }
+
+  try {
+    const saved = await saveCandidateResumeFile({
+      userId: authData.user.id,
+      fileName: file.name,
+      fileBuffer: Buffer.from(await file.arrayBuffer()),
+      contentType: file.type,
+    });
+
+    revalidatePath("/dashboard/profile");
+    revalidatePath("/admin/candidates");
+    revalidatePath("/dashboard/ats-resume-score");
+
+    return { resumeUrl: saved.resumeUrl, fileName: file.name };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Could not upload resume.",
+    };
+  }
+}
+
 export async function updateProfileAction(
   _prevState: ProfileState,
   formData: FormData,
@@ -141,26 +232,36 @@ export async function updateProfileAction(
   const parsed = profileSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
-    education: formData.get("education") || undefined,
     careerGoals: formData.get("careerGoals") || undefined,
     experienceYears: formData.get("experienceYears")?.toString() || undefined,
+    gender: formData.get("gender")?.toString() ?? "",
+    graduationCollege: formData.get("graduationCollege") || undefined,
+    graduationYear: formData.get("graduationYear")?.toString() || undefined,
+    specialization: formData.get("specialization") || undefined,
+    workExperience: formData.get("workExperience") || undefined,
     linkedinUrl: formData.get("linkedinUrl") || undefined,
     avatarUrl: formData.get("avatarUrl") || undefined,
   });
 
   if (!parsed.success) {
     const fieldErrors: NonNullable<ProfileState["fieldErrors"]> = {};
+    const allowedKeys = new Set([
+      "firstName",
+      "lastName",
+      "careerGoals",
+      "experienceYears",
+      "gender",
+      "graduationCollege",
+      "graduationYear",
+      "specialization",
+      "workExperience",
+      "linkedinUrl",
+    ] as const);
+
     for (const issue of parsed.error.issues) {
       const key = issue.path[0];
-      if (
-        key === "firstName" ||
-        key === "lastName" ||
-        key === "education" ||
-        key === "careerGoals" ||
-        key === "experienceYears" ||
-        key === "linkedinUrl"
-      ) {
-        fieldErrors[key] = issue.message;
+      if (typeof key === "string" && allowedKeys.has(key as keyof typeof fieldErrors)) {
+        fieldErrors[key as keyof typeof fieldErrors] = issue.message;
       }
     }
     return { fieldErrors };
@@ -174,8 +275,24 @@ export async function updateProfileAction(
   }
 
   const userId = authData.user.id;
-  const { firstName, lastName, education, careerGoals, experienceYears, linkedinUrl, avatarUrl } =
-    parsed.data;
+  const {
+    firstName,
+    lastName,
+    careerGoals,
+    experienceYears,
+    gender,
+    graduationCollege,
+    graduationYear,
+    specialization,
+    workExperience,
+    linkedinUrl,
+    avatarUrl,
+  } = parsed.data;
+  const education = buildEducationSummary({
+    specialization,
+    graduationCollege,
+    graduationYear,
+  });
   const name = combineFirstLastName(firstName, lastName);
 
   const existingAvatar =
@@ -215,6 +332,11 @@ export async function updateProfileAction(
       education: education || null,
       career_goals: careerGoals || null,
       experience_years: experienceYears,
+      gender: gender || null,
+      graduation_college: graduationCollege || null,
+      graduation_year: graduationYear,
+      specialization: specialization || null,
+      work_experience: workExperience || null,
       linkedin_url: linkedinUrl || null,
     },
     { onConflict: "user_id" },
@@ -229,6 +351,7 @@ export async function updateProfileAction(
   revalidatePath("/dashboard/jobs");
   revalidatePath("/admin");
   revalidatePath("/admin/profile");
+  revalidatePath("/admin/candidates");
 
   return { success: true };
 }

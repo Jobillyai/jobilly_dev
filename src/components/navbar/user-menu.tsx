@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { logoutAction } from "@/server/actions/auth";
+import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
 import type { SessionUser } from "@/lib/auth/session";
 import { formatDisplayName } from "@/lib/format-display-name";
 import styles from "./navbar.module.css";
@@ -99,11 +100,11 @@ export function UserMenu({
             Edit profile
           </Link>
           {showLogout && (
-            <form action={logoutActionFn}>
-              <button type="submit" className={styles.userDropdownItemLogout} role="menuitem">
+            <LogoutForm action={logoutActionFn}>
+              <LogoutSubmitButton className={styles.userDropdownItemLogout} role="menuitem">
                 Log out
-              </button>
-            </form>
+              </LogoutSubmitButton>
+            </LogoutForm>
           )}
         </div>
       )}

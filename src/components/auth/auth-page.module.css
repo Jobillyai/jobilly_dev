@@ -1,14 +1,4 @@
 .shell {
-  --blue-900: #0a1628;
-  --blue-500: #1877f2;
-  --blue-50: #f0f6ff;
-  --white: #ffffff;
-  --gray-300: #d1d5db;
-  --accent-dark: #0f5fd0;
-  --text-primary: #0a1628;
-  --text-secondary: #374151;
-  --text-muted: #6b7280;
-
   position: relative;
   min-height: calc(100vh - 68px);
   font-family: "Plus Jakarta Sans", sans-serif;

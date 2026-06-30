@@ -13,6 +13,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import { logoutAction } from "@/server/actions/auth";
+import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import type { SessionUser } from "@/lib/auth/session";
@@ -148,14 +149,14 @@ export function CandidateSidebar({ user, unreadApplications = 0 }: CandidateSide
             <span className={styles.userEmail}>{user.email}</span>
           </div>
         </div>
-        <form action={logoutAction}>
-          <button type="submit" className={styles.signOutBtn}>
+        <LogoutForm action={logoutAction}>
+          <LogoutSubmitButton className={styles.signOutBtn}>
             <span className={styles.navIcon} aria-hidden>
               <LogOut size={18} strokeWidth={2} />
             </span>
             <span className={styles.navLabel}>Sign out</span>
-          </button>
-        </form>
+          </LogoutSubmitButton>
+        </LogoutForm>
       </div>
     </aside>
   );

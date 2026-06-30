@@ -1,5 +1,6 @@
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
+import { getFreshCandidateResumeUrl } from "@/server/services/resume-ats-check";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/server/db/database.types";
 import type { StaffContext } from "@/lib/auth/admin";
@@ -12,6 +13,9 @@ const CANDIDATE_ROLES = [
   ...FREE_CANDIDATE_ROLES,
   ...PREMIUM_CANDIDATE_ROLES,
 ] as const;
+
+const CANDIDATE_PROFILE_SELECT =
+  "user_id, education, career_goals, linkedin_url, resume_url, assigned_employee_id, job_search_role, experience_years, gender, graduation_college, graduation_year, specialization, work_experience";
 
 export type CareerAdvisorySubmission = {
   id: string;
@@ -41,8 +45,15 @@ export type AdminCandidate = {
   careerGoals: string | null;
   linkedinUrl: string | null;
   resumeUrl: string | null;
+  resumeDownloadUrl: string | null;
+  resumeFileName: string | null;
   jobSearchRole: string | null;
   experienceYears: number | null;
+  gender: string | null;
+  graduationCollege: string | null;
+  graduationYear: number | null;
+  specialization: string | null;
+  workExperience: string | null;
   submission: CareerAdvisorySubmission | null;
 };
 
@@ -454,7 +465,7 @@ export async function getAdminCandidates(
       .order("created_at", { ascending: false }),
     profileSupabase
       .from("candidate_profiles")
-      .select("user_id, education, career_goals, linkedin_url, resume_url, assigned_employee_id, job_search_role, experience_years"),
+      .select(CANDIDATE_PROFILE_SELECT),
   ]);
 
   if (usersResult.error || !usersResult.data) {
@@ -472,11 +483,27 @@ export async function getAdminCandidates(
     (profilesResult.data ?? []).map((row) => [row.user_id, row]),
   );
 
-  return usersResult.data.map((user) => {
-    const profile = profilesByUser.get(user.id);
+  return Promise.all(
+    usersResult.data.map(async (user) => {
+      const profile = profilesByUser.get(user.id);
+      const candidate = mapUserToCandidate(
+        user,
+        profile,
+        submissionsByCandidate.get(user.id) ?? null,
+      );
 
-    return mapUserToCandidate(user, profile, submissionsByCandidate.get(user.id) ?? null);
-  });
+      if (!candidate.resumeUrl) {
+        return candidate;
+      }
+
+      const resume = await getFreshCandidateResumeUrl(user.id);
+      return {
+        ...candidate,
+        resumeDownloadUrl: resume?.resumeUrl ?? null,
+        resumeFileName: resume?.fileName ?? null,
+      };
+    }),
+  );
 }
 
 function mapUserToCandidate(
@@ -497,6 +524,11 @@ function mapUserToCandidate(
         assigned_employee_id: string | null;
         job_search_role: string | null;
         experience_years: number | null;
+        gender: string | null;
+        graduation_college: string | null;
+        graduation_year: number | null;
+        specialization: string | null;
+        work_experience: string | null;
       }
     | undefined,
   submission: CareerAdvisorySubmission | null,
@@ -513,8 +545,15 @@ function mapUserToCandidate(
     careerGoals: profile?.career_goals ?? null,
     linkedinUrl: profile?.linkedin_url ?? null,
     resumeUrl: profile?.resume_url ?? null,
+    resumeDownloadUrl: null,
+    resumeFileName: null,
     jobSearchRole: profile?.job_search_role ?? null,
     experienceYears: profile?.experience_years ?? null,
+    gender: profile?.gender ?? null,
+    graduationCollege: profile?.graduation_college ?? null,
+    graduationYear: profile?.graduation_year ?? null,
+    specialization: profile?.specialization ?? null,
+    workExperience: profile?.work_experience ?? null,
     submission,
   };
 }
@@ -548,7 +587,7 @@ export async function getAdminCandidateById(
       .maybeSingle(),
     profileSupabase
       .from("candidate_profiles")
-      .select("education, career_goals, linkedin_url, resume_url, assigned_employee_id, job_search_role, experience_years")
+      .select(CANDIDATE_PROFILE_SELECT)
       .eq("user_id", candidateId)
       .maybeSingle(),
   ]);
@@ -558,6 +597,12 @@ export async function getAdminCandidateById(
     profileResult.data ?? undefined,
     submissionResult.data ? mapSubmissionRow(submissionResult.data) : null,
   );
+
+  if (candidate.resumeUrl) {
+    const resume = await getFreshCandidateResumeUrl(candidateId);
+    candidate.resumeDownloadUrl = resume?.resumeUrl ?? null;
+    candidate.resumeFileName = resume?.fileName ?? null;
+  }
 
   if (
     staff?.role === "admin" &&

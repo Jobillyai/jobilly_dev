@@ -1,8 +1,18 @@
+const isOneDriveProject = __dirname.replace(/\\/g, "/").includes("OneDrive");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
     typedRoutes: true,
+  },
+  webpack: (config, { dev }) => {
+    // OneDrive sync corrupts webpack chunks (undefined factory / CSS 404).
+    // Disable persistent cache in local dev for stable HMR.
+    if (dev && isOneDriveProject) {
+      config.cache = false;
+    }
+    return config;
   },
   images: {
     remotePatterns: [
