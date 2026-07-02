@@ -4,7 +4,6 @@ import {
   Briefcase,
   Calendar,
   Compass,
-  FileText,
   UserCircle,
 } from "lucide-react";
 import { formatDisplayName } from "@/lib/format-display-name";
@@ -17,7 +16,6 @@ type DashboardHomeProps = {
   applicationCount: number;
   unreadApplicationCount: number;
   latestApplicationLabel: string | null;
-  latestAtsScore: number | null;
   nextSessionLabel: string;
 };
 
@@ -27,12 +25,6 @@ const modules = [
     title: "Career Advisory",
     description: "Share your goals and book a session with our career team.",
     icon: Compass,
-  },
-  {
-    href: "/dashboard/ats-resume-score",
-    title: "ATS Resume Score",
-    description: "Upload your resume and get an ATS compatibility score.",
-    icon: FileText,
   },
   {
     href: "/dashboard/applications",
@@ -71,7 +63,6 @@ export function DashboardHome({
   applicationCount,
   unreadApplicationCount,
   latestApplicationLabel,
-  latestAtsScore,
   nextSessionLabel,
 }: DashboardHomeProps) {
   const greeting = getGreeting();
@@ -90,8 +81,8 @@ export function DashboardHome({
           </p>
         ) : null}
         <p className={styles.subtitle}>
-          Your career workspace — track applications, improve your resume, and stay
-          on top of advisory sessions.
+          Your career workspace — track applications and stay on top of advisory
+          sessions.
         </p>
       </header>
 
@@ -112,17 +103,9 @@ export function DashboardHome({
           <p className={styles.statHint}>Roles applied on your behalf</p>
         </article>
         <article className={styles.statCard}>
-          <p className={styles.statLabel}>Latest ATS score</p>
-          <p
-            className={`${styles.statValue} ${
-              latestAtsScore !== null ? styles.statValueAccent : ""
-            }`}
-          >
-            {latestAtsScore !== null ? latestAtsScore : "—"}
-          </p>
-          <p className={styles.statHint}>
-            {latestAtsScore !== null ? "From your most recent check" : "Run a resume check"}
-          </p>
+          <p className={styles.statLabel}>New updates</p>
+          <p className={styles.statValue}>{unreadApplicationCount}</p>
+          <p className={styles.statHint}>Unread application notifications</p>
         </article>
         <article className={styles.statCard}>
           <p className={styles.statLabel}>Next session</p>

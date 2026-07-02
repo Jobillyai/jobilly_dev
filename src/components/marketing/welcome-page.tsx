@@ -5,14 +5,15 @@ import Link from "next/link";
 import { AbstractBackground } from "@/components/layout/abstract-background";
 import styles from "./welcome-page.module.css";
 import { CompaniesMarquee } from "./companies-marquee";
-import { EmailCaptureForm } from "./email-capture-form";
-import { FeatureCards } from "./feature-cards";
+import { WelcomeServicesSection } from "./welcome-services-section";
 import { useScrollReveal } from "./use-scroll-reveal";
 import { useCounterAnimation } from "./use-counter-animation";
+import { candidateServices } from "@/lib/candidate-services";
 
 export function WelcomePage() {
   const revealRef = useScrollReveal<HTMLDivElement>();
   const statsRef = useCounterAnimation<HTMLDivElement>();
+  const liveServiceCount = candidateServices.filter((service) => service.status === "live").length;
 
   useEffect(() => {
     const hash = window.location.hash.replace(/^#/, "");
@@ -46,12 +47,20 @@ export function WelcomePage() {
         <p className={styles.heroSub}>
           The career platform built for{" "}
           <strong className={styles.heroSubStrong}>fresh graduates and postgrads</strong> &#x2014;
-          AI-powered learning, voice mock interviews with real company personas, and a team that
-          applies to jobs <strong className={styles.heroSubStrong}>on your behalf</strong>.
+          free career advisory and ATS scoring, voice mock interviews with real company personas,
+          and a team that applies to jobs{" "}
+          <strong className={styles.heroSubStrong}>on your behalf</strong>.
         </p>
 
-        <EmailCaptureForm inputId="heroEmail" buttonLabel="Notify Me" />
-        <p className={styles.formNote}>Be first when we launch. No spam, ever.</p>
+        <div className={styles.heroActions}>
+          <Link href="/signup" className={styles.btnPrimary}>
+            Get started free
+          </Link>
+          <Link href="/login" className={styles.btnOutlineBlue}>
+            Log in
+          </Link>
+        </div>
+        <p className={styles.formNote}>No credit card required. Free tools included.</p>
 
         <div className={styles.trustStrip}>
           <div className={styles.trustItem}>
@@ -64,7 +73,7 @@ export function WelcomePage() {
                 strokeLinejoin="round"
               />
             </svg>
-            Free to start
+            Free career advisory
           </div>
           <div className={styles.trustDivider} />
           <div className={styles.trustItem}>
@@ -78,7 +87,7 @@ export function WelcomePage() {
                 strokeLinejoin="round"
               />
             </svg>
-            No credit card needed
+            ATS resume scoring
           </div>
           <div className={styles.trustDivider} />
           <div className={styles.trustItem}>
@@ -91,7 +100,7 @@ export function WelcomePage() {
               />
               <path d="M10 8V11M10 13V13.5" stroke="#1877F2" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            Built for graduates
+            Managed applications
           </div>
           <div className={styles.trustDivider} />
           <div className={styles.trustItem}>
@@ -100,7 +109,7 @@ export function WelcomePage() {
               <path d="M7 6V5C7 3.9 7.9 3 9 3H11C12.1 3 13 3.9 13 5V6" stroke="#1877F2" strokeWidth="1.5" />
               <path d="M10 11V13M10 9V9.5" stroke="#1877F2" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            AI-powered interviews
+            AI mock interviews
           </div>
         </div>
       </div>
@@ -110,11 +119,11 @@ export function WelcomePage() {
         <div className={styles.statsInner} ref={statsRef}>
           <div className={`${styles.statItem} ${styles.reveal}`} data-reveal data-reveal-visible-class={styles.revealVisible}>
             <div className={styles.statNum}>
-              <span className={styles.counting} data-counter-target="4">
+              <span className={styles.counting} data-counter-target={String(candidateServices.length)}>
                 0
               </span>
             </div>
-            <div className={styles.statLabel}>Career Features</div>
+            <div className={styles.statLabel}>Candidate services</div>
           </div>
           <div
             className={`${styles.statItem} ${styles.reveal} ${styles.d1}`}
@@ -122,9 +131,11 @@ export function WelcomePage() {
             data-reveal-visible-class={styles.revealVisible}
           >
             <div className={styles.statNum}>
-              <span className={styles.statNumBlue}>100%</span>
+              <span className={styles.counting} data-counter-target={String(liveServiceCount)}>
+                0
+              </span>
             </div>
-            <div className={styles.statLabel}>Free to start learning</div>
+            <div className={styles.statLabel}>Live in your portal today</div>
           </div>
           <div
             className={`${styles.statItem} ${styles.reveal} ${styles.d2}`}
@@ -160,44 +171,7 @@ export function WelcomePage() {
         </div>
       </div>
 
-      {/* FEATURES */}
-      <section id="products" className={styles.section}>
-        <AbstractBackground />
-        <div className={styles.sectionContent}>
-        <div className={`${styles.label} ${styles.reveal}`} data-reveal data-reveal-visible-class={styles.revealVisible}>
-          <div className={styles.labelDot} /> What&#x2019;s inside
-        </div>
-        <div
-          className={`${styles.sectionTitle} ${styles.reveal}`}
-          data-reveal
-          data-reveal-visible-class={styles.revealVisible}
-        >
-          Everything you need to go from
-          <br />
-          <em className={styles.sectionTitleEm}>graduate to hired</em>
-        </div>
-        <p className={`${styles.sectionSub} ${styles.reveal}`} data-reveal data-reveal-visible-class={styles.revealVisible}>
-          Four features, working together. Start free and unlock more as you need it.
-        </p>
-
-        <FeatureCards />
-
-        <div className={styles.productsCta}>
-          <Link href="/products" className={styles.btnOutlineBlue}>
-            Explore all candidate services
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <path
-                d="M3 8H13M9 4L13 8L9 12"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </Link>
-        </div>
-        </div>
-      </section>
+      <WelcomeServicesSection />
 
       {/* HOW IT WORKS */}
       <div className={`${styles.sectionFull} ${styles.hiwBg}`}>
@@ -281,7 +255,7 @@ export function WelcomePage() {
               Advisory, and Mock Interviews &#x2014; all under your institution&#x2019;s branding with a
               single subscription.
             </p>
-            <Link href="/signup" className={styles.btnOutlineWhite}>
+            <Link href="/contact" className={styles.btnOutlineWhite}>
               Get in touch
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path
@@ -366,23 +340,21 @@ export function WelcomePage() {
           Your first job is <em className={styles.sectionTitleEm}>closer</em> than you think
         </div>
         <p className={`${styles.reveal} ${styles.d1}`} data-reveal data-reveal-visible-class={styles.revealVisible}>
-          Join the waitlist. First users get 3 months free on the premium plan.
+          Create a free account to access career advisory, ATS scoring, your profile hub, and session
+          calendar — then add premium services when you are ready.
         </p>
         <div
-          className={`${styles.reveal} ${styles.d2}`}
-          style={{ marginBottom: 12 }}
+          className={`${styles.heroActions} ${styles.reveal} ${styles.d2}`}
           data-reveal
           data-reveal-visible-class={styles.revealVisible}
         >
-          <EmailCaptureForm inputId="ctaEmail" buttonLabel="Get Early Access" />
+          <Link href="/signup" className={styles.btnPrimary}>
+            Create free account
+          </Link>
+          <Link href="/contact" className={styles.btnOutlineBlue}>
+            Talk to our team
+          </Link>
         </div>
-        <p
-          className={`${styles.formNote} ${styles.reveal} ${styles.d2}`}
-          data-reveal
-          data-reveal-visible-class={styles.revealVisible}
-        >
-          No credit card. No spam. Cancel anytime.
-        </p>
         </div>
       </div>
     </div>

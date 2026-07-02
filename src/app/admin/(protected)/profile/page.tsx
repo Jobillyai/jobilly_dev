@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAdminUser, staffCanScrapeJobs } from "@/lib/auth/admin";
+import { getAdminUser, staffIsManager } from "@/lib/auth/admin";
 import { getUserProfile } from "@/lib/auth/profile";
 import { StaffProfileCard } from "@/components/admin/staff-profile-card";
 import styles from "../../admin.module.css";
@@ -17,7 +17,7 @@ export default async function AdminProfilePage() {
     redirect("/admin/login");
   }
 
-  const isManager = staffCanScrapeJobs({ userId: admin.id, role: admin.role });
+  const isManager = staffIsManager({ userId: admin.id, role: admin.role });
 
   return (
     <div className={styles.adminPage}>

@@ -194,8 +194,11 @@ export type Database = {
           source: string;
           search_role: string;
           scraped_at: string;
+          posted_at: string | null;
           preparation_tips: string | null;
           candidate_viewed_at: string | null;
+          application_resume_path: string | null;
+          application_resume_file_name: string | null;
         };
         Insert: {
           id?: string;
@@ -213,8 +216,11 @@ export type Database = {
           source?: string;
           search_role?: string;
           scraped_at?: string;
+          posted_at?: string | null;
           preparation_tips?: string | null;
           candidate_viewed_at?: string | null;
+          application_resume_path?: string | null;
+          application_resume_file_name?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["scraped_jobs"]["Insert"]>;
         Relationships: [];

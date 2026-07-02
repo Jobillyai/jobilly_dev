@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { formatPlanPriceMonthly } from "@/lib/candidate-services";
+import type { ReactNode } from "react";
+import {
+  candidateServices,
+  formatPlanPriceMonthly,
+  type CandidateService,
+} from "@/lib/candidate-services";
 import styles from "./welcome-page.module.css";
 
 type FeatureCardsProps = {
@@ -7,15 +12,14 @@ type FeatureCardsProps = {
   enableFeatureLinks?: boolean;
 };
 
-const features = [
-  {
+const iconMeta: Record<
+  string,
+  { iconClass?: string; badgeClass?: string; slug: string | null; icon: ReactNode }
+> = {
+  "career-advisory": {
     slug: "career-advisory",
     iconClass: styles.fiBlue,
     badgeClass: styles.badgeFree,
-    badge: "Free",
-    title: "Career Advisory",
-    description:
-      "One-on-one sessions with expert mentors. Tell us your background and goals — we map out exactly which skills and technologies to focus on first.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
         <path
@@ -36,40 +40,26 @@ const features = [
       </svg>
     ),
   },
-  {
-    slug: "ats-resume-score",
-    iconClass: styles.fiGreen,
+  profile: {
+    slug: "profile",
+    iconClass: styles.fiBlue,
     badgeClass: styles.badgeFree,
-    badge: "Free",
-    title: "ATS Resume Score",
-    description:
-      "Upload your resume as PDF or Word and get a 0–100 ATS score with missing keywords and improvement tips powered by Apify.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+        <circle cx="14" cy="10" r="4.5" stroke="#1877F2" strokeWidth="2" />
         <path
-          d="M8 6H20C21.105 6 22 6.895 22 8V20C22 21.105 21.105 22 20 22H8C6.895 22 6 21.105 6 20V8C6 6.895 6.895 6 8 6Z"
-          stroke="#059669"
+          d="M7 23C7 18.582 10.134 15 14 15C17.866 15 21 18.582 21 23"
+          stroke="#1877F2"
           strokeWidth="2"
-        />
-        <path d="M10 11H18M10 15H16" stroke="#059669" strokeWidth="2" strokeLinecap="round" />
-        <circle cx="21" cy="7" r="4" fill="#059669" />
-        <path
-          d="M20 7H22M21 6V8"
-          stroke="white"
-          strokeWidth="1.5"
           strokeLinecap="round"
         />
       </svg>
     ),
   },
-  {
+  calendar: {
     slug: "calendar",
     iconClass: styles.fiBlue,
     badgeClass: styles.badgeFree,
-    badge: "Free",
-    title: "My Calendar",
-    description:
-      "See your booked career advisory sessions on a calendar and join Google Meet when it's time.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
         <rect x="4" y="6" width="20" height="18" rx="3" stroke="#1877F2" strokeWidth="2" />
@@ -80,14 +70,10 @@ const features = [
       </svg>
     ),
   },
-  {
+  "growth-school": {
     slug: null,
     iconClass: styles.fiGreen,
-    badgeClass: styles.badgeFree,
-    badge: "Free",
-    title: "Growth School",
-    description:
-      "AI-generated micro-lessons, intelligent quizzes, and real-world coding challenges modelled on how Meta, Google, and Amazon use these skills in production.",
+    badgeClass: styles.badgeSoon,
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
         <rect x="4" y="6" width="20" height="16" rx="3" stroke="#059669" strokeWidth="2" />
@@ -104,14 +90,10 @@ const features = [
       </svg>
     ),
   },
-  {
+  "mock-interviews": {
     slug: null,
     iconClass: styles.fiViolet,
     badgeClass: styles.badgePremium,
-    badge: formatPlanPriceMonthly(79.99),
-    title: "Mock Interviews",
-    description:
-      "Voice AI interviews with real company personas — Meta, Google, Amazon, Apple. Practice until behavioral and technical rounds feel natural.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
         <rect x="4" y="8" width="20" height="14" rx="3" stroke="#7C3AED" strokeWidth="2" />
@@ -128,14 +110,10 @@ const features = [
       </svg>
     ),
   },
-  {
+  applications: {
     slug: null,
     iconClass: styles.fiOrange,
     badgeClass: styles.badgePremium,
-    badge: formatPlanPriceMonthly(99.99),
-    title: "Job Applications",
-    description:
-      "Subscribe and let us handle it. Our team applies to matched roles, tailors your resume for each one, and keeps you updated — while you focus entirely on learning.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
         <path
@@ -146,16 +124,35 @@ const features = [
         <path d="M10 12H18M10 16H15" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
         <path d="M17 3V7M11 3V7" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
         <circle cx="21" cy="7" r="4" fill="#F97316" />
-        <path
-          d="M19.5 7H22.5M21 5.5V8.5"
-          stroke="white"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
+        <path d="M19.5 7H22.5M21 5.5V8.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
   },
-] as const;
+};
+
+function getBadgeLabel(service: CandidateService, developmentInProgress: boolean) {
+  if (developmentInProgress) {
+    return "Development in Progress";
+  }
+  if (service.tier === "premium" && service.priceUsd !== undefined) {
+    return formatPlanPriceMonthly(service.priceUsd);
+  }
+  if (service.status === "coming_soon") {
+    return "Coming soon";
+  }
+  return "Free";
+}
+
+function getBadgeClass(service: CandidateService, developmentInProgress: boolean) {
+  if (developmentInProgress) {
+    return styles.badgeDev;
+  }
+  const meta = iconMeta[service.id];
+  if (service.status === "coming_soon") {
+    return styles.badgeSoon;
+  }
+  return meta?.badgeClass ?? styles.badgeFree;
+}
 
 export function FeatureCards({
   developmentInProgress = false,
@@ -163,33 +160,37 @@ export function FeatureCards({
 }: FeatureCardsProps) {
   return (
     <div className={styles.featuresGrid}>
-      {features.map((feature) => {
+      {candidateServices.map((service) => {
+        const meta = iconMeta[service.id];
+        if (!meta) {
+          return null;
+        }
+
         const href =
-          enableFeatureLinks && feature.slug
-            ? (`/dashboard/${feature.slug}` as const)
+          enableFeatureLinks && meta.slug
+            ? (`/dashboard/${meta.slug}` as "/dashboard/career-advisory" | "/dashboard/profile" | "/dashboard/calendar")
             : undefined;
 
         const card = (
           <>
-            <div className={`${styles.featureIconWrap} ${feature.iconClass}`}>
-              {feature.icon}
+            <div className={`${styles.featureIconWrap} ${meta.iconClass}`}>{meta.icon}</div>
+            <div className={`${styles.featureBadge} ${getBadgeClass(service, developmentInProgress)}`}>
+              {getBadgeLabel(service, developmentInProgress)}
             </div>
-            <div
-              className={`${styles.featureBadge} ${
-                developmentInProgress ? styles.badgeDev : feature.badgeClass
-              }`}
-            >
-              {developmentInProgress ? "Development in Progress" : feature.badge}
-            </div>
-            <div className={styles.featureTitle}>{feature.title}</div>
-            <div className={styles.featureDesc}>{feature.description}</div>
+            <div className={styles.featureTitle}>{service.title}</div>
+            <div className={styles.featureDesc}>{service.description}</div>
+            <ul className={styles.featureHighlights}>
+              {service.highlights.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </>
         );
 
         if (href) {
           return (
             <Link
-              key={feature.title}
+              key={service.id}
               href={href}
               className={`${styles.featureCard} ${styles.featureCardLink}`}
             >
@@ -199,7 +200,7 @@ export function FeatureCards({
         }
 
         return (
-          <div key={feature.title} className={styles.featureCard}>
+          <div key={service.id} className={styles.featureCard}>
             {card}
           </div>
         );

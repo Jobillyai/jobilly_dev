@@ -3,6 +3,7 @@ import { getSessionUser, type SessionUser } from "@/lib/auth/session";
 import {
   canScrapeJobs,
   isAdminPortalRole,
+  isManagerRole,
   type AdminPortalRole,
 } from "@/lib/auth/roles";
 
@@ -56,4 +57,8 @@ export function toStaffContext(admin: AdminUser): StaffContext {
 
 export function staffCanScrapeJobs(staff: StaffContext): boolean {
   return canScrapeJobs(staff.role);
+}
+
+export function staffIsManager(staff: StaffContext): boolean {
+  return isManagerRole(staff.role);
 }

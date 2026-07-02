@@ -337,8 +337,9 @@ export function ManagerCandidateScrapePanel({
         <div>
           <h2 className={styles.title}>Manager scrape controls</h2>
           <p className={styles.subtitle}>
-            Set each candidate&apos;s target role and years of experience (from
-            spreadsheet), then scrape individually or run a sequential update.
+            Set each candidate&apos;s target role and years of experience, then
+            scrape. Searches combine the role, career advisory keywords, and
+            experience level on Indeed and LinkedIn.
           </p>
           {lastRunLabel ? (
             <p className={styles.meta}>Last scrape run: {lastRunLabel}</p>

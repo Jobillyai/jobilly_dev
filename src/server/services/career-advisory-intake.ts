@@ -4,11 +4,49 @@ import type { SessionCalendarEvent } from "@/components/calendar/session-month-c
 export type CandidateCareerAdvisoryIntake = {
   name: string;
   email: string;
+  phone: string;
+  graduationDetails: string;
+  branch: string;
+  isVeteran: boolean;
+  interestedTechnology: string;
   inviteSentAt: string | null;
   sessionScheduledAt: string | null;
   googleMeetLink: string | null;
   bookedAt: string;
+  updatedAt: string;
 };
+
+type IntakeRow = {
+  name: string;
+  email: string;
+  phone: string;
+  graduation_details: string;
+  branch: string;
+  is_veteran: boolean;
+  interested_technology: string;
+  invite_sent_at: string | null;
+  session_scheduled_at: string | null;
+  google_meet_link: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function mapIntakeRow(data: IntakeRow): CandidateCareerAdvisoryIntake {
+  return {
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    graduationDetails: data.graduation_details,
+    branch: data.branch,
+    isVeteran: data.is_veteran,
+    interestedTechnology: data.interested_technology,
+    inviteSentAt: data.invite_sent_at,
+    sessionScheduledAt: data.session_scheduled_at,
+    googleMeetLink: data.google_meet_link,
+    bookedAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+}
 
 function getSessionStatus(
   sessionScheduledAt: string | null,
@@ -38,7 +76,7 @@ export async function getCareerAdvisoryIntakeForCandidate(
   const { data, error } = await supabase
     .from("career_advisory_intakes")
     .select(
-      "name, email, invite_sent_at, session_scheduled_at, google_meet_link, created_at",
+      "name, email, phone, graduation_details, branch, is_veteran, interested_technology, invite_sent_at, session_scheduled_at, google_meet_link, created_at, updated_at",
     )
     .eq("candidate_id", candidateId)
     .maybeSingle();
@@ -47,14 +85,7 @@ export async function getCareerAdvisoryIntakeForCandidate(
     return null;
   }
 
-  return {
-    name: data.name,
-    email: data.email,
-    inviteSentAt: data.invite_sent_at,
-    sessionScheduledAt: data.session_scheduled_at,
-    googleMeetLink: data.google_meet_link,
-    bookedAt: data.created_at,
-  };
+  return mapIntakeRow(data as IntakeRow);
 }
 
 export function mapIntakeToCalendarSessions(

@@ -1,16 +1,13 @@
 import { getApifyToken } from "@/server/services/apify-ats-score";
+import { experienceYearsSearchHint } from "@/lib/format-experience-years";
+import { extractJobPostedDate } from "@/lib/job-posted-date";
 
 const APIFY_INDEED_ACTOR_ID = "misceres~indeed-scraper";
 const APIFY_LINKEDIN_ACTOR_ID = "curious_coder~linkedin-jobs-scraper";
-const APIFY_GOOGLE_JOBS_ACTOR_ID = "automation-lab~google-jobs-scraper";
 
-export type JobMarketSource = "indeed" | "linkedin" | "google_jobs";
+export type JobMarketSource = "indeed" | "linkedin";
 
-export const JOB_MARKET_SOURCES: JobMarketSource[] = [
-  "indeed",
-  "linkedin",
-  "google_jobs",
-];
+export const JOB_MARKET_SOURCES: JobMarketSource[] = ["indeed", "linkedin"];
 
 export type JobListing = {
   company: string;
@@ -19,6 +16,7 @@ export type JobListing = {
   location: string;
   jdText: string;
   source: JobMarketSource;
+  postedAt: string | null;
 };
 
 /** @deprecated Use JobListing — kept for existing imports. */
@@ -31,6 +29,9 @@ type ApifyIndeedJob = {
   url?: string;
   location?: string;
   description?: string;
+  postedAt?: string;
+  datePublished?: string | number;
+  dateOnIndeed?: string | number;
 };
 
 type ApifyLinkedInJob = {
@@ -40,18 +41,9 @@ type ApifyLinkedInJob = {
   location?: string;
   descriptionText?: string;
   description?: string;
-};
-
-type ApifyGoogleJob = {
-  title?: string;
-  companyName?: string;
-  company?: string;
-  location?: string;
-  description?: string;
-  applyUrl?: string;
-  url?: string;
-  link?: string;
-  jobUrl?: string;
+  postedAt?: string;
+  postedAtTimestamp?: number;
+  postedDate?: string;
 };
 
 const IRRELEVANT_ROLE_PATTERN =
@@ -63,22 +55,127 @@ const NON_TECH_WHEN_TECH_SEARCH =
 const TECH_SEARCH_PATTERN =
   /\b(engineer|developer|devops|data|analyst|software|frontend|backend|full.?stack|sre|machine learning|ml|ai|qa|tester|programmer|architect)\b/i;
 
+function normalizeSearchFragment(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : null;
+}
+
+function fragmentIncludedIn(base: string, fragment: string): boolean {
+  return base.toLowerCase().includes(fragment.toLowerCase());
+}
+
+export function parseKeywordFilterTokens(input: string): string[] {
+  return input
+    .split(/[,;\n]+/)
+    .flatMap((part) => part.trim().split(/\s+/))
+    .map((token) => token.trim().toLowerCase())
+    .filter((token) => token.length > 1);
+}
+
+export function jobMatchesKeywordFilter(
+  job: {
+    role: string;
+    company: string;
+    location?: string | null;
+    jdText?: string | null;
+  },
+  keywordsInput: string,
+): boolean {
+  const tokens = parseKeywordFilterTokens(keywordsInput);
+  if (tokens.length === 0) {
+    return true;
+  }
+
+  const haystack = [job.role, job.company, job.location ?? "", job.jdText ?? ""]
+    .join(" ")
+    .toLowerCase();
+
+  return tokens.some((token) => haystack.includes(token));
+}
+
+/** Builds the job-board query from role, interest keywords, and experience (manager scrape). */
+export function composeJobSearchPosition(input: {
+  interestedRole?: string | null;
+  interestedTechnology?: string | null;
+  branch?: string | null;
+  graduationDetails?: string | null;
+  careerGoals?: string | null;
+  specialization?: string | null;
+  profileEducation?: string | null;
+  experienceYears?: number | null;
+  searchKeywords?: string | null;
+}): string {
+  const primaryRole =
+    normalizeSearchFragment(input.interestedRole) ||
+    normalizeSearchFragment(input.interestedTechnology) ||
+    normalizeSearchFragment(input.specialization) ||
+    normalizeSearchFragment(input.branch) ||
+    normalizeSearchFragment(input.graduationDetails)?.slice(0, 80) ||
+    normalizeSearchFragment(input.careerGoals)?.slice(0, 80) ||
+    "software engineer";
+
+  const supplements: string[] = [];
+  for (const fragment of [
+    input.interestedTechnology,
+    input.branch,
+    input.specialization,
+    input.profileEducation,
+  ]) {
+    const normalized = normalizeSearchFragment(fragment);
+    if (normalized && !fragmentIncludedIn(primaryRole, normalized)) {
+      supplements.push(normalized.split(/\s+/).slice(0, 5).join(" "));
+    }
+  }
+
+  if (input.searchKeywords?.trim()) {
+    for (const token of parseKeywordFilterTokens(input.searchKeywords)) {
+      if (!fragmentIncludedIn(primaryRole, token)) {
+        supplements.push(token);
+      }
+    }
+  }
+
+  const experienceParts: string[] = [];
+  if (input.experienceYears !== null && input.experienceYears !== undefined) {
+    if (input.experienceYears === 0) {
+      experienceParts.push("entry level");
+    } else {
+      experienceParts.push(
+        input.experienceYears === 1 ? "1 year" : `${input.experienceYears} years`,
+      );
+    }
+
+    const hint = experienceYearsSearchHint(input.experienceYears);
+    if (hint) {
+      experienceParts.push(hint.split(/\s+/).slice(0, 2).join(" "));
+    }
+  }
+
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const part of [primaryRole, ...supplements, ...experienceParts]) {
+    const key = part.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(part);
+    }
+  }
+
+  return unique.join(" ").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
 export function buildJobSearchFromInterests(input: {
   interestedTechnology?: string | null;
   branch?: string | null;
   graduationDetails?: string | null;
   careerGoals?: string | null;
   experienceYears?: number | null;
+  interestedRole?: string | null;
+  specialization?: string | null;
+  profileEducation?: string | null;
 }): { position: string; location: string } {
-  const position =
-    input.interestedTechnology?.trim() ||
-    input.branch?.trim() ||
-    input.graduationDetails?.trim() ||
-    input.careerGoals?.trim()?.slice(0, 100) ||
-    "software engineer";
-
   return {
-    position,
+    position: composeJobSearchPosition(input),
     location: "United States",
   };
 }
@@ -91,10 +188,6 @@ function truncate(text: string, max = 1500): string {
     return cleaned;
   }
   return `${cleaned.slice(0, max - 1)}…`;
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function isIrrelevantListing(role: string, searchPosition: string): boolean {
@@ -175,6 +268,7 @@ function normalizeIndeedJob(raw: ApifyIndeedJob): JobListing | null {
     location: raw.location?.trim() || "United States",
     jdText: truncate(raw.description ?? ""),
     source: "indeed",
+    postedAt: extractJobPostedDate(raw as Record<string, unknown>),
   };
 }
 
@@ -196,31 +290,7 @@ function normalizeLinkedInJob(raw: ApifyLinkedInJob): JobListing | null {
     location: raw.location?.trim() || "United States",
     jdText: truncate(description),
     source: "linkedin",
-  };
-}
-
-function normalizeGoogleJob(raw: ApifyGoogleJob): JobListing | null {
-  const role = raw.title?.trim();
-  const jobUrl =
-    raw.applyUrl?.trim() ||
-    raw.url?.trim() ||
-    raw.link?.trim() ||
-    raw.jobUrl?.trim();
-  const company = raw.companyName?.trim() || raw.company?.trim() || "Unknown company";
-
-  if (!role || !jobUrl) {
-    return null;
-  }
-
-  const description = raw.description ? stripHtml(raw.description) : "";
-
-  return {
-    company,
-    role,
-    jobUrl,
-    location: raw.location?.trim() || "United States",
-    jdText: truncate(description),
-    source: "google_jobs",
+    postedAt: extractJobPostedDate(raw as Record<string, unknown>),
   };
 }
 
@@ -316,45 +386,6 @@ export async function searchLinkedInJobs(input: {
   return { jobs };
 }
 
-export async function searchGoogleJobs(input: {
-  position: string;
-  location?: string;
-  maxItems?: number;
-}): Promise<{ jobs: JobListing[] } | { error: string }> {
-  const location = input.location ?? "United States";
-
-  const result = await runApifyActor<ApifyGoogleJob>(
-    APIFY_GOOGLE_JOBS_ACTOR_ID,
-    {
-      queries: [input.position],
-      location,
-      maxResults: input.maxItems ?? 20,
-      country: "us",
-      language: "en",
-    },
-    240,
-  );
-
-  if ("error" in result) {
-    return { error: result.error };
-  }
-
-  const jobs = filterRelevantJobs(
-    dedupeJobs(
-      result.items
-        .map((item) => normalizeGoogleJob(item))
-        .filter((job): job is JobListing => job !== null),
-    ),
-    input.position,
-  ).slice(0, input.maxItems ?? 20);
-
-  if (jobs.length === 0) {
-    return { error: "Google Jobs returned no relevant jobs for this search." };
-  }
-
-  return { jobs };
-}
-
 export async function searchJobsBySources(input: {
   position: string;
   location?: string;
@@ -392,23 +423,47 @@ export async function searchJobsBySources(input: {
     }
   }
 
-  if (input.sources.includes("google_jobs")) {
-    const googleJobs = await searchGoogleJobs({
-      position: input.position,
-      location,
-      maxItems,
-    });
-    if ("error" in googleJobs) {
-      errors.push(`Google Jobs: ${googleJobs.error}`);
-    } else {
-      jobs.push(...googleJobs.jobs);
-    }
-  }
-
   return { jobs: dedupeJobs(jobs), errors };
 }
 
 export type ResolvedJobSource = JobMarketSource | "unknown";
+
+export type JobListingSourceFilter = JobMarketSource | "all" | "other";
+
+const NON_US_LOCATION_PATTERN =
+  /\b(india|united kingdom|\buk\b|canada|germany|australia|europe|singapore|mexico|ireland|france|spain|italy|netherlands|brazil|japan|china|philippines|pakistan|dubai|uae|remote\s*-\s*(?!us|usa|united states))\b/i;
+
+/** Best-effort check that a listing is US-focused (Jobilly default market). */
+export function isUsaJobLocation(location: string | null | undefined): boolean {
+  const loc = (location ?? "United States").trim().toLowerCase();
+  if (!loc) {
+    return true;
+  }
+
+  if (NON_US_LOCATION_PATTERN.test(loc)) {
+    return false;
+  }
+
+  if (
+    loc.includes("united states") ||
+    loc === "us" ||
+    loc.includes(" usa") ||
+    loc.startsWith("usa,") ||
+    loc.includes("u.s.")
+  ) {
+    return true;
+  }
+
+  if (/\b(remote|hybrid|on-site|onsite)\b/.test(loc)) {
+    return true;
+  }
+
+  if (/, [A-Z]{2}\b/.test(location ?? "")) {
+    return true;
+  }
+
+  return loc.includes("united states") || loc === "united states";
+}
 
 export function resolveJobSource(
   sourceValue: string | null | undefined,
@@ -417,62 +472,106 @@ export function resolveJobSource(
   const source = (sourceValue ?? "").toLowerCase();
   const url = jobUrl.toLowerCase();
 
-  if (
-    source.includes("google") ||
-    url.includes("google.com") ||
-    url.includes("careers.google")
-  ) {
-    return "google_jobs";
-  }
   if (source.includes("linkedin") || url.includes("linkedin.com")) {
     return "linkedin";
   }
   if (source.includes("indeed") || url.includes("indeed.com")) {
     return "indeed";
   }
-
   return "unknown";
+}
+
+function hostnameSourceLabel(jobUrl: string): string {
+  try {
+    const host = new URL(jobUrl).hostname.replace(/^www\./, "");
+    const segment = host.split(".")[0] ?? host;
+    if (!segment || segment === "com") {
+      return "Other";
+    }
+    return segment.charAt(0).toUpperCase() + segment.slice(1);
+  } catch {
+    return "Other";
+  }
 }
 
 export function formatJobSourceLabel(
   source: JobMarketSource | string,
   jobUrl?: string,
 ): string {
-  const resolved = jobUrl ? resolveJobSource(source, jobUrl) : null;
+  const normalized = source.toLowerCase();
+  const url = jobUrl?.toLowerCase() ?? "";
 
-  if (resolved === "google_jobs" || source.toLowerCase().includes("google")) {
-    return "Google Jobs";
-  }
-  if (resolved === "linkedin" || source.toLowerCase().includes("linkedin")) {
+  if (normalized.includes("linkedin") || url.includes("linkedin.com")) {
     return "LinkedIn";
   }
-  if (resolved === "indeed" || source.toLowerCase().includes("indeed")) {
+  if (normalized.includes("indeed") || url.includes("indeed.com")) {
     return "Indeed";
   }
-  if (source.toLowerCase().includes("remotive")) {
+  if (normalized.includes("google")) {
+    return "Google Jobs";
+  }
+  if (normalized.includes("jobright") || url.includes("jobright.ai")) {
+    return "Jobright";
+  }
+  if (normalized.includes("remotive") || normalized.includes("apify")) {
     return "Legacy";
   }
-  if (source.toLowerCase().includes("apify")) {
-    return "Legacy";
+  if (jobUrl) {
+    return hostnameSourceLabel(jobUrl);
   }
-  return "Unknown";
+  if (source.trim()) {
+    return source.trim();
+  }
+  return "Other";
 }
 
 export function jobListingMatchesSource(
   sourceValue: string,
-  filter: JobMarketSource | "all",
+  filter: JobListingSourceFilter,
   jobUrl?: string,
+  location?: string | null,
 ): boolean {
   if (filter === "all") {
     return true;
   }
 
+  const resolved = jobUrl
+    ? resolveJobSource(sourceValue, jobUrl)
+    : resolveJobSource(sourceValue, "");
+
+  if (filter === "other") {
+    return resolved === "unknown" && isUsaJobLocation(location);
+  }
+
   if (jobUrl) {
-    return resolveJobSource(sourceValue, jobUrl) === filter;
+    return resolved === filter;
   }
 
   const normalized = sourceValue.toLowerCase().replace(/\s+/g, "_");
   return normalized.includes(filter);
+}
+
+export function countJobsBySource(
+  jobs: Array<{ source: string; jobUrl: string; location?: string | null }>,
+): {
+  indeed: number;
+  linkedin: number;
+  other: number;
+} {
+  const counts = { indeed: 0, linkedin: 0, other: 0 };
+
+  for (const job of jobs) {
+    const resolved = resolveJobSource(job.source, job.jobUrl);
+    if (resolved === "linkedin") {
+      counts.linkedin += 1;
+    } else if (resolved === "indeed") {
+      counts.indeed += 1;
+    } else if (isUsaJobLocation(job.location)) {
+      counts.other += 1;
+    }
+  }
+
+  return counts;
 }
 
 export async function searchJobsWithApify(input: {
@@ -491,7 +590,7 @@ export async function searchJobsWithApify(input: {
     return {
       error:
         result.errors.join(" ") ||
-        "No jobs found on Indeed, LinkedIn, or Google Jobs.",
+        "No jobs found on Indeed or LinkedIn.",
     };
   }
 

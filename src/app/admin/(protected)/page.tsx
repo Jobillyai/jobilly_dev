@@ -8,6 +8,7 @@ import { ManagerTeamOverview } from "@/components/admin/manager-team-overview";
 import {
   getAdminUser,
   staffCanScrapeJobs,
+  staffIsManager,
   toStaffContext,
 } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
@@ -23,7 +24,7 @@ export default async function AdminDashboardPage() {
   }
 
   const staff = toStaffContext(admin);
-  const isManager = staffCanScrapeJobs(staff);
+  const isManager = staffIsManager(staff);
   const { stats, recentCandidates, recentSubmissions, upcomingMeetings, mentorActivity } =
     await getAdminDashboardOverview(staff);
 
@@ -78,8 +79,8 @@ export default async function AdminDashboardPage() {
               </>
             ) : null}{" "}
             {isManager
-              ? "Full access — monitor all mentors, candidates, job scraping, and applications across the team."
-              : "Track your assigned candidates, shortlist roles, and submit applications."}
+              ? "Full access — monitor mentors, candidates, and applications across the team."
+              : "Search jobs for your assigned candidates (once every 3 hours per role), shortlist roles, and submit applications."}
           </p>
         </div>
 

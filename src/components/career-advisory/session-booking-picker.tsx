@@ -10,9 +10,10 @@ import styles from "./career-advisory-form.module.css";
 
 type SessionBookingPickerProps = {
   error?: string;
+  defaultValue?: string;
 };
 
-export function SessionBookingPicker({ error }: SessionBookingPickerProps) {
+export function SessionBookingPicker({ error, defaultValue }: SessionBookingPickerProps) {
   const { min, max } = useMemo(() => getBookingWindow(), []);
 
   return (
@@ -31,6 +32,7 @@ export function SessionBookingPicker({ error }: SessionBookingPickerProps) {
         required
         min={formatDateTimeLocalValue(min)}
         max={formatDateTimeLocalValue(max)}
+        defaultValue={defaultValue}
         className={`${styles.dateTimeInput} ${
           error ? styles.dateTimeInputError : ""
         }`}

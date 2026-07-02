@@ -1,36 +1,17 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ManagerCandidateScrapePanel } from "@/components/admin/manager-candidate-scrape-panel";
 import {
   getAdminUser,
   staffCanScrapeJobs,
+  staffIsManager,
   toStaffContext,
 } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { formatExperienceYears } from "@/lib/format-experience-years";
 import { getAdminCandidates } from "@/server/services/admin-dashboard";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
-import { getLastJobScrapeRun } from "@/server/services/bulk-job-scrape";
 import { createClient } from "@/server/db/supabase-server";
 import styles from "../../admin.module.css";
-
-function formatRunLabel(
-  run: Awaited<ReturnType<typeof getLastJobScrapeRun>>,
-): string | null {
-  if (!run) {
-    return null;
-  }
-
-  const started = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(run.startedAt));
-
-  return `${started} (${run.triggerType}) — ${run.newJobsAdded} new jobs across ${run.candidatesProcessed} candidates`;
-}
 
 export default async function AdminJobsPage() {
   const admin = await getAdminUser();
@@ -40,9 +21,9 @@ export default async function AdminJobsPage() {
   }
 
   const staff = toStaffContext(admin);
+  const isManager = staffIsManager(staff);
   const canScrape = staffCanScrapeJobs(staff);
   const candidates = await getAdminCandidates(staff);
-  const lastRun = canScrape ? await getLastJobScrapeRun() : null;
 
   const supabase = await createClient();
   const { data: scrapedRows } = await supabase
@@ -73,54 +54,39 @@ export default async function AdminJobsPage() {
     appliedJobs: counts.get(candidate.id)?.applied ?? 0,
   }));
 
-  const managerRows = [...candidates]
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-    .map((candidate) => {
-      const displayName = candidate.name
-        ? formatDisplayName(candidate.name)
-        : formatDisplayName(candidate.email.split("@")[0] ?? candidate.email);
-
-      return {
-        id: candidate.id,
-        displayName,
-        email: candidate.email,
-        defaultRole: resolveCandidateJobRole(candidate) ?? "",
-        savedRole: candidate.jobSearchRole ?? "",
-        defaultExperienceYears: candidate.experienceYears,
-        savedExperienceYears: candidate.experienceYears,
-        totalJobs: counts.get(candidate.id)?.total ?? 0,
-      };
-    });
-
   return (
     <div className={styles.adminPage}>
       <main className={styles.main}>
         <div className={styles.header}>
           <h1 className={styles.title}>
-            Job <em className={styles.titleEm}>scraping</em>
+            Job <em className={styles.titleEm}>listings</em>
           </h1>
           <p className={styles.subtitle}>
             {canScrape
-              ? "As manager, scrape Indeed, LinkedIn, and Google Jobs for all candidates every 3 hours. Mentors see these listings when they log in."
-              : "Review jobs scraped by the manager for your assigned candidates, then mark applications."}
+              ? "Search Indeed and LinkedIn for your assigned candidates from each job sheet. Each role can be searched once every 3 hours to control API billing."
+              : isManager
+                ? "Review scraped jobs across candidates. Job searches are run by assigned admins from each candidate sheet."
+                : "Review stored jobs for your assigned candidates, then mark applications."}
           </p>
         </div>
 
         {canScrape ? (
-          <ManagerCandidateScrapePanel
-            candidates={managerRows}
-            lastRunLabel={formatRunLabel(lastRun)}
-          />
+          <div className={styles.section}>
+            <p className={styles.subtitle}>
+              Open a candidate&apos;s job sheet below to search. Bulk scraping all candidates is
+              disabled.
+            </p>
+          </div>
         ) : null}
 
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>
-            {canScrape ? "All candidates" : "Your candidates"} ({candidates.length})
+            {isManager ? "All candidates" : "Your assigned candidates"} ({candidates.length})
           </h2>
           {candidates.length === 0 ? (
             <div className={styles.emptyState}>
-              {canScrape
-                ? "No candidates to manage yet."
+              {isManager
+                ? "No candidates yet."
                 : "No candidates assigned to you yet."}
             </div>
           ) : (

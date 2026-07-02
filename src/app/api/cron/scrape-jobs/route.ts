@@ -1,8 +1,4 @@
 import { NextResponse } from "next/server";
-import {
-  resolveManagerUserIdForCron,
-  scrapeAllCandidateJobs,
-} from "@/server/services/bulk-job-scrape";
 
 export const maxDuration = 300;
 
@@ -14,18 +10,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const managerUserId = await resolveManagerUserIdForCron();
-  if (!managerUserId) {
-    return NextResponse.json(
-      { error: "No manager account configured for job scraping." },
-      { status: 503 },
-    );
-  }
-
-  const result = await scrapeAllCandidateJobs(managerUserId, "cron");
-
   return NextResponse.json({
     ok: true,
-    ...result,
+    skipped: true,
+    reason:
+      "Automatic bulk scraping is disabled. Assigned admins search jobs from each candidate sheet (3-hour limit per role).",
   });
 }

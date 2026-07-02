@@ -5,6 +5,8 @@ import { getCareerAdvisoryIntakeForCandidate } from "@/server/services/career-ad
 import authStyles from "@/components/auth/auth-page.module.css";
 import formStyles from "@/components/career-advisory/career-advisory-form.module.css";
 
+export const dynamic = "force-dynamic";
+
 export default async function CareerAdvisoryPage() {
   const profile = await getUserProfile();
 

@@ -5,8 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   Calendar,
   Compass,
-  FileText,
-  Search,
   Briefcase,
   LayoutDashboard,
   LogOut,
@@ -30,18 +28,6 @@ const navItems = [
     href: "/dashboard/career-advisory" as const,
     label: "Career Advisory",
     icon: Compass,
-    exact: false,
-  },
-  {
-    href: "/dashboard/ats-resume-score" as const,
-    label: "ATS Score",
-    icon: FileText,
-    exact: false,
-  },
-  {
-    href: "/dashboard/jobs" as const,
-    label: "Matched roles",
-    icon: Search,
     exact: false,
   },
   {

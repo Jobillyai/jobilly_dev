@@ -18,8 +18,8 @@ const quickActions = [
   },
   {
     href: "/admin/jobs",
-    label: "Job scraping",
-    description: "Scrape and apply jobs for candidates in Excel view.",
+    label: "Job listings",
+    description: "Search and apply for assigned candidates (3-hour limit).",
     icon: Briefcase,
   },
   {

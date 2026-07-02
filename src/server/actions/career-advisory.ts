@@ -7,6 +7,7 @@ import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { sendCareerAdvisoryMeetInvite } from "@/server/services/send-career-advisory-invite";
 import { ensurePublicUserRecord } from "@/server/services/ensure-public-user";
+import type { CandidateCareerAdvisoryIntake } from "@/server/services/career-advisory-intake";
 import {
   parseSessionScheduledInput,
   validateSessionBookingTime,
@@ -42,6 +43,7 @@ export type CareerAdvisoryState = {
   success?: boolean;
   inviteEmailSent?: boolean;
   sessionScheduledAt?: string;
+  submittedIntake?: CandidateCareerAdvisoryIntake;
   error?: string;
   fieldErrors?: Partial<
     Record<
@@ -58,6 +60,36 @@ export type CareerAdvisoryState = {
     >
   >;
 };
+
+function buildSubmittedIntake(input: {
+  fullName: string;
+  email: string;
+  phone: string;
+  graduationDetails: string;
+  branch: string;
+  isVeteran: boolean;
+  interestedTechnology: string;
+  sessionScheduledAt: string;
+  inviteSentAt: string | null;
+  googleMeetLink: string | null;
+  bookedAt: string;
+  updatedAt: string;
+}): CandidateCareerAdvisoryIntake {
+  return {
+    name: input.fullName,
+    email: input.email,
+    phone: input.phone,
+    graduationDetails: input.graduationDetails,
+    branch: input.branch,
+    isVeteran: input.isVeteran,
+    interestedTechnology: input.interestedTechnology,
+    sessionScheduledAt: input.sessionScheduledAt,
+    inviteSentAt: input.inviteSentAt,
+    googleMeetLink: input.googleMeetLink,
+    bookedAt: input.bookedAt,
+    updatedAt: input.updatedAt,
+  };
+}
 
 export async function submitCareerAdvisoryAction(
   _prevState: CareerAdvisoryState,
@@ -148,7 +180,9 @@ export async function submitCareerAdvisoryAction(
   const { data, error } = await admin
     .from("career_advisory_intakes")
     .upsert(intakePayload, { onConflict: "candidate_id" })
-    .select("id")
+    .select(
+      "name, email, phone, graduation_details, branch, is_veteran, interested_technology, invite_sent_at, session_scheduled_at, google_meet_link, created_at, updated_at",
+    )
     .single();
 
   if (error) {
@@ -166,6 +200,20 @@ export async function submitCareerAdvisoryAction(
     return { error: "Could not save your details. Please try again." };
   }
 
+  let sessionScheduledAt = sessionStart.toISOString();
+  let inviteSentAt: string | null = null;
+  let googleMeetLink: string | null = null;
+  let bookedAt = new Date().toISOString();
+  let updatedAt = bookedAt;
+
+  if (data) {
+    bookedAt = data.created_at;
+    updatedAt = data.updated_at;
+    sessionScheduledAt = data.session_scheduled_at ?? sessionScheduledAt;
+    inviteSentAt = data.invite_sent_at;
+    googleMeetLink = data.google_meet_link;
+  }
+
   const inviteResult = await sendCareerAdvisoryMeetInvite({
     candidateId: authData.user.id,
     candidateName: fullName,
@@ -178,28 +226,51 @@ export async function submitCareerAdvisoryAction(
   });
 
   if (inviteResult.sent) {
+    inviteSentAt = new Date().toISOString();
+    sessionScheduledAt = inviteResult.sessionScheduledAt;
+    googleMeetLink = inviteResult.meetUrl;
+    updatedAt = inviteSentAt;
+
     await admin
       .from("career_advisory_intakes")
       .update({
         google_meet_link: inviteResult.meetUrl,
         session_scheduled_at: inviteResult.sessionScheduledAt,
-        invite_sent_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        invite_sent_at: inviteSentAt,
+        updated_at: updatedAt,
       })
       .eq("candidate_id", authData.user.id);
   }
+
+  const submittedIntake = buildSubmittedIntake({
+    fullName,
+    email: parsed.data.email,
+    phone: parsed.data.phone,
+    graduationDetails: parsed.data.graduationDetails,
+    branch: parsed.data.branch,
+    isVeteran: parsed.data.isVeteran === "yes",
+    interestedTechnology: parsed.data.interestedTechnology,
+    sessionScheduledAt,
+    inviteSentAt,
+    googleMeetLink,
+    bookedAt,
+    updatedAt,
+  });
 
   revalidatePath("/admin");
   revalidatePath("/admin/candidates");
   revalidatePath("/admin/calendar");
   revalidatePath("/admin/tasks");
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/calendar");
+  revalidatePath("/dashboard/career-advisory");
 
   if ("skipped" in inviteResult && inviteResult.skipped) {
     return {
       success: true,
       inviteEmailSent: false,
-      sessionScheduledAt: sessionStart.toISOString(),
+      sessionScheduledAt,
+      submittedIntake,
     };
   }
 
@@ -211,7 +282,8 @@ export async function submitCareerAdvisoryAction(
     return {
       success: true,
       inviteEmailSent: false,
-      sessionScheduledAt: sessionStart.toISOString(),
+      sessionScheduledAt,
+      submittedIntake,
       error: inviteError,
     };
   }
@@ -219,6 +291,7 @@ export async function submitCareerAdvisoryAction(
   return {
     success: true,
     inviteEmailSent: true,
-    sessionScheduledAt: inviteResult.sessionScheduledAt,
+    sessionScheduledAt,
+    submittedIntake,
   };
 }

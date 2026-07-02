@@ -26,6 +26,9 @@ import {
   formatSearchRoleLabel,
   type RoleScrapeCacheStatus,
 } from "@/server/services/job-role-cache";
+import { createSignedResumeUrl } from "@/server/services/resume-ats-check";
+
+export type JobListingViewMode = "pipeline" | "applied";
 
 export type CandidateJobListing = {
   id: string;
@@ -40,8 +43,11 @@ export type CandidateJobListing = {
   applied: boolean;
   appliedAt: string | null;
   scrapedAt: string;
+  postedAt: string | null;
   source: string;
   searchRole: string;
+  applicationResumeFileName: string | null;
+  applicationResumeDownloadUrl: string | null;
 };
 
 export type CandidateAppliedJob = {
@@ -55,6 +61,8 @@ export type CandidateAppliedJob = {
   source: string;
   preparationTips: string[];
   isNew: boolean;
+  applicationResumeFileName: string | null;
+  applicationResumeDownloadUrl: string | null;
 };
 
 type ScrapedJobRow = {
@@ -68,15 +76,18 @@ type ScrapedJobRow = {
   applied: boolean;
   applied_at: string | null;
   scraped_at: string;
+  posted_at: string | null;
   location: string | null;
   source: string | null;
   search_role: string;
   preparation_tips: string | null;
   candidate_viewed_at: string | null;
+  application_resume_path: string | null;
+  application_resume_file_name: string | null;
 };
 
 const JOB_SELECT =
-  "id, company, role, job_url, jd_text, relevance_score, selected, applied, applied_at, scraped_at, location, source, search_role, preparation_tips, candidate_viewed_at";
+  "id, company, role, job_url, jd_text, relevance_score, selected, applied, applied_at, scraped_at, posted_at, location, source, search_role, preparation_tips, candidate_viewed_at, application_resume_path, application_resume_file_name";
 
 type AppSupabase = SupabaseClient<Database>;
 
@@ -99,9 +110,31 @@ function mapDbRow(row: ScrapedJobRow): CandidateJobListing {
     applied: row.applied,
     appliedAt: row.applied_at,
     scrapedAt: row.scraped_at,
+    postedAt: row.posted_at,
     source: row.source ?? "Indeed",
     searchRole: row.search_role,
+    applicationResumeFileName: row.application_resume_file_name,
+    applicationResumeDownloadUrl: null,
   };
+}
+
+async function attachApplicationResumeUrls(
+  rows: ScrapedJobRow[],
+): Promise<CandidateJobListing[]> {
+  return Promise.all(
+    rows.map(async (row) => {
+      const listing = mapDbRow(row);
+      if (!row.application_resume_path) {
+        return listing;
+      }
+
+      const downloadUrl = await createSignedResumeUrl(row.application_resume_path);
+      return {
+        ...listing,
+        applicationResumeDownloadUrl: downloadUrl,
+      };
+    }),
+  );
 }
 
 async function getRoleScrapeCache(
@@ -179,9 +212,16 @@ async function appendJobsForRole(
   const supabase = await resolveDb(db);
   const scrapedAt = new Date().toISOString();
   const existingUrls = await getExistingJobUrlsForRole(candidateId, searchRole, db);
+  const batchUrls = new Set<string>();
 
   const rows = jobs
-    .filter((job) => !existingUrls.has(job.jobUrl))
+    .filter((job) => {
+      if (existingUrls.has(job.jobUrl) || batchUrls.has(job.jobUrl)) {
+        return false;
+      }
+      batchUrls.add(job.jobUrl);
+      return true;
+    })
     .map((job) => ({
       candidate_id: candidateId,
       employee_id: adminUserId,
@@ -197,13 +237,17 @@ async function appendJobsForRole(
       applied: false,
       applied_at: null,
       scraped_at: scrapedAt,
+      posted_at: job.postedAt,
     }));
 
   if (rows.length === 0) {
     return { inserted: 0 };
   }
 
-  const { error } = await supabase.from("scraped_jobs").insert(rows);
+  const { error } = await supabase.from("scraped_jobs").upsert(rows, {
+    onConflict: "candidate_id,search_role,job_url",
+    ignoreDuplicates: true,
+  });
 
   if (error) {
     return { inserted: 0, error: error.message };
@@ -222,14 +266,23 @@ export type PreviousSearchRole = {
 export async function getCandidateJobListings(
   candidateId: string,
   searchRole?: string | null,
-  options?: { exactRoleOnly?: boolean },
+  options?: {
+    exactRoleOnly?: boolean;
+    viewMode?: JobListingViewMode;
+  },
 ): Promise<CandidateJobListing[]> {
   const supabase = await createClient();
-  let query = supabase
-    .from("scraped_jobs")
-    .select(JOB_SELECT)
-    .eq("candidate_id", candidateId)
-    .order("relevance_score", { ascending: false });
+  const viewMode = options?.viewMode ?? "pipeline";
+  let query = supabase.from("scraped_jobs").select(JOB_SELECT).eq("candidate_id", candidateId);
+
+  if (viewMode === "pipeline") {
+    query = query
+      .eq("applied", false)
+      .order("scraped_at", { ascending: false })
+      .order("relevance_score", { ascending: false });
+  } else {
+    query = query.eq("applied", true).order("applied_at", { ascending: false });
+  }
 
   const normalizedRole = searchRole ? normalizeSearchRole(searchRole) : null;
   if (normalizedRole) {
@@ -246,7 +299,31 @@ export async function getCandidateJobListings(
     return [];
   }
 
-  return (data as ScrapedJobRow[]).map(mapDbRow);
+  return attachApplicationResumeUrls(data as ScrapedJobRow[]);
+}
+
+export async function getCandidateAppliedJobCount(
+  candidateId: string,
+): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("scraped_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("candidate_id", candidateId)
+    .eq("applied", true);
+
+  if (error) {
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
+export async function getCandidateAppliedJobListings(
+  candidateId: string,
+  searchRole?: string | null,
+): Promise<CandidateJobListing[]> {
+  return getCandidateJobListings(candidateId, searchRole, { viewMode: "applied" });
 }
 
 export async function getCandidatePreviousSearches(
@@ -293,6 +370,7 @@ export async function getCandidatePreviousSearches(
 export async function loadCandidateJobsForStoredRole(
   candidateId: string,
   storedSearchRole: string,
+  viewMode: JobListingViewMode = "pipeline",
 ): Promise<{
   jobs: CandidateJobListing[];
   searchRole: string;
@@ -301,7 +379,10 @@ export async function loadCandidateJobsForStoredRole(
 }> {
   const searchRole = normalizeSearchRole(storedSearchRole);
   const [jobs, cacheStatus] = await Promise.all([
-    getCandidateJobListings(candidateId, searchRole, { exactRoleOnly: true }),
+    getCandidateJobListings(candidateId, searchRole, {
+      exactRoleOnly: true,
+      viewMode,
+    }),
     getRoleScrapeCache(candidateId, searchRole, [...JOB_MARKET_SOURCES]),
   ]);
 
@@ -328,13 +409,19 @@ export async function getCandidateAppliedJobs(
     return [];
   }
 
-  return (data as ScrapedJobRow[])
-    .filter((row) => row.applied_at)
-    .map((row) => mapAppliedJobRow(row));
+  return Promise.all(
+    (data as ScrapedJobRow[])
+      .filter((row) => row.applied_at)
+      .map((row) => mapAppliedJobRow(row)),
+  );
 }
 
-function mapAppliedJobRow(row: ScrapedJobRow): CandidateAppliedJob {
+async function mapAppliedJobRow(row: ScrapedJobRow): Promise<CandidateAppliedJob> {
   const tips = parsePreparationTips(row.preparation_tips);
+  const downloadUrl = row.application_resume_path
+    ? await createSignedResumeUrl(row.application_resume_path)
+    : null;
+
   return {
     id: row.id,
     company: row.company,
@@ -353,6 +440,8 @@ function mapAppliedJobRow(row: ScrapedJobRow): CandidateAppliedJob {
             jdText: row.jd_text,
           }),
     isNew: row.applied && !row.candidate_viewed_at,
+    applicationResumeFileName: row.application_resume_file_name,
+    applicationResumeDownloadUrl: downloadUrl,
   };
 }
 
@@ -385,6 +474,7 @@ export async function markAppliedJobsAsViewed(candidateId: string): Promise<void
 export async function loadCandidateJobsForRole(
   candidateId: string,
   interestedRole: string,
+  viewMode: JobListingViewMode = "pipeline",
 ): Promise<{
   jobs: CandidateJobListing[];
   searchRole: string;
@@ -392,7 +482,7 @@ export async function loadCandidateJobsForRole(
 }> {
   const searchRole = normalizeSearchRole(interestedRole);
   const [jobs, cacheStatus] = await Promise.all([
-    getCandidateJobListings(candidateId, searchRole),
+    getCandidateJobListings(candidateId, searchRole, { viewMode }),
     getRoleScrapeCache(candidateId, searchRole, [...JOB_MARKET_SOURCES]),
   ]);
 
@@ -404,7 +494,12 @@ export async function refreshCandidateJobListings(
   adminUserId: string,
   sources: JobMarketSource[] = [...JOB_MARKET_SOURCES],
   interestedRole?: string | null,
-  options?: { allowScrape?: boolean; db?: AppSupabase; forceScrape?: boolean },
+  options?: {
+    allowScrape?: boolean;
+    db?: AppSupabase;
+    forceScrape?: boolean;
+    searchKeywords?: string | null;
+  },
 ): Promise<{
   jobs: CandidateJobListing[];
   searchTerms: string[];
@@ -432,8 +527,17 @@ export async function refreshCandidateJobListings(
   }
 
   const searchRole = normalizeSearchRole(roleInput);
-  const searchTerms = buildCandidateSearchTerms(candidate, roleInput);
-  const { position, location } = buildCandidateJobSearchQuery(candidate, roleInput);
+  const searchKeywords = options?.searchKeywords?.trim() || null;
+  const searchTerms = buildCandidateSearchTerms(
+    candidate,
+    roleInput,
+    candidate.experienceYears,
+    searchKeywords,
+  );
+  const { position, location } = buildCandidateJobSearchQuery(candidate, roleInput, {
+    experienceYears: candidate.experienceYears,
+    searchKeywords,
+  });
   const searchQuery = `${position} · ${location}`;
 
   const allowScrape = options?.allowScrape ?? false;
@@ -444,6 +548,10 @@ export async function refreshCandidateJobListings(
   const sourcesToScrape = forceScrape
     ? sources
     : cacheStatus.filter((entry) => !entry.fresh).map((entry) => entry.source);
+
+  const existingJobCount = (
+    await getCandidateJobListings(candidate.id, searchRole)
+  ).length;
 
   const scrapeErrors: string[] = [];
   let newJobsAdded = 0;
@@ -457,6 +565,10 @@ export async function refreshCandidateJobListings(
         candidate,
         [source],
         roleInput,
+        {
+          experienceYears: candidate.experienceYears,
+          searchKeywords,
+        },
       );
       scrapeErrors.push(...scraped.errors);
 
@@ -512,14 +624,14 @@ export async function refreshCandidateJobListings(
       scrapeCalled: false,
       newJobsAdded: 0,
       info:
-        "No stored jobs for this role yet. The manager refreshes listings every 3 hours.",
+        "No stored jobs for this role yet. Search from the job sheet (once every 3 hours per role).",
     };
   }
 
   if (!allowScrape && sourcesToScrape.length > 0 && jobs.length > 0) {
     const info =
       describeCacheStatus(updatedCacheStatus, sources) ||
-      "Showing stored jobs from the manager's last scrape.";
+      "Showing stored jobs from the last search — new searches run once every 3 hours per role.";
     return {
       jobs,
       searchTerms,
@@ -565,7 +677,23 @@ export async function refreshCandidateJobListings(
 
   if (scrapeCalled && newJobsAdded === 0 && !warning) {
     warning =
-      "Job search completed but no new unique jobs were found for this role.";
+      existingJobCount > 0
+        ? `Job search completed but no new unique jobs were found — your ${existingJobCount} stored job${existingJobCount === 1 ? "" : "s"} for this role are unchanged.`
+        : "Job search completed but no new unique jobs were found for this role.";
+  }
+
+  if (scrapeCalled && newJobsAdded > 0 && existingJobCount > 0 && !info) {
+    return {
+      jobs,
+      searchTerms,
+      searchQuery,
+      searchRole,
+      cacheStatus: updatedCacheStatus,
+      scrapeCalled,
+      newJobsAdded,
+      info: `Appended ${newJobsAdded} new job${newJobsAdded === 1 ? "" : "s"} to ${existingJobCount} existing (${jobs.length} total for this role).`,
+      warning,
+    };
   }
 
   return {
@@ -642,9 +770,31 @@ export async function setCandidateJobApplied(
       applied_at: null,
       preparation_tips: null,
       candidate_viewed_at: null,
+      application_resume_path: null,
+      application_resume_file_name: null,
     })
     .eq("id", jobId)
     .eq("candidate_id", candidateId);
+
+  return !error;
+}
+
+export async function setAppliedJobResume(
+  jobId: string,
+  candidateId: string,
+  storagePath: string,
+  fileName: string,
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("scraped_jobs")
+    .update({
+      application_resume_path: storagePath,
+      application_resume_file_name: fileName,
+    })
+    .eq("id", jobId)
+    .eq("candidate_id", candidateId)
+    .eq("applied", true);
 
   return !error;
 }

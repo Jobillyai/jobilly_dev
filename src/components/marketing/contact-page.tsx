@@ -15,7 +15,15 @@ import styles from "./contact-page.module.css";
 
 const initialState: ContactFormState = {};
 
-export function ContactPage() {
+type ContactPageProps = {
+  backHref?: "/" | "/dashboard" | "/admin";
+  backLabel?: string;
+};
+
+export function ContactPage({
+  backHref = "/",
+  backLabel = "Back to home",
+}: ContactPageProps) {
   const [state, setState] = useState<ContactFormState>(initialState);
   const [pending, startTransition] = useTransition();
 
@@ -31,8 +39,8 @@ export function ContactPage() {
       <AbstractBackground className={styles.background} />
       <div className={styles.inner}>
         <div className={styles.header}>
-          <Link href="/" className={authStyles.backLink}>
-            ← Back to home
+          <Link href={backHref} className={authStyles.backLink}>
+            ← {backLabel}
           </Link>
           <h1 className={styles.title}>
             Contact <em className={styles.titleEm}>us</em>

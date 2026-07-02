@@ -11,6 +11,7 @@ import styles from "./navbar.module.css";
 
 type AppNavbarProps = {
   user: SessionUser | null;
+  homeHref?: "/" | "/dashboard" | "/admin";
 };
 
 function toSessionUser(authUser: User): SessionUser | null {
@@ -85,7 +86,7 @@ function GuestNavActions() {
   );
 }
 
-export function AppNavbar({ user: serverUser }: AppNavbarProps) {
+export function AppNavbar({ user: serverUser, homeHref = "/" }: AppNavbarProps) {
   const [user, setUser] = useState<SessionUser | null>(serverUser);
   const [scrolled, setScrolled] = useState(false);
 
@@ -127,7 +128,7 @@ export function AppNavbar({ user: serverUser }: AppNavbarProps) {
   return (
     <nav className={`${styles.nav} ${scrolled ? styles.navScrolled : ""}`}>
       <div className={styles.navLeft}>
-        <Link href={user ? "/dashboard" : "/"} className={styles.navLogo}>
+        <Link href={user ? homeHref : "/"} className={styles.navLogo}>
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
             <rect width="28" height="28" rx="8" fill="#1877F2" />
             <path
@@ -143,13 +144,13 @@ export function AppNavbar({ user: serverUser }: AppNavbarProps) {
             jobilly<span className={styles.navLogoTextDark}>.ai</span>
           </span>
         </Link>
-        <NavLinks />
+        {!user ? <NavLinks /> : null}
       </div>
 
       <div className={styles.navRight}>
         {user ? (
           <div className={styles.navActions}>
-            <Link href="/dashboard" className={styles.navBtnGhost}>
+            <Link href={homeHref === "/admin" ? "/admin" : "/dashboard"} className={styles.navBtnGhost}>
               Dashboard
             </Link>
             <UserMenu user={user} />

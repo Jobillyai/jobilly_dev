@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAdminUser, staffCanScrapeJobs } from "@/lib/auth/admin";
+import { getAdminUser, staffCanScrapeJobs, staffIsManager } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminTopNavbar } from "@/components/admin/admin-top-navbar";
@@ -18,7 +18,7 @@ export default async function ProtectedAdminLayout({
     redirect("/admin/login");
   }
 
-  const isManager = staffCanScrapeJobs({ userId: admin.id, role: admin.role });
+  const isManager = staffIsManager({ userId: admin.id, role: admin.role });
   const roleLabel = isManager ? "Manager" : "Admin";
   const displayName = admin.name ? formatDisplayName(admin.name) : null;
 

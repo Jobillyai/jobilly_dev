@@ -8,7 +8,6 @@ export const JOB_SCRAPE_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 const SOURCE_ERROR_PREFIX: Record<JobMarketSource, string> = {
   indeed: "Indeed:",
   linkedin: "LinkedIn:",
-  google_jobs: "Google Jobs:",
 };
 
 export function sourceScrapeHadError(
@@ -51,6 +50,88 @@ export function cacheExpiresAt(lastScrapedAt: string): string {
   ).toISOString();
 }
 
+export type JobFreshnessFilter =
+  | "all"
+  | "last_24h"
+  | "last_3d"
+  | "last_7d"
+  | "older";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function jobMatchesFreshnessFilter(
+  postedAt: string | null | undefined,
+  filter: JobFreshnessFilter,
+): boolean {
+  if (filter === "all") {
+    return true;
+  }
+
+  if (!postedAt) {
+    return false;
+  }
+
+  const postedMs = new Date(postedAt).getTime();
+  if (Number.isNaN(postedMs)) {
+    return false;
+  }
+
+  const ageMs = Date.now() - postedMs;
+  if (ageMs < 0) {
+    return false;
+  }
+
+  switch (filter) {
+    case "last_24h":
+      return ageMs < DAY_MS;
+    case "last_3d":
+      return ageMs < 3 * DAY_MS;
+    case "last_7d":
+      return ageMs < 7 * DAY_MS;
+    case "older":
+      return ageMs >= 7 * DAY_MS;
+    default:
+      return true;
+  }
+}
+
+export function formatJobFreshnessLabel(postedAt: string | null | undefined): string {
+  if (!postedAt) {
+    return "Unknown";
+  }
+
+  const postedMs = new Date(postedAt).getTime();
+  if (Number.isNaN(postedMs)) {
+    return "Unknown";
+  }
+
+  const ageMs = Date.now() - postedMs;
+  if (ageMs < 0) {
+    return "Unknown";
+  }
+
+  if (ageMs < DAY_MS) {
+    return "Today";
+  }
+  if (ageMs < 3 * DAY_MS) {
+    return "< 3d";
+  }
+  if (ageMs < 7 * DAY_MS) {
+    return "< 7d";
+  }
+  if (ageMs < 30 * DAY_MS) {
+    return "< 30d";
+  }
+  return "Older";
+}
+
+export function countJobsMatchingFreshnessFilter(
+  jobs: Array<{ postedAt: string | null }>,
+  filter: JobFreshnessFilter,
+): number {
+  return jobs.filter((job) => jobMatchesFreshnessFilter(job.postedAt, filter)).length;
+}
+
 export type RoleScrapeCacheStatus = {
   source: JobMarketSource;
   lastScrapedAt: string | null;
@@ -58,9 +139,6 @@ export type RoleScrapeCacheStatus = {
 };
 
 function formatSourceLabel(source: JobMarketSource): string {
-  if (source === "google_jobs") {
-    return "Google Jobs";
-  }
   return source.charAt(0).toUpperCase() + source.slice(1);
 }
 
@@ -76,15 +154,15 @@ export function describeCacheStatus(
     .map((entry) => formatSourceLabel(entry.source));
 
   if (freshSources.length === requestedSources.length) {
-    return "Showing jobs cached in the last 3 hours — no new scrape needed.";
+    return "Showing all stored jobs for this role — after 3 hours, a new search appends fresh listings.";
   }
 
   if (freshSources.length > 0 && scrapedSources.length > 0) {
-    return `Used cached ${freshSources.join(" & ")} results; fresh scrape for ${scrapedSources.join(" & ")}. New jobs were added to this role.`;
+    return `Used cached ${freshSources.join(" & ")} results; appended new jobs from ${scrapedSources.join(" & ")} to this role.`;
   }
 
   if (scrapedSources.length > 0) {
-    return `Fresh scrape — new unique jobs were added from ${scrapedSources.join(" & ")}.`;
+    return `Fresh scrape — new unique jobs were appended to stored jobs for this role from ${scrapedSources.join(" & ")}.`;
   }
 
   return "";

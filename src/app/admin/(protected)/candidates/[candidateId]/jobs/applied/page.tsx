@@ -12,23 +12,21 @@ import { formatExperienceYears } from "@/lib/format-experience-years";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import {
   getCandidateAppliedJobCount,
-  getCandidateJobListings,
+  getCandidateAppliedJobListings,
   getCandidatePreviousSearches,
 } from "@/server/services/candidate-jobs";
 import { getAdminCandidateById } from "@/server/services/admin-dashboard";
 import styles from "@/app/admin/admin.module.css";
 
-export const maxDuration = 300;
-
-type AdminCandidateJobsPageProps = {
+type AdminCandidateAppliedJobsPageProps = {
   params: {
     candidateId: string;
   };
 };
 
-export default async function AdminCandidateJobsPage({
+export default async function AdminCandidateAppliedJobsPage({
   params,
-}: AdminCandidateJobsPageProps) {
+}: AdminCandidateAppliedJobsPageProps) {
   const admin = await getAdminUser();
 
   if (!admin) {
@@ -43,9 +41,11 @@ export default async function AdminCandidateJobsPage({
   }
 
   const defaultInterestedRole = resolveCandidateJobRole(candidate) ?? "";
-
-  const jobs = await getCandidateJobListings(candidate.id, defaultInterestedRole);
-  const [previousSearches, appliedCount] = await Promise.all([
+  const [jobs, previousSearches, appliedCount] = await Promise.all([
+    getCandidateAppliedJobListings(
+      candidate.id,
+      null,
+    ),
     getCandidatePreviousSearches(candidate.id),
     getCandidateAppliedJobCount(candidate.id),
   ]);
@@ -63,30 +63,22 @@ export default async function AdminCandidateJobsPage({
 
         <div className={styles.header}>
           <h1 className={styles.title}>
-            {staffCanScrapeJobs(staff) ? "Job scraper" : "Job listings"} for{" "}
-            <em className={styles.titleEm}>{displayName}</em>
+            Applied jobs for <em className={styles.titleEm}>{displayName}</em>
           </h1>
           <p className={styles.subtitle}>
-            {staffCanScrapeJobs(staff)
-              ? "Search Indeed and LinkedIn for your assigned candidates (once every 3 hours per role)."
-              : "Review stored jobs for"}{" "}
-            {candidate.email}
-            {candidate.submission?.branch ? ` · ${candidate.submission.branch}` : ""}
-            {candidate.submission?.interestedTechnology
-              ? ` · ${candidate.submission.interestedTechnology}`
-              : ""}
+            Roles your team has submitted for {candidate.email}
             {defaultInterestedRole ? ` · Target role: ${defaultInterestedRole}` : ""}
             {candidate.experienceYears !== null
               ? ` · ${formatExperienceYears(candidate.experienceYears)} exp.`
               : ""}
-            {candidate.resumeUrl ? " · Resume on file" : ""}.
+            .
           </p>
         </div>
 
         <CandidateJobsNav
           candidateId={candidate.id}
           appliedCount={appliedCount}
-          active="pipeline"
+          active="applied"
         />
 
         <section className={styles.section}>
@@ -98,7 +90,7 @@ export default async function AdminCandidateJobsPage({
             initialJobs={jobs}
             initialPreviousSearches={previousSearches}
             canScrape={staffCanScrapeJobs(staff)}
-            viewMode="pipeline"
+            viewMode="applied"
             appliedCount={appliedCount}
           />
         </section>

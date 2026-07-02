@@ -135,19 +135,54 @@
   color: #1877f2;
 }
 
-.linkBtn {
+.cardActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px;
+}
+
+.mockBtn {
   display: inline-flex;
   align-items: center;
-  margin: 20px;
+  gap: 8px;
   padding: 10px 16px;
+  border: none;
   border-radius: 10px;
-  background: #1877f2;
+  background: #7c3aed;
   color: #ffffff;
   font-size: 13px;
+  font-weight: 700;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.mockBtn:disabled {
+  background: #9ca3af;
+}
+
+.mockHint {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.resumeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  color: #1d4ed8;
+  font-size: 14px;
   font-weight: 700;
   text-decoration: none;
 }
 
-.linkBtn:hover {
-  background: #0f5fd0;
+.resumeLink:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
 }

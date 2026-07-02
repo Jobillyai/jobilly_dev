@@ -9,7 +9,6 @@ import {
 import { parseExperienceYears } from "@/lib/format-experience-years";
 import { getAdminCandidateById } from "@/server/services/admin-dashboard";
 import {
-  scrapeAllCandidateJobs,
   scrapeSingleCandidateJobs,
   updateCandidateJobSearchRole,
   updateCandidateExperienceYears,
@@ -22,15 +21,23 @@ import {
 } from "@/server/services/job-market-search";
 import {
   getCandidatePreviousSearches,
+  getCandidateAppliedJobListings,
   loadCandidateJobsForRole,
   loadCandidateJobsForStoredRole,
   refreshCandidateJobListings,
+  setAppliedJobResume,
   setCandidateJobApplied,
   setCandidateJobSelected,
   type CandidateJobListing,
+  type JobListingViewMode,
   type PreviousSearchRole,
 } from "@/server/services/candidate-jobs";
 import type { RoleScrapeCacheStatus } from "@/server/services/job-role-cache";
+import {
+  createSignedResumeUrl,
+  saveApplicationResumeFile,
+} from "@/server/services/resume-ats-check";
+import { RESUME_MIME_TYPES } from "@/server/services/apify-ats-score";
 
 export type JobSearchSourceMode = JobMarketSource | "all";
 
@@ -78,6 +85,7 @@ export async function listCandidatePreviousSearchesAction(
 export async function loadPreviousSearchJobsAction(
   candidateId: string,
   storedSearchRole: string,
+  viewMode: JobListingViewMode = "pipeline",
 ): Promise<
   | { error: string }
   | {
@@ -105,6 +113,7 @@ export async function loadPreviousSearchJobsAction(
   const result = await loadCandidateJobsForStoredRole(
     candidateId,
     storedSearchRole,
+    viewMode,
   );
 
   return {
@@ -119,6 +128,7 @@ export async function loadPreviousSearchJobsAction(
 export async function loadCandidateJobsForRoleAction(
   candidateId: string,
   interestedRole: string,
+  viewMode: JobListingViewMode = "pipeline",
 ): Promise<
   | { error: string }
   | {
@@ -143,7 +153,7 @@ export async function loadCandidateJobsForRoleAction(
     return { error: "Enter an interested role to view stored jobs." };
   }
 
-  const result = await loadCandidateJobsForRole(candidateId, role);
+  const result = await loadCandidateJobsForRole(candidateId, role, viewMode);
   return {
     success: true,
     jobs: result.jobs,
@@ -152,11 +162,38 @@ export async function loadCandidateJobsForRoleAction(
   };
 }
 
+export async function loadCandidateAppliedJobsAction(
+  candidateId: string,
+  interestedRole?: string,
+): Promise<
+  | { error: string }
+  | {
+      success: true;
+      jobs: CandidateJobListing[];
+    }
+> {
+  const admin = await getAdminUser();
+  if (!admin) {
+    return { error: "Unauthorized" };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  if (!candidate) {
+    return { error: "Candidate not found" };
+  }
+
+  const role = interestedRole?.trim() || null;
+  const jobs = await getCandidateAppliedJobListings(candidateId, role);
+
+  return { success: true, jobs };
+}
+
 export async function refreshCandidateJobsAction(
   candidateId: string,
   sourceMode: JobSearchSourceMode = "all",
   interestedRole?: string,
   experienceYearsInput?: string | number | null,
+  searchKeywords?: string | null,
 ): Promise<{ error: string } | JobSearchSuccess> {
   const sources = sourcesFromMode(sourceMode);
   const admin = await getAdminUser();
@@ -208,11 +245,13 @@ export async function refreshCandidateJobsAction(
     role || undefined,
     {
       allowScrape: canScrape,
-      forceScrape: canScrape,
+      forceScrape: false,
+      searchKeywords: searchKeywords?.trim() || null,
     },
   );
 
   revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+  revalidatePath(`/admin/candidates/${candidateId}/jobs/applied`);
   revalidatePath("/admin/jobs");
   revalidatePath("/dashboard/jobs");
 
@@ -245,7 +284,7 @@ export async function updateCandidateJobRoleAction(
   }
 
   if (!staffCanScrapeJobs(toStaffContext(admin))) {
-    return { error: "Only managers can edit candidate job roles." };
+    return { error: "Only assigned admins can edit candidate job roles." };
   }
 
   const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
@@ -274,7 +313,7 @@ export async function updateCandidateExperienceYearsAction(
   }
 
   if (!staffCanScrapeJobs(toStaffContext(admin))) {
-    return { error: "Only managers can edit candidate experience." };
+    return { error: "Only assigned admins can edit candidate experience." };
   }
 
   const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
@@ -305,7 +344,7 @@ export async function scrapeSingleCandidateJobsAction(
   }
 
   if (!staffCanScrapeJobs(toStaffContext(admin))) {
-    return { error: "Only managers can run job scraping." };
+    return { error: "Only assigned admins can run job searches." };
   }
 
   const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
@@ -362,21 +401,10 @@ export async function scrapeSingleCandidateJobsAction(
 export async function scrapeAllCandidatesJobsAction(): Promise<
   { error: string } | { success: true; result: BulkJobScrapeResult }
 > {
-  const admin = await getAdminUser();
-  if (!admin) {
-    return { error: "Unauthorized" };
-  }
-
-  if (!staffCanScrapeJobs(toStaffContext(admin))) {
-    return { error: "Only managers can run job scraping." };
-  }
-
-  const result = await scrapeAllCandidateJobs(admin.id, "manual");
-
-  revalidatePath("/admin/jobs");
-  revalidatePath("/admin/candidates");
-
-  return { success: true, result };
+  return {
+    error:
+      "Bulk scraping is disabled to control billing. Search jobs from each assigned candidate's job sheet (once every 3 hours per role).",
+  };
 }
 
 export async function toggleCandidateJobSelectedAction(
@@ -424,8 +452,79 @@ export async function toggleCandidateJobAppliedAction(
   }
 
   revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+  revalidatePath(`/admin/candidates/${candidateId}/jobs/applied`);
   revalidatePath("/admin/jobs");
   revalidatePath("/dashboard/applications");
   revalidatePath("/dashboard");
   return { success: true };
+}
+
+export async function uploadAppliedJobResumeAction(
+  candidateId: string,
+  jobId: string,
+  formData: FormData,
+): Promise<{
+  success?: true;
+  fileName?: string;
+  downloadUrl?: string | null;
+  error?: string;
+}> {
+  const admin = await getAdminUser();
+  if (!admin) {
+    return { error: "Unauthorized" };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  if (!candidate) {
+    return { error: "Candidate not found" };
+  }
+
+  const file = formData.get("resume");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a PDF or Word resume to upload." };
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    return { error: "Resume must be 5 MB or smaller." };
+  }
+
+  if (!(RESUME_MIME_TYPES as readonly string[]).includes(file.type)) {
+    return { error: "Use a PDF or Word document (.pdf, .doc, .docx)." };
+  }
+
+  try {
+    const saved = await saveApplicationResumeFile({
+      candidateId,
+      jobId,
+      fileName: file.name,
+      fileBuffer: Buffer.from(await file.arrayBuffer()),
+      contentType: file.type,
+    });
+
+    const ok = await setAppliedJobResume(
+      jobId,
+      candidateId,
+      saved.storagePath,
+      saved.fileName,
+    );
+
+    if (!ok) {
+      return { error: "Mark the job as applied before attaching a resume." };
+    }
+
+    const downloadUrl = await createSignedResumeUrl(saved.storagePath);
+
+    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+    revalidatePath("/dashboard/applications");
+
+    return {
+      success: true,
+      fileName: saved.fileName,
+      downloadUrl,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Could not upload resume.",
+    };
+  }
 }

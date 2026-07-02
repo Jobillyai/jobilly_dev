@@ -14,7 +14,7 @@ export function isMentorAdminRole(role: string | null | undefined): boolean {
   return role === "admin";
 }
 
-/** Managers run job scraping for all candidates. */
+/** Managers oversee mentors and service requests — no job scraping. */
 export function isManagerRole(role: string | null | undefined): boolean {
   return role === "manager";
 }
@@ -29,6 +29,7 @@ export function isAdminRole(role: string | null | undefined): boolean {
   return isAdminPortalRole(role);
 }
 
+/** Mentor admins scrape jobs for assigned candidates only (3-hour cache per role). */
 export function canScrapeJobs(role: string | null | undefined): boolean {
-  return isManagerRole(role);
+  return isMentorAdminRole(role);
 }

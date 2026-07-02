@@ -87,7 +87,6 @@ export const productTrustPoints = [
 
 export const freeIncludedServices = [
   "Career Advisory sessions",
-  "ATS Resume Score checker",
   "Session calendar",
   "Profile & resume hub",
 ] as const;
@@ -116,7 +115,6 @@ export type CandidateService = {
   priceUsd?: number;
   dashboardHref?:
     | "/dashboard/career-advisory"
-    | "/dashboard/ats-resume-score"
     | "/dashboard/profile"
     | "/dashboard/calendar"
     | "/dashboard/applications";
@@ -134,28 +132,14 @@ export const candidateServices: CandidateService[] = [
       "Personalized learning path",
       "Role and market guidance",
       "Google Meet sessions",
+      "Session notes & follow-ups",
+      "Mentor admin support",
     ],
     status: "live",
     tier: "free",
     phase: "discover",
     dashboardHref: "/dashboard/career-advisory",
     featured: true,
-  },
-  {
-    id: "ats-resume-score",
-    title: "ATS Resume Score",
-    tagline: "Know how recruiters see you",
-    description:
-      "Upload your resume and get an ATS compatibility score with keyword gaps and actionable fixes — so your application clears automated screening.",
-    highlights: [
-      "0–100 ATS score",
-      "Missing keyword analysis",
-      "PDF and Word support",
-    ],
-    status: "live",
-    tier: "free",
-    phase: "prepare",
-    dashboardHref: "/dashboard/ats-resume-score",
   },
   {
     id: "profile",
@@ -167,6 +151,8 @@ export const candidateServices: CandidateService[] = [
       "Resume upload & storage",
       "Contact details management",
       "Shared with your Jobilly team",
+      "Education & experience fields",
+      "LinkedIn profile link",
     ],
     status: "live",
     tier: "free",
@@ -183,6 +169,8 @@ export const candidateServices: CandidateService[] = [
       "Advisory session tracking",
       "Google Meet links",
       "Upcoming & past sessions",
+      "One calendar view",
+      "Never miss a milestone",
     ],
     status: "live",
     tier: "free",
@@ -199,6 +187,8 @@ export const candidateServices: CandidateService[] = [
       "Skill-based micro-lessons",
       "Progressive unlock path",
       "Real-world project prompts",
+      "Quizzes & coding challenges",
+      "Mapped to top company hiring bar",
     ],
     status: "coming_soon",
     tier: "free",
@@ -214,6 +204,8 @@ export const candidateServices: CandidateService[] = [
       "Meta, Google, Amazon personas",
       "Voice-based practice",
       "Feedback after every session",
+      "Behavioral & technical modes",
+      "Unlimited practice rounds",
     ],
     status: "coming_soon",
     tier: "premium",
@@ -231,6 +223,8 @@ export const candidateServices: CandidateService[] = [
       "Indeed & LinkedIn job matching",
       "Applied roles in your portal",
       "Resume tailored per application",
+      "Human recruiter oversight",
+      "Real-time application updates",
     ],
     status: "live",
     tier: "premium",

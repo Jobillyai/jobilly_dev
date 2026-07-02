@@ -140,8 +140,7 @@
 }
 
 .shortlistBadge,
-.appliedBadge,
-.matchBadge {
+.appliedBadge {
   padding: 4px 8px;
   border-radius: 999px;
   font-size: 11px;
@@ -156,11 +155,6 @@
 .appliedBadge {
   background: #dcfce7;
   color: #166534;
-}
-
-.matchBadge {
-  background: #eff6ff;
-  color: #1d4ed8;
 }
 
 .meta {

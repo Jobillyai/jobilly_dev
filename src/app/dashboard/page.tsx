@@ -2,7 +2,6 @@ import { getSessionUser } from "@/lib/auth/session";
 import { DashboardHome } from "@/components/dashboard/dashboard-home";
 import { getCareerAdvisoryIntakeForCandidate } from "@/server/services/career-advisory-intake";
 import { getCandidateAppliedJobs } from "@/server/services/candidate-jobs";
-import { listResumeAtsChecks } from "@/server/services/resume-ats-check";
 import styles from "./dashboard.module.css";
 
 function formatSessionLabel(
@@ -33,14 +32,10 @@ function formatSessionLabel(
 export default async function DashboardPage() {
   const user = await getSessionUser();
 
-  const [applications, atsChecks, advisory] = await Promise.all([
+  const [applications, advisory] = await Promise.all([
     user ? getCandidateAppliedJobs(user.id) : Promise.resolve([]),
-    user ? listResumeAtsChecks(user.id) : Promise.resolve([]),
     user ? getCareerAdvisoryIntakeForCandidate(user.id) : Promise.resolve(null),
   ]);
-
-  const latestCompleted = atsChecks.find((check) => check.status === "completed");
-  const latestAtsScore = latestCompleted?.atsScore ?? null;
 
   const latestApplication = applications[0];
   const unreadApplicationCount = applications.filter((job) => job.isNew).length;
@@ -56,7 +51,6 @@ export default async function DashboardPage() {
         applicationCount={applications.length}
         unreadApplicationCount={unreadApplicationCount}
         latestApplicationLabel={latestApplicationLabel}
-        latestAtsScore={latestAtsScore}
         nextSessionLabel={formatSessionLabel(
           advisory?.sessionScheduledAt ?? null,
           advisory?.inviteSentAt ?? null,

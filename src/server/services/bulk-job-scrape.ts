@@ -159,7 +159,7 @@ export async function scrapeSingleCandidateJobs(
     managerUserId,
     [...JOB_MARKET_SOURCES],
     role,
-    { allowScrape: true, db: admin, forceScrape: true },
+    { allowScrape: true, db: admin, forceScrape: false },
   );
 
   const candidateError =

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { ServiceRequestsPanel } from "@/components/admin/service-requests-panel";
 import {
   getAdminUser,
-  staffCanScrapeJobs,
+  staffIsManager,
   toStaffContext,
 } from "@/lib/auth/admin";
 import {
@@ -19,7 +19,7 @@ export default async function AdminServiceRequestsPage() {
   }
 
   const staff = toStaffContext(admin);
-  const isManager = staffCanScrapeJobs(staff);
+  const isManager = staffIsManager(staff);
   const [requests, mentors] = await Promise.all([
     listServiceRequests(staff),
     isManager ? listMentorAdmins() : Promise.resolve([]),

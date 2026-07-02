@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { CheckCircle2, Sparkles } from "lucide-react";
+import { CheckCircle2, FileText, Mic, Sparkles } from "lucide-react";
 import { formatJobSourceLabel } from "@/server/services/job-market-search";
 import { markApplicationsViewedAction } from "@/server/actions/candidate-applications";
 import type { CandidateAppliedJob } from "@/server/services/candidate-jobs";
@@ -57,8 +57,8 @@ export function AppliedJobsList({ applications }: AppliedJobsListProps) {
               <p className={styles.jdText}>{job.jdText}</p>
             ) : (
               <p className={styles.jdEmpty}>
-                No description was captured for this listing. Open the posting below for full
-                details.
+                No description was captured for this application. Your Jobilly team will share
+                more details if the employer responds.
               </p>
             )}
           </section>
@@ -77,14 +77,33 @@ export function AppliedJobsList({ applications }: AppliedJobsListProps) {
             </section>
           ) : null}
 
-          <a
-            href={job.jobUrl}
-            target="_blank"
-            rel="noreferrer"
-            className={styles.linkBtn}
-          >
-            View job posting
-          </a>
+          {job.applicationResumeDownloadUrl ? (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Resume used</h2>
+              <a
+                href={job.applicationResumeDownloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.resumeLink}
+              >
+                <FileText size={16} aria-hidden />
+                <span>{job.applicationResumeFileName ?? "Download resume"}</span>
+              </a>
+            </section>
+          ) : null}
+
+          <div className={styles.cardActions}>
+            <button
+              type="button"
+              className={styles.mockBtn}
+              disabled
+              title="Voice mock interviews are coming soon"
+            >
+              <Mic size={16} aria-hidden />
+              Start mock interview
+            </button>
+            <span className={styles.mockHint}>Coming soon</span>
+          </div>
         </li>
       ))}
     </ul>

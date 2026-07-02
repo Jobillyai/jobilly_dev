@@ -4,7 +4,7 @@ import {
   formatExperienceYears,
 } from "@/lib/format-experience-years";
 import {
-  buildJobSearchFromInterests,
+  composeJobSearchPosition,
   searchJobsBySources,
   type JobListing,
   type JobMarketSource,
@@ -20,6 +20,7 @@ export type JobSearchResult = {
   relevanceScore: number;
   resumeMatch: "high" | "medium" | "low";
   source: JobMarketSource;
+  postedAt: string | null;
 };
 
 function tokenize(value: string): string[] {
@@ -33,25 +34,28 @@ function tokenize(value: string): string[] {
 export function buildCandidateJobSearchQuery(
   candidate: AdminCandidate,
   interestedRole?: string | null,
+  options?: { experienceYears?: number | null; searchKeywords?: string | null },
 ): {
   position: string;
   location: string;
 } {
-  const roleOverride = interestedRole?.trim();
-  if (roleOverride) {
-    return {
-      position: roleOverride,
-      location: "United States",
-    };
-  }
+  const experienceYears = options?.experienceYears ?? candidate.experienceYears;
+  const role = interestedRole?.trim() || candidate.jobSearchRole?.trim() || null;
 
-  return buildJobSearchFromInterests({
-    interestedTechnology: candidate.submission?.interestedTechnology,
-    branch: candidate.submission?.branch,
-    graduationDetails: candidate.submission?.graduationDetails,
-    careerGoals: candidate.careerGoals,
-    experienceYears: candidate.experienceYears,
-  });
+  return {
+    position: composeJobSearchPosition({
+      interestedRole: role,
+      interestedTechnology: candidate.submission?.interestedTechnology,
+      branch: candidate.submission?.branch,
+      graduationDetails: candidate.submission?.graduationDetails,
+      careerGoals: candidate.careerGoals,
+      specialization: candidate.specialization,
+      profileEducation: candidate.profileEducation,
+      experienceYears,
+      searchKeywords: options?.searchKeywords,
+    }),
+    location: "United States",
+  };
 }
 
 function experienceSearchTokens(years: number | null | undefined): string[] {
@@ -72,14 +76,20 @@ function experienceSearchTokens(years: number | null | undefined): string[] {
 export function buildCandidateSearchTerms(
   candidate: AdminCandidate,
   interestedRole?: string | null,
+  experienceYears?: number | null,
+  searchKeywords?: string | null,
 ): string[] {
+  const years = experienceYears ?? candidate.experienceYears;
   const parts = [
-    interestedRole?.trim(),
+    interestedRole?.trim() || candidate.jobSearchRole?.trim(),
+    searchKeywords?.trim(),
     candidate.submission?.interestedTechnology,
     candidate.submission?.branch,
     candidate.submission?.graduationDetails,
+    candidate.specialization,
     candidate.profileEducation,
-    ...experienceSearchTokens(candidate.experienceYears),
+    candidate.workExperience,
+    ...experienceSearchTokens(years),
     candidate.careerGoals,
     candidate.role.replace(/_/g, " "),
   ].filter(Boolean) as string[];
@@ -132,10 +142,24 @@ export async function scrapeJobsForCandidate(
   candidate: AdminCandidate,
   sources: JobMarketSource[] = [...JOB_MARKET_SOURCES],
   interestedRole?: string | null,
+  options?: {
+    experienceYears?: number | null;
+    searchKeywords?: string | null;
+  },
 ): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[] }> {
-  const searchTerms = buildCandidateSearchTerms(candidate, interestedRole);
+  const experienceYears = options?.experienceYears ?? candidate.experienceYears;
+  const searchKeywords = options?.searchKeywords;
+  const searchTerms = buildCandidateSearchTerms(
+    candidate,
+    interestedRole,
+    experienceYears,
+    searchKeywords,
+  );
   const hasResume = Boolean(candidate.resumeUrl);
-  const { position, location } = buildCandidateJobSearchQuery(candidate, interestedRole);
+  const { position, location } = buildCandidateJobSearchQuery(candidate, interestedRole, {
+    experienceYears,
+    searchKeywords,
+  });
   const searchQuery = `${position} · ${location}`;
 
   const apifyResult = await searchJobsBySources({
@@ -157,6 +181,7 @@ export async function scrapeJobsForCandidate(
         relevanceScore: score,
         resumeMatch,
         source: job.source,
+        postedAt: job.postedAt,
       };
     })
     .sort((a, b) => b.relevanceScore - a.relevanceScore)

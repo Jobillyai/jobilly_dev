@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
   getAdminUser,
-  staffCanScrapeJobs,
+  staffIsManager,
   toStaffContext,
 } from "@/lib/auth/admin";
 import {
@@ -33,7 +33,7 @@ export async function loadMentorOptionsAction(): Promise<
   { error: string } | { success: true; mentors: Awaited<ReturnType<typeof listMentorAdmins>> }
 > {
   const admin = await getAdminUser();
-  if (!admin || !staffCanScrapeJobs(toStaffContext(admin))) {
+  if (!admin || !staffIsManager(toStaffContext(admin))) {
     return { error: "Unauthorized" };
   }
 
@@ -51,7 +51,7 @@ export async function assignServiceRequestAction(
   mentorId: string,
 ): Promise<{ error?: string; success?: true }> {
   const admin = await getAdminUser();
-  if (!admin || !staffCanScrapeJobs(toStaffContext(admin))) {
+  if (!admin || !staffIsManager(toStaffContext(admin))) {
     return { error: "Only managers can assign service requests." };
   }
 

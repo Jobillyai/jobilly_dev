@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { AppNavbar } from "@/components/navbar/app-navbar";
+import { getMarketingHomePath } from "@/lib/auth/home-path";
 import type { SessionUser } from "@/lib/auth/session";
 import type { AdminUser } from "@/lib/auth/admin";
 
@@ -19,5 +20,10 @@ export function NavSwitcher({ user, adminUser }: NavSwitcherProps) {
     return null;
   }
 
-  return <AppNavbar user={user} />;
+  const homeHref = getMarketingHomePath({
+    isLoggedIn: Boolean(user),
+    role: adminUser?.role,
+  });
+
+  return <AppNavbar user={user} homeHref={homeHref} />;
 }

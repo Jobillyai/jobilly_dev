@@ -302,3 +302,63 @@ export async function saveCandidateResumeFile(input: {
 
   return { resumeUrl: signedData.signedUrl };
 }
+
+export async function createSignedResumeUrl(
+  storagePath: string,
+): Promise<string | null> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.storage
+    .from("resumes")
+    .createSignedUrl(storagePath, RESUME_SIGNED_URL_TTL_SECONDS);
+
+  if (error || !data?.signedUrl) {
+    return null;
+  }
+
+  return data.signedUrl;
+}
+
+export async function saveApplicationResumeFile(input: {
+  candidateId: string;
+  jobId: string;
+  fileName: string;
+  fileBuffer: Buffer;
+  contentType: string;
+}): Promise<{ storagePath: string; fileName: string }> {
+  const admin = createAdminClient();
+
+  const { data: buckets, error: listError } = await admin.storage.listBuckets();
+  if (listError) {
+    throw new Error(listError.message);
+  }
+
+  if (!buckets?.some((bucket) => bucket.name === "resumes")) {
+    const { error: createError } = await admin.storage.createBucket("resumes", {
+      public: false,
+      fileSizeLimit: 5 * 1024 * 1024,
+      allowedMimeTypes: [...RESUME_MIME_TYPES],
+    });
+
+    if (createError && !createError.message.toLowerCase().includes("already exists")) {
+      throw new Error(createError.message);
+    }
+  }
+
+  const extension = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
+  const safeName =
+    input.fileName.replace(/[^\w.-]/g, "_").slice(0, 120) || `resume.${extension}`;
+  const path = `${input.candidateId}/applications/${input.jobId}/${safeName}`;
+
+  const { error: uploadError } = await admin.storage
+    .from("resumes")
+    .upload(path, input.fileBuffer, {
+      upsert: true,
+      contentType: input.contentType,
+    });
+
+  if (uploadError) {
+    throw new Error(uploadError.message);
+  }
+
+  return { storagePath: path, fileName: input.fileName };
+}
