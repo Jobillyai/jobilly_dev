@@ -69,7 +69,7 @@ function PreviousSubmissionPanel({ intake }: { intake: CandidateCareerAdvisoryIn
   return (
     <section className={styles.previousSubmission} aria-label="Previous submission">
       <div className={styles.previousSubmissionHeader}>
-        <p className={styles.previousSubmissionLabel}>Previous submission</p>
+        <p className={styles.previousSubmissionLabel}>Your latest submission</p>
         <span
           className={`${styles.statusBadge} ${
             intake.inviteSentAt ? styles.statusBadgeSent : styles.statusBadgePending
@@ -80,34 +80,6 @@ function PreviousSubmissionPanel({ intake }: { intake: CandidateCareerAdvisoryIn
       </div>
 
       <dl className={styles.submittedSummaryList}>
-        <div>
-          <dt>Name</dt>
-          <dd>{intake.name}</dd>
-        </div>
-        <div>
-          <dt>Email</dt>
-          <dd>{intake.email}</dd>
-        </div>
-        <div>
-          <dt>Phone</dt>
-          <dd>{intake.phone}</dd>
-        </div>
-        <div>
-          <dt>Graduation</dt>
-          <dd>{intake.graduationDetails}</dd>
-        </div>
-        <div>
-          <dt>Branch</dt>
-          <dd>{intake.branch}</dd>
-        </div>
-        <div>
-          <dt>Veteran</dt>
-          <dd>{intake.isVeteran ? "Yes" : "No"}</dd>
-        </div>
-        <div>
-          <dt>Interested technology</dt>
-          <dd>{intake.interestedTechnology}</dd>
-        </div>
         {sessionLabel ? (
           <div>
             <dt>Session</dt>
@@ -217,11 +189,6 @@ export function CareerAdvisoryForm({
         <h2 className={styles.formSectionTitle}>
           {previousSubmission ? "Update your details" : "Submit your details"}
         </h2>
-        <p className={styles.formSectionHint}>
-          {previousSubmission
-            ? "Change any field below and submit again to update your advisory request."
-            : "Fill in the form below to request your first career advisory session."}
-        </p>
 
         <form
           key={previousSubmission?.updatedAt ?? "new"}

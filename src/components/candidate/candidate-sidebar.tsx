@@ -13,9 +13,8 @@ import {
 import { logoutAction } from "@/server/actions/auth";
 import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
 import { formatDisplayName } from "@/lib/format-display-name";
-import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import type { SessionUser } from "@/lib/auth/session";
-import styles from "../admin/admin-sidebar.module.css";
+import styles from "./candidate-sidebar.module.css";
 
 const navItems = [
   {
@@ -77,14 +76,18 @@ export function CandidateSidebar({ user, unreadApplications = 0 }: CandidateSide
   }
 
   return (
-    <aside className={styles.adminSidebar}>
-      <div className={styles.brand}>
-        <div className={styles.brandMark}>Jb</div>
-        <div>
-          <span className={styles.brandText}>jobilly.ai</span>
-          <span className={styles.brandSub}>Candidate portal</span>
-        </div>
-      </div>
+    <aside className={styles.sidebar}>
+      <Link href="/dashboard" className={styles.brand}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/jobilly.png"
+          alt="Jobilly AI"
+          className={styles.brandLogo}
+          height={36}
+          width={75}
+        />
+        <span className={styles.brandText}>jobilly.ai</span>
+      </Link>
 
       <nav className={styles.nav} aria-label="Candidate navigation">
         {navItems.map((item) => {
@@ -127,12 +130,6 @@ export function CandidateSidebar({ user, unreadApplications = 0 }: CandidateSide
             <span className={styles.userName}>
               {user.name ? formatDisplayName(user.name) : user.email.split("@")[0]}
             </span>
-            {user.memberId ? (
-              <span className={styles.userMemberId}>
-                <MemberIdBadge memberId={user.memberId} size="sm" />
-              </span>
-            ) : null}
-            <span className={styles.userEmail}>{user.email}</span>
           </div>
         </div>
         <LogoutForm action={logoutAction}>

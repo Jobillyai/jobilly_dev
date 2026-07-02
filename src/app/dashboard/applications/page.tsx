@@ -13,7 +13,6 @@ export default async function CandidateApplicationsPage() {
   }
 
   const applications = await getCandidateAppliedJobs(user.id);
-  const unreadCount = applications.filter((job) => job.isNew).length;
 
   return (
     <div className={styles.page}>
@@ -26,12 +25,6 @@ export default async function CandidateApplicationsPage() {
             When our team applies to a role on your behalf, you&apos;ll see the job
             description and tailored preparation tips here.
           </p>
-          {unreadCount > 0 ? (
-            <p className={pageStyles.unreadNotice}>
-              {unreadCount} new application update{unreadCount === 1 ? "" : "s"} from your
-              Jobilly team.
-            </p>
-          ) : null}
         </div>
 
         {applications.length === 0 ? (

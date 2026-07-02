@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/server/db/supabase-browser";
 import type { SessionUser } from "@/lib/auth/session";
+import { JobillyLogo } from "@/components/brand/jobilly-logo";
 import { UserMenu } from "./user-menu";
 import styles from "./navbar.module.css";
 
@@ -128,22 +129,7 @@ export function AppNavbar({ user: serverUser, homeHref = "/" }: AppNavbarProps) 
   return (
     <nav className={`${styles.nav} ${scrolled ? styles.navScrolled : ""}`}>
       <div className={styles.navLeft}>
-        <Link href={user ? homeHref : "/"} className={styles.navLogo}>
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
-            <rect width="28" height="28" rx="8" fill="#1877F2" />
-            <path
-              d="M8 14C8 10.686 10.686 8 14 8C17.314 8 20 10.686 20 14C20 17.314 17.314 20 14 20"
-              stroke="white"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-            />
-            <circle cx="14" cy="14" r="2.5" fill="white" />
-            <path d="M14 20V22" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
-          </svg>
-          <span className={styles.navLogoText}>
-            jobilly<span className={styles.navLogoTextDark}>.ai</span>
-          </span>
-        </Link>
+        <JobillyLogo href={user ? homeHref : "/"} height={32} className={styles.navLogo} />
         {!user ? <NavLinks /> : null}
       </div>
 

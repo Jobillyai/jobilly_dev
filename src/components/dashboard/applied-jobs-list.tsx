@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { CheckCircle2, FileText, Mic, Sparkles } from "lucide-react";
+import { CheckCircle2, FileText } from "lucide-react";
 import { formatJobSourceLabel } from "@/server/services/job-market-search";
 import { markApplicationsViewedAction } from "@/server/actions/candidate-applications";
 import type { CandidateAppliedJob } from "@/server/services/candidate-jobs";
@@ -31,24 +31,17 @@ export function AppliedJobsList({ applications }: AppliedJobsListProps) {
     <ul className={styles.list}>
       {applications.map((job) => (
         <li key={job.id} className={styles.card}>
-          <div className={styles.updateBanner}>
-            <Sparkles size={16} aria-hidden />
-            <span>
-              Your Jobilly team applied to this role on {formatDate(job.appliedAt)}
-            </span>
-            {job.isNew ? <span className={styles.newBadge}>New update</span> : null}
-          </div>
-
           <div className={styles.cardHeader}>
             <div>
               <p className={styles.role}>{job.role}</p>
               <p className={styles.company}>{job.company}</p>
             </div>
-            <span className={styles.appliedBadge}>Applied</span>
+            {job.isNew ? <span className={styles.newBadge}>New</span> : null}
           </div>
 
           <p className={styles.meta}>
-            {job.location} · {formatJobSourceLabel(job.source, job.jobUrl)}
+            Applied {formatDate(job.appliedAt)} · {job.location} ·{" "}
+            {formatJobSourceLabel(job.source, job.jobUrl)}
           </p>
 
           <section className={styles.section}>
@@ -91,19 +84,6 @@ export function AppliedJobsList({ applications }: AppliedJobsListProps) {
               </a>
             </section>
           ) : null}
-
-          <div className={styles.cardActions}>
-            <button
-              type="button"
-              className={styles.mockBtn}
-              disabled
-              title="Voice mock interviews are coming soon"
-            >
-              <Mic size={16} aria-hidden />
-              Start mock interview
-            </button>
-            <span className={styles.mockHint}>Coming soon</span>
-          </div>
         </li>
       ))}
     </ul>

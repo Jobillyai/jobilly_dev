@@ -4,41 +4,22 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .card {
   padding: 0;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 4px 18px rgba(10, 22, 40, 0.04);
+  border: 1px solid var(--jb-border);
+  border-radius: var(--jb-radius-lg);
+  background: var(--jb-surface);
+  box-shadow: var(--jb-shadow-sm);
   overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
 }
 
-.updateBanner {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 12px 20px;
-  background: linear-gradient(90deg, #eff6ff 0%, #f0fdf4 100%);
-  border-bottom: 1px solid rgba(24, 119, 242, 0.12);
-  font-size: 13px;
-  font-weight: 600;
-  color: #1e40af;
-}
-
-.newBadge {
-  margin-left: auto;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: #1877f2;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+.card:hover {
+  border-color: var(--jb-brand-border);
+  box-shadow: var(--jb-shadow-md);
 }
 
 .cardHeader {
@@ -46,60 +27,61 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 20px 20px 0;
+  padding: 22px 24px 0;
+}
+
+.newBadge {
+  flex-shrink: 0;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--jb-brand);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .role {
   margin: 0 0 4px;
   font-size: 20px;
   font-weight: 800;
-  color: #0a1628;
+  letter-spacing: -0.03em;
+  color: var(--jb-ink);
 }
 
 .company {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #374151;
-}
-
-.appliedBadge {
-  display: inline-flex;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #ecfdf5;
-  color: #047857;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  color: var(--jb-ink-secondary);
 }
 
 .meta {
-  margin: 8px 0 0;
-  padding: 0 20px;
+  margin: 10px 0 0;
+  padding: 0 24px;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--jb-ink-muted);
 }
 
 .section {
-  padding: 18px 20px 0;
+  padding: 20px 24px 0;
 }
 
 .sectionTitle {
   margin: 0 0 10px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--jb-brand-hover);
 }
 
 .jdText {
   margin: 0;
   font-size: 14px;
-  line-height: 1.65;
-  color: #374151;
+  line-height: 1.7;
+  color: var(--jb-ink-secondary);
   white-space: pre-wrap;
 }
 
@@ -107,14 +89,14 @@
   margin: 0;
   font-size: 14px;
   line-height: 1.6;
-  color: #6b7280;
+  color: var(--jb-ink-muted);
   font-style: italic;
 }
 
 .tipsList {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 4px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -126,63 +108,36 @@
   gap: 10px;
   font-size: 14px;
   line-height: 1.55;
-  color: #334155;
+  color: var(--jb-ink-secondary);
 }
 
 .tipsList li svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #1877f2;
-}
-
-.cardActions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 20px;
-}
-
-.mockBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 10px;
-  background: #7c3aed;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: not-allowed;
-  opacity: 0.72;
-}
-
-.mockBtn:disabled {
-  background: #9ca3af;
-}
-
-.mockHint {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
+  color: var(--jb-brand);
 }
 
 .resumeLink {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  margin-bottom: 22px;
   padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #dbeafe;
-  background: #f8fbff;
-  color: #1d4ed8;
+  border-radius: var(--jb-radius-sm);
+  border: 1px solid var(--jb-brand-border);
+  background: var(--jb-brand-soft);
+  color: var(--jb-brand-hover);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .resumeLink:hover {
-  background: #eff6ff;
-  border-color: #93c5fd;
+  background: #ccfbf1;
+  border-color: var(--jb-brand);
+}
+
+.card .section:last-child {
+  padding-bottom: 22px;
 }

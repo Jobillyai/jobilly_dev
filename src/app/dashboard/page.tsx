@@ -47,7 +47,6 @@ export default async function DashboardPage() {
     <div className={styles.page}>
       <DashboardHome
         userName={user?.name}
-        memberId={user?.memberId}
         applicationCount={applications.length}
         unreadApplicationCount={unreadApplicationCount}
         latestApplicationLabel={latestApplicationLabel}

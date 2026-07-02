@@ -1,50 +1,15 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Briefcase,
-  Calendar,
-  Compass,
-  UserCircle,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { formatDisplayName } from "@/lib/format-display-name";
-import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import styles from "./dashboard-home.module.css";
 
 type DashboardHomeProps = {
   userName?: string;
-  memberId?: string | null;
   applicationCount: number;
   unreadApplicationCount: number;
   latestApplicationLabel: string | null;
   nextSessionLabel: string;
 };
-
-const modules = [
-  {
-    href: "/dashboard/career-advisory",
-    title: "Career Advisory",
-    description: "Share your goals and book a session with our career team.",
-    icon: Compass,
-  },
-  {
-    href: "/dashboard/applications",
-    title: "Applications",
-    description: "Track roles your Jobilly team has applied to on your behalf.",
-    icon: Briefcase,
-  },
-  {
-    href: "/dashboard/calendar",
-    title: "Calendar",
-    description: "View upcoming advisory sessions and past appointments.",
-    icon: Calendar,
-  },
-  {
-    href: "/dashboard/profile",
-    title: "Profile",
-    description: "Update your contact details and resume.",
-    icon: UserCircle,
-  },
-] as const;
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -59,7 +24,6 @@ function getGreeting(): string {
 
 export function DashboardHome({
   userName,
-  memberId,
   applicationCount,
   unreadApplicationCount,
   latestApplicationLabel,
@@ -75,14 +39,8 @@ export function DashboardHome({
         <h1 className={styles.title}>
           {displayName ? `Welcome back, ${displayName}` : "Welcome back"}
         </h1>
-        {memberId ? (
-          <p className={styles.memberIdRow}>
-            Signed in as <MemberIdBadge memberId={memberId} />
-          </p>
-        ) : null}
         <p className={styles.subtitle}>
-          Your career workspace — track applications and stay on top of advisory
-          sessions.
+          Track applications and stay on top of advisory sessions.
         </p>
       </header>
 
@@ -91,7 +49,7 @@ export function DashboardHome({
           <span className={styles.updateBannerLabel}>New application update</span>
           <span className={styles.updateBannerText}>{latestApplicationLabel}</span>
           <span className={styles.updateBannerAction}>
-            View JD &amp; prep tips <ArrowRight size={14} aria-hidden />
+            View details <ArrowRight size={14} aria-hidden />
           </span>
         </Link>
       ) : null}
@@ -103,11 +61,6 @@ export function DashboardHome({
           <p className={styles.statHint}>Roles applied on your behalf</p>
         </article>
         <article className={styles.statCard}>
-          <p className={styles.statLabel}>New updates</p>
-          <p className={styles.statValue}>{unreadApplicationCount}</p>
-          <p className={styles.statHint}>Unread application notifications</p>
-        </article>
-        <article className={styles.statCard}>
           <p className={styles.statLabel}>Next session</p>
           <p className={`${styles.statValue} ${styles.statValueText}`}>
             {nextSessionLabel}
@@ -115,29 +68,6 @@ export function DashboardHome({
           <p className={styles.statHint}>Career advisory calendar</p>
         </article>
       </section>
-
-      <h2 className={styles.sectionTitle}>Quick actions</h2>
-      <div className={styles.grid}>
-        {modules.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link key={item.href} href={item.href} className={styles.card}>
-              <div className={styles.cardHeader}>
-                <div>
-                  <p className={styles.cardTitle}>{item.title}</p>
-                  <p className={styles.cardDesc}>{item.description}</p>
-                </div>
-                <span className={styles.cardIcon} aria-hidden>
-                  <Icon size={20} strokeWidth={2} />
-                </span>
-              </div>
-              <span className={styles.cardAction}>
-                Open <ArrowRight size={14} aria-hidden />
-              </span>
-            </Link>
-          );
-        })}
-      </div>
     </div>
   );
 }

@@ -18,8 +18,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(24, 119, 242, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(24, 119, 242, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(13, 148, 136, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 148, 136, 0.06) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 90% 75% at 50% 45%, black 12%, transparent 82%);
 }
@@ -27,7 +27,7 @@
 .dotField {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(24, 119, 242, 0.18) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(13, 148, 136, 0.2) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 5%, transparent 75%);
   opacity: 0.35;
@@ -153,7 +153,7 @@
   position: absolute;
   width: 10px;
   height: 10px;
-  background: #1877f2;
+  background: #14b8a6;
   transform: rotate(45deg);
   border-radius: 2px;
   opacity: 0.3;

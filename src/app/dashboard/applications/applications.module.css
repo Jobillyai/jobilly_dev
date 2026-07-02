@@ -1,5 +1,5 @@
 .main {
-  max-width: 880px;
+  max-width: 920px;
   text-align: left;
 }
 
@@ -9,121 +9,32 @@
 
 .subtitle {
   font-size: 15px;
-  line-height: 1.6;
-  color: #374151;
+  line-height: 1.65;
+  color: var(--jb-ink-muted);
   max-width: 620px;
   margin: 0;
 }
 
-.unreadNotice {
-  margin: 12px 0 0;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: #eff6ff;
-  border: 1px solid rgba(24, 119, 242, 0.2);
-  font-size: 14px;
-  font-weight: 600;
-  color: #1d4ed8;
-  max-width: 620px;
-}
-
 .emptyCard {
-  padding: 32px;
-  border: 1.5px solid rgba(24, 119, 242, 0.12);
-  border-radius: 16px;
-  background: #f8fbff;
+  padding: 40px 32px;
+  border: 1px dashed var(--jb-brand-border);
+  border-radius: var(--jb-radius-lg);
+  background: linear-gradient(135deg, var(--jb-brand-soft) 0%, var(--jb-surface) 100%);
+  text-align: center;
 }
 
 .emptyTitle {
   margin: 0 0 8px;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
-  color: #0a1628;
+  letter-spacing: -0.02em;
+  color: var(--jb-ink);
 }
 
 .emptyText {
-  margin: 0;
+  margin: 0 auto;
+  max-width: 420px;
   font-size: 14px;
-  line-height: 1.6;
-  color: #6b7280;
-}
-
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.card {
-  padding: 20px 22px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 4px 18px rgba(10, 22, 40, 0.04);
-}
-
-.cardHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.role {
-  margin: 0 0 4px;
-  font-size: 17px;
-  font-weight: 800;
-  color: #0a1628;
-}
-
-.company {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.badge {
-  display: inline-flex;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #ecfdf5;
-  color: #047857;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.meta {
-  margin: 0 0 10px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.description {
-  margin: 0 0 14px;
-  font-size: 14px;
-  line-height: 1.55;
-  color: #374151;
-}
-
-.linkBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 9px 14px;
-  border-radius: 10px;
-  background: #1877f2;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.linkBtn:hover {
-  background: #0f5fd0;
+  line-height: 1.65;
+  color: var(--jb-ink-muted);
 }

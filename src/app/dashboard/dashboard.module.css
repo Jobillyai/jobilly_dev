@@ -1,25 +1,25 @@
 .page {
   min-height: 100vh;
   font-family: var(--jb-font-sans);
-  background: var(--jb-surface-subtle);
+  background: transparent;
   color: var(--jb-ink);
 }
 
 .main {
-  max-width: 1080px;
+  max-width: 920px;
   margin: 0 auto;
-  padding: 32px 32px 64px;
+  padding: 40px 36px 72px;
 }
 
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .title {
-  font-size: clamp(26px, 3vw, 32px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.2;
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
   color: var(--jb-ink);
   margin-bottom: 8px;
 }
@@ -33,13 +33,13 @@
 
 .subtitle {
   font-size: 15px;
-  line-height: 1.6;
-  color: var(--jb-ink-secondary);
+  line-height: 1.65;
+  color: var(--jb-ink-muted);
   max-width: 560px;
 }
 
 @media (max-width: 768px) {
   .main {
-    padding: 24px 20px 48px;
+    padding: 28px 20px 56px;
   }
 }

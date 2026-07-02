@@ -9,16 +9,13 @@ import {
   Check,
   Compass,
   Eye,
-  FileText,
   GraduationCap,
   Layers,
   Mic,
-  ShieldCheck,
   Sparkles,
   Target,
   UserCircle,
   Users,
-  Zap,
 } from "lucide-react";
 import { AbstractBackground } from "@/components/layout/abstract-background";
 import {
@@ -26,7 +23,6 @@ import {
   defaultPremiumPlanId,
   formatPlanPrice,
   formatPlanPriceMonthly,
-  freeIncludedServices,
   getServicesByPhase,
   premiumPlans,
   productTrustPoints,
@@ -75,51 +71,6 @@ const valuePoints = [
     icon: Eye,
     title: "Portal visibility",
     text: "Every application, session, and score lives in your candidate dashboard.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "ATS-ready materials",
-    text: "Resume scoring and per-role tailoring help you clear automated screening.",
-  },
-  {
-    icon: Mic,
-    title: "Company-style practice",
-    text: "Voice mock interviews modeled on Meta, Google, and Amazon interview patterns.",
-  },
-  {
-    icon: Zap,
-    title: "Real-time updates",
-    text: "Track applied roles and recruiter progress without chasing email threads.",
-  },
-] as const;
-
-const freeServiceIcons = [Compass, FileText, UserCircle, Calendar] as const;
-
-const flowSteps = [
-  {
-    icon: Compass,
-    step: "01",
-    title: "Discover with advisory",
-    text: "Define target roles and a realistic timeline with expert guidance.",
-  },
-  {
-    icon: FileText,
-    step: "02",
-    title: "Prepare your profile",
-    text: "Score your resume, fix gaps, and keep materials ready in one hub.",
-  },
-  {
-    icon: Mic,
-    step: "03",
-    title: "Practice interviews",
-    text: "Voice mock sessions with company-style personas and scored feedback.",
-  },
-  {
-    icon: Briefcase,
-    step: "04",
-    title: "Apply with our team",
-    text: "We search, apply, and track roles — you see every application in your portal.",
-    accent: true as const,
   },
 ] as const;
 
@@ -376,11 +327,6 @@ export function ProductsPage() {
                 <p className={styles.sectionLabel}>Service catalog</p>
                 <h2 className={styles.sectionTitle}>What you get as a candidate</h2>
               </div>
-              <p className={styles.catalogIntro}>
-                Every service explained in detail — filter by journey phase or browse all.
-                Free tools are included with your account; premium plans unlock mock
-                interviews and managed applications.
-              </p>
             </div>
 
             <div
@@ -419,77 +365,6 @@ export function ProductsPage() {
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className={styles.flowBlock}>
-            <AbstractBackground />
-            <div className={styles.flowBlockInner}>
-              <p className={styles.sectionLabel}>How it connects</p>
-              <h2 className={styles.sectionTitle}>Services that compound</h2>
-              <p className={styles.flowIntro}>
-                Each step feeds the next — advisory sets direction, ATS scoring sharpens
-                your resume, practice builds confidence, and managed applications turn
-                preparation into offers.
-              </p>
-
-              <div className={styles.flowGrid}>
-                {flowSteps.map((step, index) => {
-                  const StepIcon = step.icon;
-                  return (
-                    <div key={step.step} className={styles.flowGridItem}>
-                      {index > 0 ? (
-                        <div className={styles.flowArrow} aria-hidden>
-                          <ArrowRight size={18} />
-                        </div>
-                      ) : null}
-                      <div
-                        className={`${styles.flowCard} ${
-                          "accent" in step && step.accent ? styles.flowCardAccent : ""
-                        }`}
-                      >
-                        <div className={styles.flowCardIcon}>
-                          <StepIcon size={18} strokeWidth={2} aria-hidden />
-                        </div>
-                        <span className={styles.flowStep}>{step.step}</span>
-                        <h3>{step.title}</h3>
-                        <p>{step.text}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.freeStrip}>
-            <p className={styles.freeStripLabel}>Always free with your account</p>
-            <div className={styles.freeServiceGrid}>
-              {freeIncludedServices.map((item, index) => {
-                const Icon = freeServiceIcons[index] ?? Sparkles;
-                return (
-                  <div key={item} className={styles.freeServiceCard}>
-                    <div className={styles.freeServiceIcon}>
-                      <Icon size={18} strokeWidth={2} aria-hidden />
-                    </div>
-                    <span>{item}</span>
-                    <Check size={16} className={styles.freeServiceCheck} aria-hidden />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className={styles.bottomCta}>
-            <h2>Ready to start?</h2>
-            <p>
-              Create a free account for career advisory, ATS scoring, and your calendar.
-              Add mock interviews from {formatPlanPriceMonthly(79.99)}, applications from{" "}
-              {formatPlanPriceMonthly(99.99)}, or the bundle for{" "}
-              {formatPlanPriceMonthly(149.99)}.
-            </p>
-            <Link href="/signup" className={styles.planCta}>
-              Create free account
-            </Link>
           </div>
 
           <p className={styles.contactNote}>

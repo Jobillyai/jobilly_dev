@@ -5,10 +5,10 @@
   --jb-ink-secondary: #334155;
   --jb-ink-muted: #64748b;
   --jb-ink-subtle: #94a3b8;
-  --jb-brand: #1d4ed8;
-  --jb-brand-hover: #1e40af;
-  --jb-brand-soft: #eff6ff;
-  --jb-brand-border: #bfdbfe;
+  --jb-brand: #7c3aed;
+  --jb-brand-hover: #6d28d9;
+  --jb-brand-soft: #f5f3ff;
+  --jb-brand-border: #ddd6fe;
   --jb-surface: #ffffff;
   --jb-surface-subtle: #f8fafc;
   --jb-border: #e2e8f0;
@@ -32,11 +32,14 @@
 /* Hero — Hustle Hive-style centered pitch */
 .hero {
   position: relative;
-  padding: 72px 24px 48px;
-  background: var(--jb-surface);
+  padding: 96px 24px 56px;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(167, 139, 250, 0.2), transparent 55%),
+    linear-gradient(180deg, #f8f7ff 0%, #ffffff 100%);
   border-bottom: 1px solid var(--jb-border);
   overflow: hidden;
   text-align: center;
+  color: var(--jb-ink);
 }
 
 .heroInner {
@@ -58,7 +61,7 @@
 
 .heroTitle {
   font-size: clamp(36px, 6vw, 52px);
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.08;
   color: var(--jb-ink);
@@ -87,7 +90,7 @@
   align-items: center;
   gap: 4px;
   padding: 16px 12px;
-  background: var(--jb-surface);
+  background: #ffffff;
   border: 1px solid var(--jb-border);
   border-radius: var(--jb-radius-md);
   box-shadow: var(--jb-shadow-sm);
@@ -123,8 +126,8 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--jb-ink-secondary);
-  background: var(--jb-surface-subtle);
-  border: 1px solid var(--jb-border);
+  background: var(--jb-brand-soft);
+  border: 1px solid var(--jb-brand-border);
   padding: 8px 16px;
   border-radius: 100px;
 }

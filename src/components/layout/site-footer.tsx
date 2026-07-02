@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { JobillyLogo } from "@/components/brand/jobilly-logo";
 import styles from "./site-footer.module.css";
 
 export function SiteFooter() {
@@ -15,9 +16,7 @@ export function SiteFooter() {
 
   return (
     <footer className={styles.footer}>
-      <div className={styles.footerLogo}>
-        jobilly<span className={styles.footerLogoWhite}>.ai</span>
-      </div>
+      <JobillyLogo href="/" height={32} className={styles.footerLogo} onDark />
       <div className={styles.footerLinks}>
         <a href="#">Privacy</a>
         <a href="#">Terms</a>
