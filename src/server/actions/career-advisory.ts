@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { combineFirstLastName } from "@/lib/format-person-name";
+import { formatPhoneNumber, type PhoneCountry } from "@/lib/format-phone";
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { sendCareerAdvisoryMeetInvite } from "@/server/services/send-career-advisory-invite";
@@ -17,19 +18,19 @@ const intakeSchema = z.object({
   firstName: z.string().min(1, "Enter your first name").max(100),
   lastName: z.string().min(1, "Enter your last name").max(100),
   email: z.string().email("Enter a valid email"),
+  phoneCountry: z.enum(["us", "in"], {
+    required_error: "Select a country code",
+  }),
   phone: z
     .string()
-    .min(7, "Enter a valid phone number")
-    .max(20, "Phone number is too long")
-    .regex(/^[0-9+\-\s()]+$/, "Enter a valid phone number"),
+    .min(1, "Enter a phone number")
+    .max(15, "Phone number is too long")
+    .regex(/^[0-9\s()-]+$/, "Enter a valid phone number"),
   graduationDetails: z
     .string()
     .min(1, "Enter your graduation details")
     .max(300),
   branch: z.string().min(1, "Enter your branch").max(200),
-  isVeteran: z.enum(["yes", "no"], {
-    required_error: "Select whether you are a veteran",
-  }),
   interestedTechnology: z
     .string()
     .min(1, "Enter the technology you are interested in")
@@ -50,10 +51,10 @@ export type CareerAdvisoryState = {
       | "firstName"
       | "lastName"
       | "email"
+      | "phoneCountry"
       | "phone"
       | "graduationDetails"
       | "branch"
-      | "isVeteran"
       | "interestedTechnology"
       | "sessionScheduledAt",
       string
@@ -99,10 +100,10 @@ export async function submitCareerAdvisoryAction(
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     email: formData.get("email"),
+    phoneCountry: formData.get("phoneCountry"),
     phone: formData.get("phone"),
     graduationDetails: formData.get("graduationDetails"),
     branch: formData.get("branch"),
-    isVeteran: formData.get("isVeteran"),
     interestedTechnology: formData.get("interestedTechnology"),
     sessionScheduledAt: formData.get("sessionScheduledAt"),
   });
@@ -115,10 +116,10 @@ export async function submitCareerAdvisoryAction(
         key === "firstName" ||
         key === "lastName" ||
         key === "email" ||
+        key === "phoneCountry" ||
         key === "phone" ||
         key === "graduationDetails" ||
         key === "branch" ||
-        key === "isVeteran" ||
         key === "interestedTechnology" ||
         key === "sessionScheduledAt"
       ) {
@@ -127,6 +128,27 @@ export async function submitCareerAdvisoryAction(
     }
     return { fieldErrors };
   }
+
+  const phoneDigits = parsed.data.phone.replace(/\D/g, "");
+  const phoneCountry = parsed.data.phoneCountry as PhoneCountry;
+
+  if (phoneCountry === "us" && phoneDigits.length !== 10) {
+    return {
+      fieldErrors: {
+        phone: "Enter a valid 10-digit US phone number",
+      },
+    };
+  }
+
+  if (phoneCountry === "in" && phoneDigits.length !== 10) {
+    return {
+      fieldErrors: {
+        phone: "Enter a valid 10-digit Indian phone number",
+      },
+    };
+  }
+
+  const formattedPhone = formatPhoneNumber(phoneCountry, phoneDigits);
 
   const sessionStart = parseSessionScheduledInput(parsed.data.sessionScheduledAt);
   if (!sessionStart) {
@@ -168,10 +190,10 @@ export async function submitCareerAdvisoryAction(
     candidate_id: authData.user.id,
     name: fullName,
     email: parsed.data.email,
-    phone: parsed.data.phone,
+    phone: formattedPhone,
     graduation_details: parsed.data.graduationDetails,
     branch: parsed.data.branch,
-    is_veteran: parsed.data.isVeteran === "yes",
+    is_veteran: false,
     interested_technology: parsed.data.interestedTechnology,
     session_scheduled_at: sessionStart.toISOString(),
     updated_at: new Date().toISOString(),
@@ -245,10 +267,10 @@ export async function submitCareerAdvisoryAction(
   const submittedIntake = buildSubmittedIntake({
     fullName,
     email: parsed.data.email,
-    phone: parsed.data.phone,
+    phone: formattedPhone,
     graduationDetails: parsed.data.graduationDetails,
     branch: parsed.data.branch,
-    isVeteran: parsed.data.isVeteran === "yes",
+    isVeteran: data.is_veteran,
     interestedTechnology: parsed.data.interestedTechnology,
     sessionScheduledAt,
     inviteSentAt,

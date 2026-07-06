@@ -1,7 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
-import { isMarketingRoute } from "@/lib/auth/home-path";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 
 export async function middleware(request: NextRequest) {
@@ -83,9 +82,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (isMarketingRoute(pathname) && isLoggedIn) {
-    const redirectUrl = new URL(isAdmin ? "/admin" : "/dashboard", request.url);
-    return NextResponse.redirect(redirectUrl);
+  if (pathname === "/" && isLoggedIn && isAdmin) {
+    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   return response;

@@ -217,16 +217,6 @@ export function CandidatesList({ candidates }: CandidatesListProps) {
                   <dd>{submission.branch}</dd>
                   <dt>Phone</dt>
                   <dd>{submission.phone}</dd>
-                  <dt>Veteran</dt>
-                  <dd>
-                    <span
-                      className={`${styles.badge} ${
-                        submission.isVeteran ? styles.badgeYes : styles.badgeNo
-                      }`}
-                    >
-                      {submission.isVeteran ? "Yes" : "No"}
-                    </span>
-                  </dd>
                   <dt>Interested technology</dt>
                   <dd className={styles.detailWide}>{submission.interestedTechnology}</dd>
                   <dt>Submitted</dt>

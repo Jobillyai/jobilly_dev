@@ -5,13 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/server/db/supabase-browser";
+import { logoutAction } from "@/server/actions/auth";
+import { adminLogoutAction } from "@/server/actions/admin-auth";
+import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
 import type { SessionUser } from "@/lib/auth/session";
-import { JobillyLogo } from "@/components/brand/jobilly-logo";
+import type { AdminUser } from "@/lib/auth/admin";
 import { UserMenu } from "./user-menu";
 import styles from "./navbar.module.css";
 
 type AppNavbarProps = {
   user: SessionUser | null;
+  adminUser?: AdminUser | null;
   homeHref?: "/" | "/dashboard" | "/admin";
 };
 
@@ -87,9 +91,18 @@ function GuestNavActions() {
   );
 }
 
-export function AppNavbar({ user: serverUser, homeHref = "/" }: AppNavbarProps) {
+export function AppNavbar({
+  user: serverUser,
+  homeHref = "/",
+}: AppNavbarProps) {
+  const pathname = usePathname();
   const [user, setUser] = useState<SessionUser | null>(serverUser);
   const [scrolled, setScrolled] = useState(false);
+  const isAdminRoute = pathname.startsWith("/admin") && !pathname.startsWith("/admin/login");
+  const profileHref = isAdminRoute ? "/admin/profile" : "/dashboard/profile";
+  const logoutActionFn = isAdminRoute ? adminLogoutAction : logoutAction;
+  const onPortal = pathname.startsWith("/dashboard") || isAdminRoute;
+  const showPortalLink = Boolean(user) && !onPortal && homeHref !== "/";
 
   useEffect(() => {
     setUser(serverUser);
@@ -129,17 +142,44 @@ export function AppNavbar({ user: serverUser, homeHref = "/" }: AppNavbarProps) 
   return (
     <nav className={`${styles.nav} ${scrolled ? styles.navScrolled : ""}`}>
       <div className={styles.navLeft}>
-        <JobillyLogo href={user ? homeHref : "/"} height={32} className={styles.navLogo} />
+        <Link href={user ? homeHref : "/"} className={styles.navLogo}>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+            <rect width="28" height="28" rx="8" fill="#1877F2" />
+            <path
+              d="M8 14C8 10.686 10.686 8 14 8C17.314 8 20 10.686 20 14C20 17.314 17.314 20 14 20"
+              stroke="white"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+            <circle cx="14" cy="14" r="2.5" fill="white" />
+            <path d="M14 20V22" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+          <span className={styles.navLogoText}>
+            jobilly<span className={styles.navLogoTextDark}>.ai</span>
+          </span>
+        </Link>
         {!user ? <NavLinks /> : null}
       </div>
 
       <div className={styles.navRight}>
         {user ? (
           <div className={styles.navActions}>
-            <Link href={homeHref === "/admin" ? "/admin" : "/dashboard"} className={styles.navBtnGhost}>
-              Dashboard
-            </Link>
-            <UserMenu user={user} />
+            {showPortalLink ? (
+              <Link href={homeHref} className={styles.navBtnGhost}>
+                Dashboard
+              </Link>
+            ) : null}
+            <UserMenu
+              user={user}
+              profileHref={profileHref}
+              logoutActionFn={logoutActionFn}
+              showLogout={false}
+            />
+            <LogoutForm action={logoutActionFn}>
+              <LogoutSubmitButton className={styles.navBtnGhost}>
+                Log out
+              </LogoutSubmitButton>
+            </LogoutForm>
           </div>
         ) : (
           <GuestNavActions />

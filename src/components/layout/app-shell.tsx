@@ -16,7 +16,7 @@ export default async function AppShell({
   return (
     <>
       <NavSwitcher user={user} adminUser={adminUser} />
-      <ShellContent>{children}</ShellContent>
+      <ShellContent user={user} adminUser={adminUser}>{children}</ShellContent>
     </>
   );
 }

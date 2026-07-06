@@ -20,7 +20,7 @@ export default async function DashboardLayout({
 
   return (
     <div className={shellStyles.adminShell}>
-      <CandidateSidebar user={user} unreadApplications={unreadApplications} />
+      <CandidateSidebar unreadApplications={unreadApplications} />
       <div className={`${shellStyles.adminContent} ${portalStyles.content}`}>{children}</div>
     </div>
   );

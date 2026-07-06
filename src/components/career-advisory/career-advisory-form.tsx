@@ -10,6 +10,7 @@ import {
 import type { CandidateCareerAdvisoryIntake } from "@/server/services/career-advisory-intake";
 import { formatDateTimeLocalValue } from "@/lib/career-advisory/booking-window";
 import { PersonNameFields } from "@/components/auth/person-name-fields";
+import { PhoneField } from "@/components/auth/phone-field";
 import { FormField } from "@/components/auth/form-field";
 import { splitFullName } from "@/lib/format-person-name";
 import { SubmitButton } from "@/components/auth/submit-button";
@@ -217,15 +218,10 @@ export function CareerAdvisoryForm({
             error={state.fieldErrors?.email}
           />
 
-          <FormField
-            id="phone"
-            name="phone"
-            type="tel"
-            label="Phone number"
-            placeholder="e.g. +1 555 123 4567"
-            autoComplete="tel"
-            defaultValue={formDefaults?.phone}
+          <PhoneField
+            defaultPhone={formDefaults?.phone}
             error={state.fieldErrors?.phone}
+            placeholder="555 123 4567"
           />
 
           <FormField
@@ -245,34 +241,6 @@ export function CareerAdvisoryForm({
             defaultValue={formDefaults?.branch}
             error={state.fieldErrors?.branch}
           />
-
-          <div className={authStyles.field}>
-            <label htmlFor="isVeteran" className={authStyles.label}>
-              Veteran
-            </label>
-            <select
-              id="isVeteran"
-              name="isVeteran"
-              className={`${styles.select} ${
-                state.fieldErrors?.isVeteran ? styles.selectError : ""
-              }`}
-              aria-invalid={!!state.fieldErrors?.isVeteran}
-              defaultValue={
-                formDefaults ? (formDefaults.isVeteran ? "yes" : "no") : ""
-              }
-            >
-              {!formDefaults ? (
-                <option value="" disabled>
-                  Select an option
-                </option>
-              ) : null}
-              <option value="no">No</option>
-              <option value="yes">Yes</option>
-            </select>
-            {state.fieldErrors?.isVeteran ? (
-              <p className={authStyles.fieldError}>{state.fieldErrors.isVeteran}</p>
-            ) : null}
-          </div>
 
           <div className={authStyles.field}>
             <label htmlFor="interestedTechnology" className={authStyles.label}>
