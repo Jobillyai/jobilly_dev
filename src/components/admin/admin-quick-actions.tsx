@@ -48,12 +48,19 @@ const quickActions = [
   },
 ] as const;
 
-export function AdminQuickActions() {
+type AdminQuickActionsProps = {
+  showJobApply?: boolean;
+};
+
+export function AdminQuickActions({ showJobApply = true }: AdminQuickActionsProps) {
+  const actions = showJobApply
+    ? quickActions
+    : quickActions.filter((action) => action.href !== "/admin/jobs");
   return (
     <section className={styles.quickActionsSection}>
       <h2 className={styles.sectionTitle}>Quick actions</h2>
       <div className={styles.quickActionsGrid}>
-        {quickActions.map((action) => {
+        {actions.map((action) => {
           const Icon = action.icon;
           return (
             <Link key={action.label} href={action.href} className={styles.quickActionCard}>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { createClient } from "@/server/db/supabase-browser";
 import { normalizeSearchRole } from "@/lib/normalize-search-role";
 
-const REFRESH_DEBOUNCE_MS = 750;
+const REFRESH_DEBOUNCE_MS = 400;
 const BACKOFF_INTERVALS_MS = [10_000, 15_000, 20_000, 30_000] as const;
 const DISCONNECTED_FALLBACK_MS = 30_000;
 

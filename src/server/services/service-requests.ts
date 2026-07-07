@@ -2,10 +2,14 @@ import { createAdminClient } from "@/server/db/supabase-admin";
 import { createClient } from "@/server/db/supabase-server";
 import type { StaffContext } from "@/lib/auth/admin";
 
+export type ServiceRequestType = "contact" | "new_candidate";
+
 export type ServiceRequestStatus = "open" | "assigned" | "closed";
 
 export type ServiceRequestRow = {
   id: string;
+  requestType: ServiceRequestType;
+  candidateUserId: string | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -30,6 +34,8 @@ export type MentorOption = {
 
 type DbRow = {
   id: string;
+  request_type: ServiceRequestType;
+  candidate_user_id: string | null;
   first_name: string;
   last_name: string;
   email: string;
@@ -50,6 +56,8 @@ type DbRow = {
 function mapRow(row: DbRow): ServiceRequestRow {
   return {
     id: row.id,
+    requestType: row.request_type,
+    candidateUserId: row.candidate_user_id,
     firstName: row.first_name,
     lastName: row.last_name,
     email: row.email,
@@ -78,6 +86,7 @@ export async function createServiceRequest(input: {
   const { data, error } = await admin
     .from("service_requests")
     .insert({
+      request_type: "contact",
       first_name: input.firstName.trim(),
       last_name: input.lastName.trim(),
       email: input.email.trim().toLowerCase(),
@@ -104,7 +113,7 @@ export async function listServiceRequests(
   let query = supabase
     .from("service_requests")
     .select(
-      "id, first_name, last_name, email, phone, enquiry, status, assigned_mentor_id, assigned_at, assigned_by, created_at, updated_at",
+      "id, request_type, candidate_user_id, first_name, last_name, email, phone, enquiry, status, assigned_mentor_id, assigned_at, assigned_by, created_at, updated_at",
     )
     .order("created_at", { ascending: false });
 
@@ -148,10 +157,26 @@ export async function listServiceRequests(
 
     return mapRow({
       ...row,
+      request_type: (row.request_type ?? "contact") as ServiceRequestType,
       status: row.status as ServiceRequestStatus,
       mentor: mentor ?? null,
     });
   });
+}
+
+export async function countOpenNewCandidateSignups(): Promise<number> {
+  const admin = createAdminClient();
+  const { count, error } = await admin
+    .from("service_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("request_type", "new_candidate")
+    .eq("status", "open");
+
+  if (error) {
+    return 0;
+  }
+
+  return count ?? 0;
 }
 
 export async function listMentorAdmins(): Promise<MentorOption[]> {
@@ -193,6 +218,16 @@ export async function assignServiceRequestToMentor(
     return { error: "Selected mentor was not found." };
   }
 
+  const { data: request, error: requestError } = await admin
+    .from("service_requests")
+    .select("id, request_type, candidate_user_id")
+    .eq("id", requestId)
+    .maybeSingle();
+
+  if (requestError || !request) {
+    return { error: "Request was not found." };
+  }
+
   const now = new Date().toISOString();
   const { error } = await admin
     .from("service_requests")
@@ -209,6 +244,90 @@ export async function assignServiceRequestToMentor(
     console.error("assignServiceRequestToMentor error:", error);
     return { error: "Could not assign this request." };
   }
+
+  if (
+    request.request_type === "new_candidate" &&
+    request.candidate_user_id
+  ) {
+    const { error: profileError } = await admin
+      .from("candidate_profiles")
+      .upsert(
+        {
+          user_id: request.candidate_user_id,
+          assigned_employee_id: mentorId,
+          updated_at: now,
+        },
+        { onConflict: "user_id" },
+      );
+
+    if (profileError) {
+      console.error("assignServiceRequestToMentor profile error:", profileError);
+      return { error: "Mentor assigned to request but candidate link failed." };
+    }
+  }
+
+  return {};
+}
+
+export async function assignCandidateToMentor(
+  candidateId: string,
+  mentorId: string,
+  managerId: string,
+): Promise<{ error?: string }> {
+  const admin = createAdminClient();
+
+  const { data: mentor, error: mentorError } = await admin
+    .from("users")
+    .select("id, role")
+    .eq("id", mentorId)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (mentorError || !mentor) {
+    return { error: "Selected mentor was not found." };
+  }
+
+  const { data: candidate, error: candidateError } = await admin
+    .from("users")
+    .select("id, role")
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  if (candidateError || !candidate) {
+    return { error: "Candidate was not found." };
+  }
+
+  if (candidate.role !== "free_candidate" && candidate.role !== "subscribed_candidate") {
+    return { error: "Only candidates can be assigned to a mentor." };
+  }
+
+  const now = new Date().toISOString();
+  const { error: profileError } = await admin.from("candidate_profiles").upsert(
+    {
+      user_id: candidateId,
+      assigned_employee_id: mentorId,
+      updated_at: now,
+    },
+    { onConflict: "user_id" },
+  );
+
+  if (profileError) {
+    console.error("assignCandidateToMentor profile error:", profileError);
+    return { error: "Could not assign mentor to this candidate." };
+  }
+
+  await admin
+    .from("service_requests")
+    .update({
+      assigned_mentor_id: mentorId,
+      assigned_by: managerId,
+      assigned_at: now,
+      status: "assigned",
+      updated_at: now,
+    })
+    .eq("candidate_user_id", candidateId)
+    .eq("request_type", "new_candidate")
+    .eq("status", "open");
 
   return {};
 }

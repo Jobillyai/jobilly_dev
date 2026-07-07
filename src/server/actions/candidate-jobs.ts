@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import {
   getAdminUser,
+  staffCanAccessJobApplyPortal,
   staffCanScrapeJobs,
   toStaffContext,
 } from "@/lib/auth/admin";
@@ -34,6 +35,11 @@ import {
 } from "@/server/services/candidate-jobs";
 import type { RoleScrapeCacheStatus } from "@/server/services/job-role-cache";
 import {
+  analyzeCandidateResumeBuffer,
+  analyzeCandidateResumeOnFile,
+} from "@/server/services/candidate-resume-analyze";
+import { sendCandidateApplicationsDigest } from "@/server/services/run-daily-applications-digest";
+import {
   createSignedResumeUrl,
   saveApplicationResumeFile,
 } from "@/server/services/resume-ats-check";
@@ -62,6 +68,19 @@ type JobSearchSuccess = {
   warning?: string;
 };
 
+function managerJobApplyError(): string {
+  return "Managers cannot use the job apply portal.";
+}
+
+function assertJobApplyPortalAccess(
+  staff: ReturnType<typeof toStaffContext>,
+): string | null {
+  if (!staffCanAccessJobApplyPortal(staff)) {
+    return managerJobApplyError();
+  }
+  return null;
+}
+
 export async function listCandidatePreviousSearchesAction(
   candidateId: string,
 ): Promise<
@@ -73,7 +92,13 @@ export async function listCandidatePreviousSearchesAction(
     return { error: "Unauthorized" };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -101,7 +126,13 @@ export async function loadPreviousSearchJobsAction(
     return { error: "Unauthorized" };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -143,7 +174,13 @@ export async function loadCandidateJobsForRoleAction(
     return { error: "Unauthorized" };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -162,6 +199,105 @@ export async function loadCandidateJobsForRoleAction(
   };
 }
 
+export async function prepareCandidateJobSearchAction(
+  candidateId: string,
+  sourceMode: JobSearchSourceMode = "all",
+  interestedRole?: string,
+  experienceYearsInput?: string | number | null,
+  searchKeywords?: string | null,
+): Promise<
+  | { error: string }
+  | {
+      success: true;
+      jobs: CandidateJobListing[];
+      searchRole: string;
+      cacheStatus: RoleScrapeCacheStatus[];
+      shouldScrape: boolean;
+      info?: string;
+    }
+> {
+  const sources = sourcesFromMode(sourceMode);
+  const admin = await getAdminUser();
+  if (!admin) {
+    return { error: "Unauthorized" };
+  }
+
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
+  let candidate = await getAdminCandidateById(candidateId, staff);
+  if (!candidate) {
+    return { error: "Candidate not found" };
+  }
+
+  const role = interestedRole?.trim();
+  if (!role) {
+    return { error: "Enter an interested role before searching." };
+  }
+
+  const canScrape = staffCanScrapeJobs(staff);
+
+  if (canScrape) {
+    const saveRole = await updateCandidateJobSearchRole(candidateId, role);
+    if (saveRole.error) {
+      return { error: saveRole.error };
+    }
+
+    if (experienceYearsInput !== undefined) {
+      const experienceYears =
+        typeof experienceYearsInput === "number"
+          ? experienceYearsInput
+          : parseExperienceYears(experienceYearsInput);
+      const saveExperience = await updateCandidateExperienceYears(
+        candidateId,
+        experienceYears,
+      );
+      if (saveExperience.error) {
+        return { error: saveExperience.error };
+      }
+    }
+
+    const refreshed = await getAdminCandidateById(candidateId, staff);
+    if (refreshed) {
+      candidate = refreshed;
+    }
+  }
+
+  const stored = await loadCandidateJobsForRole(candidateId, role, "pipeline");
+  const sourcesToScrape = stored.cacheStatus
+    .filter((entry) => sources.includes(entry.source) && !entry.fresh)
+    .map((entry) => entry.source);
+
+  const shouldScrape = canScrape && sourcesToScrape.length > 0;
+  let info: string | undefined;
+
+  if (!canScrape && sourcesToScrape.length > 0 && stored.jobs.length > 0) {
+    info =
+      "Showing stored jobs from the last search — new searches run once every 3 hours per role.";
+  } else if (!shouldScrape && stored.jobs.length === 0) {
+    info = canScrape
+      ? "No stored jobs for this role yet. Starting a background search."
+      : "No stored jobs for this role yet. An assigned mentor can search again after the 3-hour cache expires.";
+  } else if (!shouldScrape && stored.jobs.length > 0) {
+    info =
+      stored.cacheStatus.find((entry) => sources.includes(entry.source) && entry.fresh)
+        ? "Showing stored jobs — selected sources were searched within the last 3 hours."
+        : undefined;
+  }
+
+  return {
+    success: true,
+    jobs: stored.jobs,
+    searchRole: stored.searchRole,
+    cacheStatus: stored.cacheStatus,
+    shouldScrape,
+    info,
+  };
+}
+
 export async function loadCandidateAppliedJobsAction(
   candidateId: string,
   interestedRole?: string,
@@ -177,7 +313,13 @@ export async function loadCandidateAppliedJobsAction(
     return { error: "Unauthorized" };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -202,6 +344,11 @@ export async function refreshCandidateJobsAction(
   }
 
   const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
   let candidate = await getAdminCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
@@ -403,7 +550,7 @@ export async function scrapeAllCandidatesJobsAction(): Promise<
 > {
   return {
     error:
-      "Bulk scraping is disabled to control billing. Search jobs from each assigned candidate's job sheet (once every 3 hours per role).",
+      "Bulk scraping is disabled. Search jobs from each assigned candidate's job sheet (once every 3 hours per role).",
   };
 }
 
@@ -417,7 +564,13 @@ export async function toggleCandidateJobSelectedAction(
     return { error: "Unauthorized" };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -441,7 +594,13 @@ export async function toggleCandidateJobAppliedAction(
     return { error: "Unauthorized" };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -474,7 +633,13 @@ export async function uploadAppliedJobResumeAction(
     return { error: "Unauthorized" };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -527,4 +692,140 @@ export async function uploadAppliedJobResumeAction(
       error: error instanceof Error ? error.message : "Could not upload resume.",
     };
   }
+}
+
+export type CandidateResumeAnalysisResult = {
+  success?: true;
+  fileName?: string;
+  downloadUrl?: string;
+  resumeText?: string;
+  wordCount?: number;
+  atsScore?: number | null;
+  atsGrade?: string | null;
+  error?: string;
+};
+
+async function authorizeCandidateAccess(candidateId: string) {
+  const admin = await getAdminUser();
+  if (!admin) {
+    return { error: "Unauthorized" as const };
+  }
+
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError as const };
+  }
+
+  const candidate = await getAdminCandidateById(candidateId, staff);
+  if (!candidate) {
+    return { error: "Candidate not found" as const };
+  }
+
+  return { admin, candidate };
+}
+
+export async function uploadAndAnalyzeCandidateResumeAction(
+  candidateId: string,
+  formData: FormData,
+): Promise<CandidateResumeAnalysisResult> {
+  const access = await authorizeCandidateAccess(candidateId);
+  if ("error" in access) {
+    return { error: access.error };
+  }
+
+  const file = formData.get("resume");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a PDF or Word resume to upload." };
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    return { error: "Resume must be 5 MB or smaller." };
+  }
+
+  if (!(RESUME_MIME_TYPES as readonly string[]).includes(file.type)) {
+    return { error: "Use a PDF or Word document (.pdf, .doc, .docx)." };
+  }
+
+  const interestedRole = String(formData.get("interestedRole") ?? "").trim() || null;
+
+  try {
+    const analysis = await analyzeCandidateResumeBuffer({
+      candidateId,
+      fileBuffer: Buffer.from(await file.arrayBuffer()),
+      fileName: file.name,
+      contentType: file.type,
+      interestedRole,
+      saveToProfile: true,
+    });
+
+    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+    revalidatePath(`/admin/candidates/${candidateId}/jobs/applied`);
+
+    return {
+      success: true,
+      fileName: analysis.fileName,
+      downloadUrl: analysis.downloadUrl,
+      resumeText: analysis.resumeText,
+      wordCount: analysis.wordCount,
+      atsScore: analysis.atsScore,
+      atsGrade: analysis.atsGrade,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Could not analyze resume.",
+    };
+  }
+}
+
+export async function analyzeCandidateResumeOnFileAction(
+  candidateId: string,
+  interestedRole?: string | null,
+): Promise<CandidateResumeAnalysisResult> {
+  const access = await authorizeCandidateAccess(candidateId);
+  if ("error" in access) {
+    return { error: access.error };
+  }
+
+  try {
+    const analysis = await analyzeCandidateResumeOnFile({
+      candidateId,
+      interestedRole: interestedRole?.trim() || null,
+    });
+
+    return {
+      success: true,
+      fileName: analysis.fileName,
+      downloadUrl: analysis.downloadUrl,
+      resumeText: analysis.resumeText,
+      wordCount: analysis.wordCount,
+      atsScore: analysis.atsScore,
+      atsGrade: analysis.atsGrade,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Could not analyze resume on file.",
+    };
+  }
+}
+
+export async function sendCandidateApplicationsDigestAction(
+  candidateId: string,
+): Promise<
+  | { success: true; jobCount: number; recipientEmail: string }
+  | { error: string }
+> {
+  const access = await authorizeCandidateAccess(candidateId);
+  if ("error" in access) {
+    return { error: access.error };
+  }
+
+  if (!staffCanScrapeJobs(toStaffContext(access.admin))) {
+    return { error: "Only mentors can send application summary emails." };
+  }
+
+  return sendCandidateApplicationsDigest(candidateId, {
+    onlyToday: false,
+    skipDuplicateCheck: true,
+  });
 }

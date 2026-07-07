@@ -125,12 +125,12 @@
 .logoItem:focus-within .logoSvg,
 .logoItem:hover .logoFallback,
 .logoItem:focus-within .logoFallback {
-  color: var(--logo-brand, #1877f2);
+  color: var(--logo-brand, var(--jb-brand));
 }
 
 .logoItem:hover .logoName,
 .logoItem:focus-within .logoName {
-  color: var(--logo-brand, #1877f2);
+  color: var(--logo-brand, var(--jb-brand));
 }
 
 .logoItem:focus-within {
@@ -138,7 +138,7 @@
 }
 
 .logoItem:focus-visible .logoCard {
-  outline: 2px solid #1877f2;
+  outline: 2px solid var(--jb-brand);
   outline-offset: 4px;
   border-radius: 8px;
 }

@@ -1,26 +1,64 @@
 import { getApifyToken } from "@/server/services/apify-ats-score";
-import { experienceYearsSearchHint } from "@/lib/format-experience-years";
+import { experienceLevelSearchTerms } from "@/lib/format-experience-years";
 import { extractJobPostedDate } from "@/lib/job-posted-date";
 
+const APIFY_GLASSDOOR_ACTOR_ID = "automation-lab~glassdoor-jobs-scraper";
+const APIFY_ZIPRECRUITER_ACTOR_ID = "piotrv1001~ziprecruiter-jobs-scraper";
 const APIFY_INDEED_ACTOR_ID = "misceres~indeed-scraper";
 const APIFY_LINKEDIN_ACTOR_ID = "curious_coder~linkedin-jobs-scraper";
 
-export type JobMarketSource = "indeed" | "linkedin";
+export type JobMarketSource = "indeed" | "linkedin" | "glassdoor" | "ziprecruiter";
 
-export const JOB_MARKET_SOURCES: JobMarketSource[] = ["indeed", "linkedin"];
+/** Active scrape sources — searched in this order for progressive UI updates. */
+export const JOB_MARKET_SOURCES: JobMarketSource[] = [
+  "linkedin",
+  "indeed",
+  "glassdoor",
+  "ziprecruiter",
+];
+
+export const JOB_MARKET_SOURCE_LABELS: Record<JobMarketSource, string> = {
+  indeed: "Indeed",
+  linkedin: "LinkedIn",
+  glassdoor: "Glassdoor",
+  ziprecruiter: "ZipRecruiter",
+};
+
+export type JobListingSource = JobMarketSource;
 
 export type JobListing = {
   company: string;
   role: string;
   jobUrl: string;
+  applyUrl?: string | null;
   location: string;
   jdText: string;
-  source: JobMarketSource;
+  source: JobListingSource;
   postedAt: string | null;
 };
 
 /** @deprecated Use JobListing — kept for existing imports. */
 export type ApifyJobListing = JobListing;
+
+type ApifyGlassdoorJob = {
+  title?: string;
+  company?: string;
+  location?: string;
+  description?: string;
+  jobUrl?: string;
+  postedDate?: string;
+  salary?: string;
+};
+
+type ApifyZipRecruiterJob = {
+  title?: string;
+  company?: string;
+  location?: string;
+  description?: string;
+  jobUrl?: string;
+  postedDate?: string | null;
+  scrapedAt?: string;
+};
 
 type ApifyIndeedJob = {
   positionName?: string;
@@ -38,6 +76,7 @@ type ApifyLinkedInJob = {
   title?: string;
   companyName?: string;
   link?: string;
+  applyUrl?: string;
   location?: string;
   descriptionText?: string;
   description?: string;
@@ -137,18 +176,7 @@ export function composeJobSearchPosition(input: {
 
   const experienceParts: string[] = [];
   if (input.experienceYears !== null && input.experienceYears !== undefined) {
-    if (input.experienceYears === 0) {
-      experienceParts.push("entry level");
-    } else {
-      experienceParts.push(
-        input.experienceYears === 1 ? "1 year" : `${input.experienceYears} years`,
-      );
-    }
-
-    const hint = experienceYearsSearchHint(input.experienceYears);
-    if (hint) {
-      experienceParts.push(hint.split(/\s+/).slice(0, 2).join(" "));
-    }
+    experienceParts.push(...experienceLevelSearchTerms(input.experienceYears).slice(0, 2));
   }
 
   const unique: string[] = [];
@@ -162,6 +190,47 @@ export function composeJobSearchPosition(input: {
   }
 
   return unique.join(" ").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+const ROLE_STOP_WORDS = new Set([
+  "and",
+  "or",
+  "the",
+  "for",
+  "with",
+  "intern",
+  "internship",
+]);
+
+/** Server-side relevance gate for scraped listings (role + optional keywords). */
+export function jobMatchesSearchCriteria(
+  job: {
+    role: string;
+    company: string;
+    location?: string | null;
+    jdText?: string | null;
+  },
+  interestedRole: string,
+  searchKeywords?: string | null,
+): boolean {
+  if (searchKeywords?.trim() && !jobMatchesKeywordFilter(job, searchKeywords)) {
+    return false;
+  }
+
+  const roleTokens = parseKeywordFilterTokens(
+    interestedRole.replace(/[^a-z0-9+#. ]+/gi, " "),
+  ).filter((token) => token.length > 2 && !ROLE_STOP_WORDS.has(token));
+
+  if (roleTokens.length === 0) {
+    return true;
+  }
+
+  const haystack = [job.role, job.company, job.jdText ?? ""].join(" ").toLowerCase();
+  const matched = roleTokens.filter((token) => haystack.includes(token)).length;
+  const required =
+    roleTokens.length <= 2 ? 1 : Math.max(1, Math.ceil(roleTokens.length * 0.5));
+
+  return matched >= required;
 }
 
 export function buildJobSearchFromInterests(input: {
@@ -200,6 +269,28 @@ function isIrrelevantListing(role: string, searchPosition: string): boolean {
   }
 
   return false;
+}
+
+export function isJobrightListing(
+  source: string | null | undefined,
+  jobUrl: string,
+): boolean {
+  const normalizedSource = (source ?? "").toLowerCase();
+  if (normalizedSource.includes("jobright")) {
+    return true;
+  }
+
+  const url = jobUrl.toLowerCase();
+  if (url.includes("jobright")) {
+    return true;
+  }
+
+  try {
+    const host = new URL(jobUrl).hostname.toLowerCase();
+    return host.includes("jobright");
+  } catch {
+    return false;
+  }
 }
 
 function buildLinkedInSearchUrl(position: string, location: string): string {
@@ -252,21 +343,67 @@ async function runApifyActor<T>(
   return { items: payload as T[] };
 }
 
+function normalizeGlassdoorJob(raw: ApifyGlassdoorJob): JobListing | null {
+  const role = raw.title?.trim();
+  const jobUrl = raw.jobUrl?.trim();
+  const company = raw.company?.trim() || "Unknown company";
+
+  if (!role || !jobUrl || isJobrightListing(null, jobUrl)) {
+    return null;
+  }
+
+  const description = [raw.description, raw.salary].filter(Boolean).join(" · ");
+
+  return {
+    company,
+    role,
+    jobUrl: getCleanJobListingUrl(jobUrl, "glassdoor"),
+    location: raw.location?.trim() || "United States",
+    jdText: truncate(description),
+    source: "glassdoor",
+    postedAt: extractJobPostedDate(raw as Record<string, unknown>),
+  };
+}
+
+function normalizeZipRecruiterJob(raw: ApifyZipRecruiterJob): JobListing | null {
+  const role = raw.title?.trim();
+  const jobUrl = raw.jobUrl?.trim();
+  const company = raw.company?.trim() || "Unknown company";
+
+  if (!role || !jobUrl || isJobrightListing(null, jobUrl)) {
+    return null;
+  }
+
+  const description = raw.description ?? "";
+
+  return {
+    company,
+    role,
+    jobUrl: getCleanJobListingUrl(jobUrl, "ziprecruiter"),
+    location: raw.location?.trim() || "United States",
+    jdText: truncate(description),
+    source: "ziprecruiter",
+    postedAt: extractJobPostedDate(raw as Record<string, unknown>),
+  };
+}
+
 function normalizeIndeedJob(raw: ApifyIndeedJob): JobListing | null {
   const role = raw.positionName?.trim() || raw.title?.trim();
   const jobUrl = raw.url?.trim();
   const company = raw.company?.trim() || "Unknown company";
 
-  if (!role || !jobUrl) {
+  if (!role || !jobUrl || isJobrightListing(null, jobUrl)) {
     return null;
   }
+
+  const description = raw.description ?? "";
 
   return {
     company,
     role,
-    jobUrl,
+    jobUrl: getCleanJobListingUrl(jobUrl, "indeed"),
     location: raw.location?.trim() || "United States",
-    jdText: truncate(raw.description ?? ""),
+    jdText: truncate(description),
     source: "indeed",
     postedAt: extractJobPostedDate(raw as Record<string, unknown>),
   };
@@ -274,19 +411,22 @@ function normalizeIndeedJob(raw: ApifyIndeedJob): JobListing | null {
 
 function normalizeLinkedInJob(raw: ApifyLinkedInJob): JobListing | null {
   const role = raw.title?.trim();
-  const jobUrl = raw.link?.trim();
+  const rawLink = raw.link?.trim();
   const company = raw.companyName?.trim() || "Unknown company";
 
-  if (!role || !jobUrl) {
+  if (!role || !rawLink || isJobrightListing(null, rawLink)) {
     return null;
   }
 
+  const jobUrl = getCleanJobListingUrl(rawLink, "linkedin");
+  const applyUrl = resolveExternalApplyUrl(raw.applyUrl, jobUrl);
   const description = raw.descriptionText ?? raw.description ?? "";
 
   return {
     company,
     role,
     jobUrl,
+    applyUrl,
     location: raw.location?.trim() || "United States",
     jdText: truncate(description),
     source: "linkedin",
@@ -299,6 +439,9 @@ function dedupeJobs(jobs: JobListing[]): JobListing[] {
   const unique: JobListing[] = [];
 
   for (const job of jobs) {
+    if (isJobrightListing(job.source, job.jobUrl)) {
+      continue;
+    }
     if (seen.has(job.jobUrl)) {
       continue;
     }
@@ -310,7 +453,85 @@ function dedupeJobs(jobs: JobListing[]): JobListing[] {
 }
 
 function filterRelevantJobs(jobs: JobListing[], searchPosition: string): JobListing[] {
-  return jobs.filter((job) => !isIrrelevantListing(job.role, searchPosition));
+  return jobs.filter(
+    (job) =>
+      !isJobrightListing(job.source, job.jobUrl) &&
+      !isIrrelevantListing(job.role, searchPosition),
+  );
+}
+
+export async function searchGlassdoorJobs(input: {
+  position: string;
+  location?: string;
+  maxItems?: number;
+}): Promise<{ jobs: JobListing[] } | { error: string }> {
+  const maxItems = input.maxItems ?? 20;
+
+  const result = await runApifyActor<ApifyGlassdoorJob>(
+    APIFY_GLASSDOOR_ACTOR_ID,
+    {
+      query: input.position,
+      location: input.location ?? "United States",
+      maxResults: Math.max(10, maxItems),
+    },
+    240,
+  );
+
+  if ("error" in result) {
+    return { error: result.error };
+  }
+
+  const jobs = filterRelevantJobs(
+    dedupeJobs(
+      result.items
+        .map((item) => normalizeGlassdoorJob(item))
+        .filter((job): job is JobListing => job !== null),
+    ),
+    input.position,
+  ).slice(0, maxItems);
+
+  if (jobs.length === 0) {
+    return { error: "Glassdoor returned no relevant jobs for this search." };
+  }
+
+  return { jobs };
+}
+
+export async function searchZipRecruiterJobs(input: {
+  position: string;
+  location?: string;
+  maxItems?: number;
+}): Promise<{ jobs: JobListing[] } | { error: string }> {
+  const maxItems = input.maxItems ?? 20;
+
+  const result = await runApifyActor<ApifyZipRecruiterJob>(
+    APIFY_ZIPRECRUITER_ACTOR_ID,
+    {
+      search: input.position,
+      location: input.location ?? "United States",
+      maxPages: Math.min(20, Math.max(1, Math.ceil(maxItems / 20))),
+    },
+    240,
+  );
+
+  if ("error" in result) {
+    return { error: result.error };
+  }
+
+  const jobs = filterRelevantJobs(
+    dedupeJobs(
+      result.items
+        .map((item) => normalizeZipRecruiterJob(item))
+        .filter((job): job is JobListing => job !== null),
+    ),
+    input.position,
+  ).slice(0, maxItems);
+
+  if (jobs.length === 0) {
+    return { error: "ZipRecruiter returned no relevant jobs for this search." };
+  }
+
+  return { jobs };
 }
 
 export async function searchIndeedJobs(input: {
@@ -360,7 +581,7 @@ export async function searchLinkedInJobs(input: {
     {
       urls: [searchUrl],
       count: Math.max(10, input.maxItems ?? 20),
-      scrapeCompany: false,
+      scrapeCompany: true,
       splitByLocation: false,
     },
     240,
@@ -396,30 +617,60 @@ export async function searchJobsBySources(input: {
   const errors: string[] = [];
   const maxItems = input.maxItemsPerSource ?? 20;
   const location = input.location ?? "United States";
+  const requested = new Set(
+    input.sources.filter((source) => JOB_MARKET_SOURCES.includes(source)),
+  );
 
-  if (input.sources.includes("indeed")) {
-    const indeed = await searchIndeedJobs({
-      position: input.position,
-      location,
-      maxItems,
-    });
-    if ("error" in indeed) {
-      errors.push(`Indeed: ${indeed.error}`);
-    } else {
-      jobs.push(...indeed.jobs);
+  for (const source of JOB_MARKET_SOURCES) {
+    if (!requested.has(source)) {
+      continue;
     }
-  }
 
-  if (input.sources.includes("linkedin")) {
-    const linkedin = await searchLinkedInJobs({
-      position: input.position,
-      location,
-      maxItems,
-    });
-    if ("error" in linkedin) {
-      errors.push(`LinkedIn: ${linkedin.error}`);
-    } else {
-      jobs.push(...linkedin.jobs);
+    if (source === "linkedin") {
+      const linkedin = await searchLinkedInJobs({ position: input.position, location, maxItems });
+      if ("error" in linkedin) {
+        errors.push(`LinkedIn: ${linkedin.error}`);
+      } else {
+        jobs.push(...linkedin.jobs);
+      }
+      continue;
+    }
+
+    if (source === "indeed") {
+      const indeed = await searchIndeedJobs({ position: input.position, location, maxItems });
+      if ("error" in indeed) {
+        errors.push(`Indeed: ${indeed.error}`);
+      } else {
+        jobs.push(...indeed.jobs);
+      }
+      continue;
+    }
+
+    if (source === "glassdoor") {
+      const glassdoor = await searchGlassdoorJobs({
+        position: input.position,
+        location,
+        maxItems,
+      });
+      if ("error" in glassdoor) {
+        errors.push(`Glassdoor: ${glassdoor.error}`);
+      } else {
+        jobs.push(...glassdoor.jobs);
+      }
+      continue;
+    }
+
+    if (source === "ziprecruiter") {
+      const ziprecruiter = await searchZipRecruiterJobs({
+        position: input.position,
+        location,
+        maxItems,
+      });
+      if ("error" in ziprecruiter) {
+        errors.push(`ZipRecruiter: ${ziprecruiter.error}`);
+      } else {
+        jobs.push(...ziprecruiter.jobs);
+      }
     }
   }
 
@@ -472,6 +723,12 @@ export function resolveJobSource(
   const source = (sourceValue ?? "").toLowerCase();
   const url = jobUrl.toLowerCase();
 
+  if (source.includes("glassdoor") || url.includes("glassdoor.com")) {
+    return "glassdoor";
+  }
+  if (source.includes("ziprecruiter") || url.includes("ziprecruiter.com")) {
+    return "ziprecruiter";
+  }
   if (source.includes("linkedin") || url.includes("linkedin.com")) {
     return "linkedin";
   }
@@ -481,9 +738,120 @@ export function resolveJobSource(
   return "unknown";
 }
 
+/** Canonical job posting URL — strips LinkedIn tracking params and normalizes /jobs/view/{id}. */
+export function getCleanJobListingUrl(
+  jobUrl: string,
+  sourceValue?: string | null,
+): string {
+  const trimmed = jobUrl.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  const source = sourceValue ? resolveJobSource(sourceValue, trimmed) : resolveJobSource("", trimmed);
+
+  if (source === "linkedin" || trimmed.includes("linkedin.com")) {
+    try {
+      const parsed = new URL(trimmed);
+      const pathname = parsed.pathname.replace(/\/apply\/?$/i, "");
+      const viewMatch = pathname.match(/\/jobs\/view\/([^/]+)/i);
+      if (viewMatch?.[1]) {
+        const segment = decodeURIComponent(viewMatch[1]);
+        const numericMatch = segment.match(/(\d{6,})$/);
+        const id = numericMatch?.[1] ?? segment;
+        return `https://www.linkedin.com/jobs/view/${id}/`;
+      }
+    } catch {
+      return trimmed;
+    }
+  }
+
+  if (source === "indeed" || trimmed.includes("indeed.com")) {
+    try {
+      const parsed = new URL(trimmed);
+      parsed.hash = "";
+      return parsed.toString();
+    } catch {
+      return trimmed;
+    }
+  }
+
+  return trimmed;
+}
+
+/** Compact link label — LinkedIn job ID or hostname, not the full path. */
+export function formatShortJobUrlLabel(
+  jobUrl: string,
+  sourceValue?: string | null,
+): string {
+  const url = getCleanJobListingUrl(jobUrl, sourceValue);
+  if (!url.trim()) {
+    return "Job";
+  }
+
+  const source = sourceValue
+    ? resolveJobSource(sourceValue, url)
+    : resolveJobSource("", url);
+
+  try {
+    const parsed = new URL(url);
+
+    if (source === "linkedin" || parsed.hostname.includes("linkedin.com")) {
+      const viewMatch = parsed.pathname.match(/\/jobs\/view\/([^/]+)/i);
+      if (viewMatch?.[1]) {
+        const segment = decodeURIComponent(viewMatch[1]);
+        const numericMatch = segment.match(/(\d{6,})$/);
+        if (numericMatch) {
+          return `#${numericMatch[1]}`;
+        }
+        return segment.length > 20 ? `${segment.slice(0, 20)}…` : segment;
+      }
+      return "linkedin.com";
+    }
+
+    return parsed.hostname.replace(/^www\./i, "");
+  } catch {
+    return "Job";
+  }
+}
+
+export function formatJobListingUrlLabel(
+  jobUrl: string,
+  sourceValue?: string | null,
+): string {
+  return formatShortJobUrlLabel(jobUrl, sourceValue);
+}
+
+/** Company apply URL from LinkedIn — excludes LinkedIn easy-apply links. */
+export function resolveExternalApplyUrl(
+  applyUrl: string | null | undefined,
+  listingUrl: string,
+): string | null {
+  const trimmed = applyUrl?.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const normalizedListing = getCleanJobListingUrl(listingUrl, "linkedin");
+  const lower = trimmed.toLowerCase();
+
+  if (lower.includes("linkedin.com")) {
+    return null;
+  }
+
+  if (getCleanJobListingUrl(trimmed) === normalizedListing) {
+    return null;
+  }
+
+  return trimmed;
+}
+
 function hostnameSourceLabel(jobUrl: string): string {
   try {
     const host = new URL(jobUrl).hostname.replace(/^www\./, "");
+    if (isJobrightListing(null, jobUrl)) {
+      return "Other";
+    }
     const segment = host.split(".")[0] ?? host;
     if (!segment || segment === "com") {
       return "Other";
@@ -501,6 +869,12 @@ export function formatJobSourceLabel(
   const normalized = source.toLowerCase();
   const url = jobUrl?.toLowerCase() ?? "";
 
+  if (normalized.includes("glassdoor") || url.includes("glassdoor.com")) {
+    return "Glassdoor";
+  }
+  if (normalized.includes("ziprecruiter") || url.includes("ziprecruiter.com")) {
+    return "ZipRecruiter";
+  }
   if (normalized.includes("linkedin") || url.includes("linkedin.com")) {
     return "LinkedIn";
   }
@@ -510,8 +884,8 @@ export function formatJobSourceLabel(
   if (normalized.includes("google")) {
     return "Google Jobs";
   }
-  if (normalized.includes("jobright") || url.includes("jobright.ai")) {
-    return "Jobright";
+  if (isJobrightListing(source, jobUrl ?? "")) {
+    return "Other";
   }
   if (normalized.includes("remotive") || normalized.includes("apify")) {
     return "Legacy";
@@ -553,21 +927,23 @@ export function jobListingMatchesSource(
 
 export function countJobsBySource(
   jobs: Array<{ source: string; jobUrl: string; location?: string | null }>,
-): {
-  indeed: number;
-  linkedin: number;
-  other: number;
-} {
-  const counts = { indeed: 0, linkedin: 0, other: 0 };
+): Record<JobMarketSource | "other", number> {
+  const counts: Record<JobMarketSource | "other", number> = {
+    indeed: 0,
+    linkedin: 0,
+    glassdoor: 0,
+    ziprecruiter: 0,
+    other: 0,
+  };
 
   for (const job of jobs) {
     const resolved = resolveJobSource(job.source, job.jobUrl);
-    if (resolved === "linkedin") {
-      counts.linkedin += 1;
-    } else if (resolved === "indeed") {
-      counts.indeed += 1;
-    } else if (isUsaJobLocation(job.location)) {
-      counts.other += 1;
+    if (resolved === "unknown") {
+      if (isUsaJobLocation(job.location)) {
+        counts.other += 1;
+      }
+    } else {
+      counts[resolved] += 1;
     }
   }
 
@@ -590,7 +966,7 @@ export async function searchJobsWithApify(input: {
     return {
       error:
         result.errors.join(" ") ||
-        "No jobs found on Indeed or LinkedIn.",
+        "No jobs found on Indeed, LinkedIn, Glassdoor, or ZipRecruiter.",
     };
   }
 

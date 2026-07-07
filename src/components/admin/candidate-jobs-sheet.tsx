@@ -7,19 +7,22 @@ import {
   loadCandidateAppliedJobsAction,
   loadCandidateJobsForRoleAction,
   loadPreviousSearchJobsAction,
-  refreshCandidateJobsAction,
+  prepareCandidateJobSearchAction,
+  sendCandidateApplicationsDigestAction,
   toggleCandidateJobAppliedAction,
   toggleCandidateJobSelectedAction,
   uploadAppliedJobResumeAction,
+  uploadAndAnalyzeCandidateResumeAction,
   type JobSearchSourceMode,
 } from "@/server/actions/candidate-jobs";
 import {
-  formatJobSourceLabel,
   jobListingMatchesSource,
   jobMatchesKeywordFilter,
   countJobsBySource,
-  resolveJobSource,
+  JOB_MARKET_SOURCES,
+  JOB_MARKET_SOURCE_LABELS,
   type JobListingSourceFilter,
+  type JobMarketSource,
 } from "@/server/services/job-market-search";
 import type {
   CandidateJobListing,
@@ -29,15 +32,24 @@ import type {
 import {
   cacheExpiresAt,
   countJobsMatchingFreshnessFilter,
-  formatJobFreshnessLabel,
   jobMatchesFreshnessFilter,
   normalizeSearchRole,
   type JobFreshnessFilter,
   type RoleScrapeCacheStatus,
 } from "@/server/services/job-role-cache";
-import { isPostedWithinDays } from "@/lib/job-posted-date";
-import { formatExperienceYears, parseExperienceYears } from "@/lib/format-experience-years";
+import {
+  experienceLevelFromYears,
+  yearsFromExperienceLevel,
+  type ExperienceLevel,
+} from "@/lib/format-experience-years";
 import { useScrapedJobsLiveUpdates } from "@/lib/hooks/use-scraped-jobs-live-updates";
+import {
+  buildCandidateResumeCorpus,
+  calculateResumeJobMatchPercent,
+  resumeMatchLevel,
+  type CandidateResumeMatchInput,
+} from "@/lib/resume-job-match";
+import { AdminJobList } from "@/components/admin/admin-job-list";
 import styles from "./candidate-jobs-sheet.module.css";
 
 type CandidateJobsSheetProps = {
@@ -50,20 +62,13 @@ type CandidateJobsSheetProps = {
   canScrape: boolean;
   viewMode?: JobListingViewMode;
   appliedCount?: number;
+  candidateResumeMatch?: CandidateResumeMatchInput;
+  candidateResumeDownloadUrl?: string | null;
+  candidateResumeFileName?: string | null;
+  initialAnalyzedResumeText?: string | null;
 };
 
 type SourceFilter = JobListingSourceFilter;
-
-function sourceBadgeClass(source: string, jobUrl: string): string {
-  const resolved = resolveJobSource(source, jobUrl);
-  if (resolved === "linkedin") {
-    return styles.sourceLinkedin ?? "";
-  }
-  if (resolved === "indeed") {
-    return styles.sourceIndeed ?? "";
-  }
-  return styles.sourceOther ?? styles.sourceDefault ?? "";
-}
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -100,7 +105,7 @@ function mergeJobListings(
 
 function formatCacheExpiry(status: RoleScrapeCacheStatus): string {
   if (!status.fresh || !status.lastScrapedAt) {
-    return "Needs scrape";
+    return "Search needed";
   }
 
   return `Cached until ${formatDate(cacheExpiresAt(status.lastScrapedAt))}`;
@@ -116,6 +121,10 @@ export function CandidateJobsSheet({
   canScrape,
   viewMode = "pipeline",
   appliedCount = 0,
+  candidateResumeMatch,
+  candidateResumeDownloadUrl = null,
+  candidateResumeFileName = null,
+  initialAnalyzedResumeText = null,
 }: CandidateJobsSheetProps) {
   const isAppliedView = viewMode === "applied";
   const router = useRouter();
@@ -127,12 +136,13 @@ export function CandidateJobsSheet({
   const [, startTransition] = useTransition();
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [freshnessFilter, setFreshnessFilter] = useState<JobFreshnessFilter>("all");
+  const [searchSourceMode, setSearchSourceMode] = useState<JobSearchSourceMode>("all");
   const [pendingSource, setPendingSource] = useState<JobSearchSourceMode | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [loadingStored, setLoadingStored] = useState(false);
   const [interestedRole, setInterestedRole] = useState(defaultInterestedRole);
-  const [experienceYearsInput, setExperienceYearsInput] = useState(
-    candidateExperienceYears?.toString() ?? "",
+  const [experienceLevelInput, setExperienceLevelInput] = useState<ExperienceLevel | "">(
+    () => experienceLevelFromYears(candidateExperienceYears) ?? "",
   );
   const [keywordsInput, setKeywordsInput] = useState("");
   const [cacheStatus, setCacheStatus] = useState<RoleScrapeCacheStatus[]>([]);
@@ -141,23 +151,36 @@ export function CandidateJobsSheet({
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [isBackgroundScraping, setIsBackgroundScraping] = useState(false);
   const [uploadingResumeJobId, setUploadingResumeJobId] = useState<string | null>(null);
+  const [analyzedResumeText, setAnalyzedResumeText] = useState<string | null>(
+    initialAnalyzedResumeText,
+  );
+  const [resumeDownloadUrl, setResumeDownloadUrl] = useState<string | null>(
+    candidateResumeDownloadUrl,
+  );
+  const [resumeFileName, setResumeFileName] = useState<string | null>(
+    candidateResumeFileName,
+  );
+  const [resumeAnalysisMeta, setResumeAnalysisMeta] = useState<{
+    wordCount: number;
+    atsScore: number | null;
+    atsGrade: string | null;
+  } | null>(null);
+  const [analyzingResume, setAnalyzingResume] = useState(false);
+  const [sendingDigestEmail, setSendingDigestEmail] = useState(false);
+  const resumeAnalyzeInputRef = useRef<HTMLInputElement>(null);
   const skipRoleReloadRef = useRef(false);
   const lastSearchRoleRef = useRef<string | null>(null);
 
   const refreshJobsForRole = useCallback(async () => {
-    const role = interestedRole.trim();
-
     if (isAppliedView) {
-      const result = await loadCandidateAppliedJobsAction(
-        candidateId,
-        role || undefined,
-      );
+      const result = await loadCandidateAppliedJobsAction(candidateId);
       if ("success" in result && result.success) {
         setJobs(result.jobs);
       }
       return;
     }
 
+    const role = interestedRole.trim();
     if (!role) {
       return;
     }
@@ -178,35 +201,49 @@ export function CandidateJobsSheet({
   });
 
   useEffect(() => {
-    setExperienceYearsInput(
-      candidateExperienceYears === null || candidateExperienceYears === undefined
-        ? ""
-        : String(candidateExperienceYears),
+    setJobs(initialJobs);
+    setPreviousSearches(initialPreviousSearches);
+    setInterestedRole(defaultInterestedRole);
+    setAnalyzedResumeText(initialAnalyzedResumeText);
+    setResumeDownloadUrl(candidateResumeDownloadUrl);
+    setResumeFileName(candidateResumeFileName);
+    setResumeAnalysisMeta(
+      initialAnalyzedResumeText?.trim()
+        ? {
+            wordCount: initialAnalyzedResumeText.trim().split(/\s+/).filter(Boolean).length,
+            atsScore: null,
+            atsGrade: null,
+          }
+        : null,
     );
-  }, [candidateExperienceYears]);
+    setMessage(null);
+    setCacheStatus([]);
+    setSelectedPreviousSearch("");
+    setSourceFilter("all");
+    setFreshnessFilter("all");
+    setKeywordsInput("");
+    skipRoleReloadRef.current = false;
+    lastSearchRoleRef.current = null;
+  }, [
+    candidateId,
+    initialJobs,
+    initialPreviousSearches,
+    defaultInterestedRole,
+    initialAnalyzedResumeText,
+    candidateResumeDownloadUrl,
+    candidateResumeFileName,
+  ]);
 
   useEffect(() => {
-    const role = interestedRole.trim();
+    setExperienceLevelInput(experienceLevelFromYears(candidateExperienceYears) ?? "");
+  }, [candidateExperienceYears, candidateId]);
 
+  useEffect(() => {
     if (isAppliedView) {
-      if (!role) {
-        return;
-      }
-
-      const timer = window.setTimeout(async () => {
-        setLoadingStored(true);
-        try {
-          const result = await loadCandidateAppliedJobsAction(candidateId, role);
-          if ("success" in result && result.success) {
-            setJobs(result.jobs);
-          }
-        } finally {
-          setLoadingStored(false);
-        }
-      }, 450);
-
-      return () => window.clearTimeout(timer);
+      return;
     }
+
+    const role = interestedRole.trim();
 
     if (!role || isBackgroundScraping) {
       return;
@@ -284,15 +321,48 @@ export function CandidateJobsSheet({
     }
   }
 
+  const resumeCorpus = useMemo(
+    () =>
+      buildCandidateResumeCorpus({
+        ...candidateResumeMatch,
+        resumeText: analyzedResumeText,
+        interestedRole:
+          interestedRole.trim() || candidateResumeMatch?.interestedRole || null,
+      }),
+    [candidateResumeMatch, interestedRole, analyzedResumeText],
+  );
+
+  const usingAnalyzedResume = Boolean(analyzedResumeText?.trim());
+
+  const jobsWithMatch = useMemo(
+    () =>
+      jobs.map((job) => {
+        const score = calculateResumeJobMatchPercent(resumeCorpus, {
+          role: job.role,
+          company: job.company,
+          jdText: job.jdText,
+        });
+
+        return {
+          ...job,
+          relevanceScore: score,
+          resumeMatch: resumeMatchLevel(score),
+        };
+      }),
+    [jobs, resumeCorpus],
+  );
+
   const filteredJobs = useMemo(
     () =>
-      jobs.filter(
-        (job) =>
-          jobListingMatchesSource(job.source, sourceFilter, job.jobUrl, job.location) &&
-          jobMatchesFreshnessFilter(job.postedAt, freshnessFilter) &&
-          jobMatchesKeywordFilter(job, keywordsInput),
-      ),
-    [jobs, sourceFilter, freshnessFilter, keywordsInput],
+      jobsWithMatch
+        .filter(
+          (job) =>
+            jobListingMatchesSource(job.source, sourceFilter, job.jobUrl, job.location) &&
+            jobMatchesFreshnessFilter(job.postedAt, freshnessFilter) &&
+            jobMatchesKeywordFilter(job, keywordsInput),
+        )
+        .sort((a, b) => b.relevanceScore - a.relevanceScore),
+    [jobsWithMatch, sourceFilter, freshnessFilter, keywordsInput],
   );
 
   const sourceCounts = useMemo(() => countJobsBySource(jobs), [jobs]);
@@ -310,16 +380,16 @@ export function CandidateJobsSheet({
 
   function searchSourceLabel(sourceMode: JobSearchSourceMode): string {
     if (sourceMode === "all") {
-      return "Indeed & LinkedIn";
+      return "all sources";
     }
-    return sourceMode.charAt(0).toUpperCase() + sourceMode.slice(1);
+    return JOB_MARKET_SOURCE_LABELS[sourceMode];
   }
 
   function resolvedExperienceYears(): number | null {
-    if (experienceYearsInput.trim() === "") {
+    if (!experienceLevelInput) {
       return null;
     }
-    return parseExperienceYears(experienceYearsInput);
+    return yearsFromExperienceLevel(experienceLevelInput);
   }
 
   async function handleSearch(sourceMode: JobSearchSourceMode) {
@@ -335,26 +405,10 @@ export function CandidateJobsSheet({
     skipRoleReloadRef.current = true;
     lastSearchRoleRef.current = normalizeSearchRole(role);
 
-    const storedResult = await loadCandidateJobsForRoleAction(candidateId, role);
-    if ("success" in storedResult && storedResult.success) {
-      setJobs((current) => mergeJobListings(current, storedResult.jobs));
-      setCacheStatus(storedResult.cacheStatus);
-    }
-
-    if (canScrape) {
-      setIsBackgroundScraping(true);
-      setMessageKind("info");
-      setMessage(
-        storedResult && "success" in storedResult && storedResult.success
-          ? `Showing ${storedResult.jobs.length} stored job${storedResult.jobs.length === 1 ? "" : "s"}. Scraping ${searchSourceLabel(sourceMode)} in the background — new rows appear automatically.`
-          : `Scraping ${searchSourceLabel(sourceMode)} in the background — jobs will appear in the sheet as they are found.`,
-      );
-    } else {
-      setIsSearching(true);
-    }
+    let backgroundScrapeStarted = false;
 
     try {
-      const result = await refreshCandidateJobsAction(
+      const prep = await prepareCandidateJobSearchAction(
         candidateId,
         sourceMode,
         role,
@@ -362,52 +416,114 @@ export function CandidateJobsSheet({
         keywordsInput.trim() || undefined,
       );
 
-      if ("error" in result && result.error) {
+      if ("error" in prep && prep.error) {
         setMessageKind("error");
-        setMessage(result.error);
+        setMessage(prep.error);
+        setPendingSource(null);
         return;
       }
 
-      if ("success" in result && result.success) {
-        setJobs((current) => mergeJobListings(current, result.jobs));
-        setCacheStatus(result.cacheStatus);
-        setSelectedPreviousSearch(result.searchRole);
-        void refreshPreviousSearchesList();
+      if (!("success" in prep) || !prep.success) {
+        setPendingSource(null);
+        return;
+      }
 
-        if (result.info && !result.scrapeCalled) {
-          setMessageKind("info");
-          setMessage(`${result.info} Showing ${result.count} stored job${result.count === 1 ? "" : "s"}.`);
-        } else if (result.warning) {
-          setMessageKind("warning");
-          setMessage(
-            result.info
-              ? `${result.info} ${result.warning}`
-              : result.warning,
-          );
-        } else if (result.scrapeCalled) {
-          setMessageKind("success");
-          setMessage(
-            `Scrape finished — ${result.newJobsAdded} new unique job${result.newJobsAdded === 1 ? "" : "s"} added (${result.count} total for this role).`,
-          );
-        } else if (result.info) {
-          setMessageKind("success");
-          setMessage(
-            `${result.info} ${result.newJobsAdded} new unique job${result.newJobsAdded === 1 ? "" : "s"} added (${result.count} total for this role).`,
-          );
-        } else {
-          setMessageKind("success");
-          setMessage(
-            `${result.count} job${result.count === 1 ? "" : "s"} stored for "${role}".`,
-          );
-        }
+      setJobs((current) => mergeJobListings(current, prep.jobs));
+      setCacheStatus(prep.cacheStatus);
+      setSelectedPreviousSearch(prep.searchRole);
+      void refreshPreviousSearchesList();
+
+      if (prep.shouldScrape && canScrape) {
+        backgroundScrapeStarted = true;
+        setIsBackgroundScraping(true);
+        setMessageKind("info");
+        setMessage(
+          prep.jobs.length > 0
+            ? `Showing ${prep.jobs.length} stored job${prep.jobs.length === 1 ? "" : "s"}. Searching ${searchSourceLabel(sourceMode)} in the background (LinkedIn → Indeed → Glassdoor → ZipRecruiter) — new rows append automatically.`
+            : `Searching ${searchSourceLabel(sourceMode)} in the background (LinkedIn → Indeed → Glassdoor → ZipRecruiter) — jobs appear as each source finishes.`,
+        );
+
+        void fetch("/api/admin/candidate-jobs/scrape", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            candidateId,
+            sourceMode,
+            interestedRole: role,
+            searchKeywords: keywordsInput.trim() || null,
+          }),
+        })
+          .then(async (response) => {
+            const result = (await response.json()) as {
+              error?: string;
+              success?: boolean;
+              scrapeCalled?: boolean;
+              newJobsAdded?: number;
+              count?: number;
+              cacheStatus?: typeof cacheStatus;
+              warning?: string;
+              info?: string;
+            };
+
+            if (!response.ok || result.error) {
+              setMessageKind("error");
+              setMessage(result.error ?? "Background job search failed.");
+              return;
+            }
+
+            if (result.cacheStatus) {
+              setCacheStatus(result.cacheStatus);
+            }
+            await refreshJobsForRole();
+
+            if (result.warning) {
+              setMessageKind("warning");
+              setMessage(
+                result.info
+                  ? `${result.info} ${result.warning}`
+                  : result.warning,
+              );
+            } else if (result.scrapeCalled) {
+              setMessageKind("success");
+              setMessage(
+                `Search finished — ${result.newJobsAdded ?? 0} new unique job${result.newJobsAdded === 1 ? "" : "s"} added (${result.count ?? prep.jobs.length} total for this role).`,
+              );
+            } else if (result.info) {
+              setMessageKind("info");
+              setMessage(result.info);
+            }
+          })
+          .catch(() => {
+            setMessageKind("error");
+            setMessage("Background job search failed. Check your connection and try again.");
+          })
+          .finally(() => {
+            setIsBackgroundScraping(false);
+            setPendingSource(null);
+          });
+
+        return;
+      }
+
+      if (prep.info) {
+        setMessageKind("info");
+        setMessage(`${prep.info} Showing ${prep.jobs.length} stored job${prep.jobs.length === 1 ? "" : "s"}.`);
+      } else {
+        setMessageKind("success");
+        setMessage(
+          `${prep.jobs.length} job${prep.jobs.length === 1 ? "" : "s"} stored for "${role}".`,
+        );
       }
     } catch {
       setMessageKind("error");
       setMessage("Job search failed. Please try again.");
     } finally {
-      setIsBackgroundScraping(false);
-      setIsSearching(false);
-      setPendingSource(null);
+      if (!backgroundScrapeStarted) {
+        if (!canScrape) {
+          setIsSearching(false);
+        }
+        setPendingSource(null);
+      }
     }
   }
 
@@ -483,6 +599,89 @@ export function CandidateJobsSheet({
     });
   }
 
+  function applyResumeAnalysisResult(result: {
+    resumeText?: string;
+    downloadUrl?: string;
+    fileName?: string;
+    wordCount?: number;
+    atsScore?: number | null;
+    atsGrade?: string | null;
+  }) {
+    if (result.resumeText) {
+      setAnalyzedResumeText(result.resumeText);
+    }
+    if (result.downloadUrl) {
+      setResumeDownloadUrl(result.downloadUrl);
+    }
+    if (result.fileName) {
+      setResumeFileName(result.fileName);
+    }
+    if (result.wordCount !== undefined) {
+      setResumeAnalysisMeta({
+        wordCount: result.wordCount,
+        atsScore: result.atsScore ?? null,
+        atsGrade: result.atsGrade ?? null,
+      });
+    }
+  }
+
+  async function handleSendApplicationsDigest() {
+    setSendingDigestEmail(true);
+    setMessage(null);
+
+    try {
+      const result = await sendCandidateApplicationsDigestAction(candidateId);
+      if ("error" in result) {
+        setMessageKind("error");
+        setMessage(result.error);
+        return;
+      }
+
+      setMessageKind("success");
+      setMessage(
+        `Application summary emailed to ${result.recipientEmail} (${result.jobCount} job${result.jobCount === 1 ? "" : "s"}).`,
+      );
+    } finally {
+      setSendingDigestEmail(false);
+    }
+  }
+
+  async function handleAnalyzeResumeUpload(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+
+    setAnalyzingResume(true);
+    setMessage(null);
+
+    const formData = new FormData();
+    formData.append("resume", file);
+    formData.append("interestedRole", interestedRole.trim());
+
+    try {
+      const result = await uploadAndAnalyzeCandidateResumeAction(candidateId, formData);
+      if (result.error) {
+        setMessageKind("error");
+        setMessage(result.error);
+        return;
+      }
+
+      if (result.success) {
+        applyResumeAnalysisResult(result);
+        setMessageKind("success");
+        const atsNote =
+          result.atsScore != null
+            ? ` Overall ATS score: ${result.atsScore}${result.atsGrade ? ` (${result.atsGrade})` : ""}.`
+            : "";
+        setMessage(
+          `Resume analyzed (${result.wordCount?.toLocaleString() ?? 0} words). Match % updated for all jobs.${atsNote}`,
+        );
+      }
+    } finally {
+      setAnalyzingResume(false);
+    }
+  }
+
   async function handleResumeUpload(jobId: string, file: File | undefined) {
     if (!file) {
       return;
@@ -521,229 +720,316 @@ export function CandidateJobsSheet({
     }
   }
 
-  const fileName = isAppliedView
-    ? `${candidateName.replace(/\s+/g, "_")}_applied_jobs.xlsx`
-    : `${candidateName.replace(/\s+/g, "_")}_jobs.xlsx`;
+
   const loadingPreviousSearch = loadingPrevious;
   const scrapeInProgress = isBackgroundScraping;
   const showMentorLoading = isSearching && !canScrape;
-  const indeedCache = cacheStatus.find((entry) => entry.source === "indeed");
-  const linkedinCache = cacheStatus.find((entry) => entry.source === "linkedin");
+  const sourceCacheByName = useMemo(
+    () =>
+      Object.fromEntries(
+        JOB_MARKET_SOURCES.map((source) => [
+          source,
+          cacheStatus.find((entry) => entry.source === source),
+        ]),
+      ) as Record<JobMarketSource, (typeof cacheStatus)[number] | undefined>,
+    [cacheStatus],
+  );
+
+  const controlsHint = isAppliedView
+    ? "Attach the resume used, or undo apply to return a job to the pipeline."
+    : canScrape
+      ? null
+      : "Load a previous search below, or wait for an admin to search again.";
 
   return (
     <div className={styles.sheet}>
-      <div
-        className={`${styles.searchRoleBar} ${canScrape ? styles.searchRoleBarManager : ""}`}
-      >
-        <label htmlFor="interestedRole" className={styles.roleLabel}>
-          Interested role
-        </label>
-        <input
-          id="interestedRole"
-          type="text"
-          value={interestedRole}
-          onChange={(event) => {
-            setInterestedRole(event.target.value);
-            setSelectedPreviousSearch("");
-          }}
-          placeholder="e.g. Software Engineer, Data Analyst"
-          className={styles.roleInput}
-          disabled={loadingPreviousSearch || scrapeInProgress}
-        />
-        {canScrape ? (
-          <>
-            <label htmlFor="experienceYears" className={styles.experienceLabel}>
-              Years exp.
+      <section className={styles.controls}>
+        <div className={styles.controlsTop}>
+          <div className={styles.controlsIntro}>
+            <h2 className={styles.controlsTitle}>
+              {isAppliedView ? "Applied jobs" : canScrape ? "Apply for jobs" : "Stored jobs"}
+            </h2>
+            {controlsHint ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
+            {resumeAnalysisMeta ? (
+              <p className={styles.analysisMeta}>
+                {usingAnalyzedResume ? "Resume analyzed" : "Profile match only"}
+                {" · "}
+                {resumeAnalysisMeta.wordCount.toLocaleString()} words
+                {resumeAnalysisMeta.atsScore != null
+                  ? ` · ATS ${resumeAnalysisMeta.atsScore}${
+                      resumeAnalysisMeta.atsGrade ? ` (${resumeAnalysisMeta.atsGrade})` : ""
+                    }`
+                  : ""}
+              </p>
+            ) : null}
+          </div>
+          <div className={styles.controlsActions}>
+            {resumeDownloadUrl ? (
+              <a
+                href={resumeDownloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.resumeViewLink}
+                title={resumeFileName ?? undefined}
+              >
+                {candidateName}&apos;s resume
+              </a>
+            ) : (
+              <span className={styles.resumeMissingLabel}>No resume on file for {candidateName}</span>
+            )}
+            <label className={styles.resumeAnalyzeBtn}>
+              <input
+                ref={resumeAnalyzeInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className={styles.resumeFileInput}
+                disabled={analyzingResume || loadingPreviousSearch || scrapeInProgress}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  void handleAnalyzeResumeUpload(file);
+                  event.target.value = "";
+                }}
+              />
+              {analyzingResume ? "Analyzing…" : "Upload & analyze resume"}
             </label>
-            <input
-              id="experienceYears"
-              type="number"
-              min={0}
-              max={50}
-              value={experienceYearsInput}
-              onChange={(event) => setExperienceYearsInput(event.target.value)}
-              placeholder=""
-              className={styles.experienceInput}
-              disabled={loadingPreviousSearch || scrapeInProgress}
-              aria-label="Years of experience for job scraping"
-            />
-          </>
-        ) : null}
-        <label htmlFor="searchKeywords" className={styles.keywordsLabel}>
-          Keywords
-        </label>
-        <input
-          id="searchKeywords"
-          type="text"
-          value={keywordsInput}
-          onChange={(event) => setKeywordsInput(event.target.value)}
-          placeholder="e.g. React, remote, Python — optional; filters rows and refines job board search"
-          className={styles.keywordsInput}
-          disabled={loadingPreviousSearch || scrapeInProgress}
-        />
-        <span className={styles.roleHint}>
-          {isAppliedView
-            ? "Filter by role, attach the resume used, or undo apply to return a job to the pipeline."
-            : canScrape
-              ? "Each role can be searched once every 3 hours. New results append to existing jobs."
-              : "Load a previous search below, or wait for an admin to run a new scrape."}
-        </span>
-        <label htmlFor="previousSearch" className={styles.previousSearchLabel}>
-          Previous searches
-        </label>
-        <select
-          id="previousSearch"
-          value={selectedPreviousSearch}
-          onChange={(event) => handlePreviousSearchChange(event.target.value)}
-          className={styles.previousSearchSelect}
-          disabled={loadingPreviousSearch || scrapeInProgress}
-        >
-          <option value="">
-            {previousSearches.length > 0
-              ? "Load a previous search…"
-              : "No previous searches yet"}
-          </option>
-          {previousSearches.map((entry) => (
-            <option key={entry.searchRole} value={entry.searchRole}>
-              {entry.label} ({entry.jobCount} job{entry.jobCount === 1 ? "" : "s"} ·{" "}
-              {formatDate(entry.lastScrapedAt)})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className={styles.toolbar}>
-        <div className={styles.toolbarLeft}>
-          <span className={styles.toolbarLabel}>
-            {isAppliedView ? "Applied jobs" : canScrape ? "Job search" : "Stored jobs"}
-          </span>
-          <span className={styles.toolbarFile}>{fileName}</span>
+            {(scrapeInProgress || showMentorLoading) && (
+              <span className={styles.toolbarSpinner} aria-hidden />
+            )}
+            {isAppliedView && canScrape ? (
+              <button
+                type="button"
+                className={styles.sendMailBtn}
+                onClick={() => void handleSendApplicationsDigest()}
+                disabled={sendingDigestEmail || loadingStored || appliedCount === 0}
+              >
+                {sendingDigestEmail ? "Sending…" : "Send mail"}
+              </button>
+            ) : null}
+            {(!canScrape || isAppliedView) && (
+              <button
+                type="button"
+                className={styles.searchBtn}
+                onClick={() => (isAppliedView ? void refreshJobsForRole() : handleSearch("all"))}
+                disabled={loadingPreviousSearch || scrapeInProgress}
+              >
+                {isAppliedView
+                  ? loadingStored
+                    ? "Loading…"
+                    : "Refresh applied jobs"
+                  : showMentorLoading
+                    ? "Loading…"
+                    : "Refresh stored jobs"}
+              </button>
+            )}
+          </div>
         </div>
-        <div className={styles.toolbarActions}>
-          {(scrapeInProgress || showMentorLoading) && (
-            <span className={styles.toolbarSpinner} aria-hidden />
-          )}
-          {canScrape && !isAppliedView ? (
-            <>
-              <button
-                type="button"
-                className={styles.refreshBtn}
-                onClick={() => handleSearch("indeed")}
+
+        {!isAppliedView ? (
+          <div className={styles.fieldGrid}>
+            <div className={styles.field}>
+              <label htmlFor="interestedRole" className={styles.fieldLabel}>
+                Interested role
+              </label>
+              <input
+                id="interestedRole"
+                type="text"
+                value={interestedRole}
+                onChange={(event) => {
+                  setInterestedRole(event.target.value);
+                  setSelectedPreviousSearch("");
+                }}
+                placeholder="e.g. Software Engineer, Data Analyst"
+                className={styles.fieldInput}
+                disabled={loadingPreviousSearch || scrapeInProgress}
+              />
+            </div>
+            <div className={styles.fieldExperience}>
+              <label htmlFor="experienceLevel" className={styles.fieldLabel}>
+                Experience
+              </label>
+              <select
+                id="experienceLevel"
+                value={experienceLevelInput}
+                onChange={(event) =>
+                  setExperienceLevelInput(event.target.value as ExperienceLevel | "")
+                }
+                className={styles.fieldInput}
+                disabled={!canScrape || loadingPreviousSearch || scrapeInProgress}
+                aria-label="Experience level for job search"
+              >
+                <option value="">Not set</option>
+                <option value="entry">Entry level</option>
+                <option value="mid">Mid level</option>
+                <option value="senior">Senior</option>
+              </select>
+            </div>
+            <div className={styles.fieldWide}>
+              <label htmlFor="searchKeywords" className={styles.fieldLabel}>
+                Keywords
+              </label>
+              <input
+                id="searchKeywords"
+                type="text"
+                value={keywordsInput}
+                onChange={(event) => setKeywordsInput(event.target.value)}
+                placeholder="React, remote, Python — optional"
+                className={styles.fieldInput}
+                disabled={loadingPreviousSearch || scrapeInProgress}
+              />
+            </div>
+            <div className={styles.fieldHistory}>
+              <label htmlFor="previousSearch" className={styles.fieldLabel}>
+                Previous searches
+              </label>
+              <select
+                id="previousSearch"
+                value={selectedPreviousSearch}
+                onChange={(event) => handlePreviousSearchChange(event.target.value)}
+                className={styles.fieldSelect}
                 disabled={loadingPreviousSearch || scrapeInProgress}
               >
-                {pendingSource === "indeed" ? "Searching Indeed…" : "Search Indeed"}
-              </button>
-              <button
-                type="button"
-                className={`${styles.refreshBtn} ${styles.refreshBtnLinkedin}`}
-                onClick={() => handleSearch("linkedin")}
+                <option value="">
+                  {previousSearches.length > 0
+                    ? "Load a previous search…"
+                    : "No previous searches yet"}
+                </option>
+                {previousSearches.map((entry) => (
+                  <option key={entry.searchRole} value={entry.searchRole}>
+                    {entry.label} ({entry.jobCount} job{entry.jobCount === 1 ? "" : "s"} ·{" "}
+                    {formatDate(entry.lastScrapedAt)})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        ) : null}
+
+        {!isAppliedView && canScrape ? (
+          <div className={styles.searchBar}>
+            <div className={styles.searchBarField}>
+              <label htmlFor="searchSource" className={styles.fieldLabel}>
+                Job board
+              </label>
+              <select
+                id="searchSource"
+                value={searchSourceMode}
+                onChange={(event) =>
+                  setSearchSourceMode(event.target.value as JobSearchSourceMode)
+                }
+                className={styles.fieldSelect}
                 disabled={loadingPreviousSearch || scrapeInProgress}
               >
-                {pendingSource === "linkedin" ? "Searching LinkedIn…" : "Search LinkedIn"}
-              </button>
-              <button
-                type="button"
-                className={`${styles.refreshBtn} ${styles.refreshBtnAll}`}
-                onClick={() => handleSearch("all")}
-                disabled={loadingPreviousSearch || scrapeInProgress}
-              >
-                {pendingSource === "all" ? "Searching all…" : "Search all"}
-              </button>
-            </>
-          ) : (
+                <option value="all">All sources</option>
+                {JOB_MARKET_SOURCES.map((source) => (
+                  <option key={source} value={source}>
+                    {JOB_MARKET_SOURCE_LABELS[source]}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button
               type="button"
-              className={styles.refreshBtn}
-              onClick={() => (isAppliedView ? void refreshJobsForRole() : handleSearch("all"))}
+              className={styles.searchBtn}
+              onClick={() => void handleSearch(searchSourceMode)}
               disabled={loadingPreviousSearch || scrapeInProgress}
             >
-              {isAppliedView
-                ? loadingStored
-                  ? "Loading…"
-                  : "Refresh applied jobs"
-                : showMentorLoading
-                  ? "Loading…"
-                  : "Refresh stored jobs"}
+              {pendingSource
+                ? `Searching ${searchSourceLabel(pendingSource)}…`
+                : searchSourceMode === "all"
+                  ? "Search all sources"
+                  : `Search ${JOB_MARKET_SOURCE_LABELS[searchSourceMode]}`}
             </button>
-          )}
-        </div>
-      </div>
-
-      <div className={styles.metaBar}>
-        {isAppliedView ? (
-          <p>
-            <strong>Applied:</strong> {appliedCount} role{appliedCount === 1 ? "" : "s"} submitted
-          </p>
-        ) : (
-          <>
-            <p>
-              <strong>Scrape cache:</strong> Indeed —{" "}
-              {indeedCache ? formatCacheExpiry(indeedCache) : "not searched"} · LinkedIn —{" "}
-              {linkedinCache ? formatCacheExpiry(linkedinCache) : "not searched"}
-            </p>
-            <p>
-              <strong>In sheet:</strong> Indeed {sourceCounts.indeed} · LinkedIn{" "}
-              {sourceCounts.linkedin}
-              {sourceCounts.other > 0 ? ` · Other ${sourceCounts.other}` : ""}
-            </p>
-          </>
-        )}
-      </div>
-
-      <div className={styles.filterBar}>
-        <div className={styles.filterGroup}>
-          <label htmlFor="sourceFilter" className={styles.filterLabel}>
-            Source
-          </label>
-          <select
-            id="sourceFilter"
-            value={sourceFilter}
-            onChange={(event) => setSourceFilter(event.target.value as SourceFilter)}
-            className={styles.filterSelect}
-            disabled={loadingPreviousSearch || scrapeInProgress}
-          >
-            <option value="all">All sources ({jobs.length})</option>
-            <option value="indeed">Indeed only ({sourceCounts.indeed})</option>
-            <option value="linkedin">LinkedIn only ({sourceCounts.linkedin})</option>
-            <option value="other">Other USA sources ({sourceCounts.other})</option>
-          </select>
-        </div>
-        <div className={styles.filterGroup}>
-          <label htmlFor="freshnessFilter" className={styles.filterLabel}>
-            Posted
-          </label>
-          <select
-            id="freshnessFilter"
-            value={freshnessFilter}
-            onChange={(event) =>
-              setFreshnessFilter(event.target.value as JobFreshnessFilter)
-            }
-            className={styles.filterSelect}
-            disabled={loadingPreviousSearch || scrapeInProgress}
-          >
-            <option value="all">All posting dates ({jobs.length})</option>
-            <option value="last_24h">Posted today / 24h ({freshnessCounts.last_24h})</option>
-            <option value="last_3d">Posted last 3 days ({freshnessCounts.last_3d})</option>
-            <option value="last_7d">Posted last 7 days ({freshnessCounts.last_7d})</option>
-            <option value="older">Posted 7+ days ago ({freshnessCounts.older})</option>
-          </select>
-        </div>
-        {freshnessCounts.unknown > 0 ? (
-          <p className={styles.filterHint}>
-            {freshnessCounts.unknown} job{freshnessCounts.unknown === 1 ? "" : "s"} missing a
-            posting date — re-scrape to populate.
-          </p>
+          </div>
         ) : null}
-        <p className={styles.filterSummary}>
-          Showing {filteredJobs.length} of {jobs.length} job
-          {jobs.length === 1 ? "" : "s"}
-          {sourceFilter !== "all" ||
-          freshnessFilter !== "all" ||
-          keywordsInput.trim()
-            ? " with current filters"
-            : ""}
-        </p>
-      </div>
+
+        <div className={styles.metaFilters}>
+          <div className={styles.statPills}>
+            {isAppliedView ? (
+              <span className={styles.statPill}>
+                <strong>{appliedCount}</strong> role{appliedCount === 1 ? "" : "s"} submitted
+              </span>
+            ) : (
+              <>
+                {JOB_MARKET_SOURCES.map((source) => (
+                  <span key={source} className={styles.statPill}>
+                    {JOB_MARKET_SOURCE_LABELS[source]} cache:{" "}
+                    {sourceCacheByName[source]
+                      ? formatCacheExpiry(sourceCacheByName[source]!)
+                      : "not searched"}
+                  </span>
+                ))}
+                <span className={styles.statPill}>
+                  In sheet:{" "}
+                  {JOB_MARKET_SOURCES.map((source, index) => (
+                    <span key={source}>
+                      {index > 0 ? " · " : ""}
+                      {JOB_MARKET_SOURCE_LABELS[source]} {sourceCounts[source]}
+                    </span>
+                  ))}
+                  {sourceCounts.other > 0 ? ` · Other ${sourceCounts.other}` : ""}
+                </span>
+              </>
+            )}
+          </div>
+          <div className={styles.filterRow}>
+            <div className={styles.filterGroup}>
+              <label htmlFor="sourceFilter" className={styles.fieldLabel}>
+                Source
+              </label>
+              <select
+                id="sourceFilter"
+                value={sourceFilter}
+                onChange={(event) => setSourceFilter(event.target.value as SourceFilter)}
+                className={styles.fieldSelect}
+                disabled={loadingPreviousSearch || scrapeInProgress}
+              >
+                <option value="all">All sources ({jobs.length})</option>
+                {JOB_MARKET_SOURCES.map((source) => (
+                  <option key={source} value={source}>
+                    {JOB_MARKET_SOURCE_LABELS[source]} only ({sourceCounts[source]})
+                  </option>
+                ))}
+                <option value="other">Other USA sources ({sourceCounts.other})</option>
+              </select>
+            </div>
+            <div className={styles.filterGroup}>
+              <label htmlFor="freshnessFilter" className={styles.fieldLabel}>
+                Posted
+              </label>
+              <select
+                id="freshnessFilter"
+                value={freshnessFilter}
+                onChange={(event) =>
+                  setFreshnessFilter(event.target.value as JobFreshnessFilter)
+                }
+                className={styles.fieldSelect}
+                disabled={loadingPreviousSearch || scrapeInProgress}
+              >
+                <option value="all">All posting dates ({jobs.length})</option>
+                <option value="last_24h">Posted today / 24h ({freshnessCounts.last_24h})</option>
+                <option value="last_3d">Posted last 3 days ({freshnessCounts.last_3d})</option>
+                <option value="last_7d">Posted last 7 days ({freshnessCounts.last_7d})</option>
+                <option value="older">Posted 7+ days ago ({freshnessCounts.older})</option>
+              </select>
+            </div>
+            <p className={styles.filterSummary}>
+              Showing {filteredJobs.length} of {jobs.length} job
+              {jobs.length === 1 ? "" : "s"}
+              {sourceFilter !== "all" ||
+              freshnessFilter !== "all" ||
+              keywordsInput.trim()
+                ? " · filtered"
+                : ""}
+            </p>
+          </div>
+          {freshnessCounts.unknown > 0 ? (
+            <p className={styles.filterHint}>
+              {freshnessCounts.unknown} job{freshnessCounts.unknown === 1 ? "" : "s"} missing a
+              posting date — search again to populate.
+            </p>
+          ) : null}
+        </div>
+      </section>
 
       {message && (
         <p
@@ -768,10 +1054,10 @@ export function CandidateJobsSheet({
             <span className={styles.toolbarSpinner} aria-hidden />
             <p className={styles.scrapeBannerText}>
               <strong>
-                Scraping {pendingSource ? searchSourceLabel(pendingSource) : "jobs"}…
+                Searching {pendingSource ? searchSourceLabel(pendingSource) : "for jobs"}…
               </strong>{" "}
               Stored jobs are shown below. New rows are added automatically as each
-              source finishes (Indeed → LinkedIn) via live updates.
+              source finishes (LinkedIn → Indeed → Glassdoor → ZipRecruiter) via live updates.
             </p>
           </div>
         )}
@@ -789,9 +1075,9 @@ export function CandidateJobsSheet({
             {isAppliedView
               ? "No applied jobs yet. Mark roles as applied from the Job pipeline tab."
               : scrapeInProgress
-                ? `Scraping "${interestedRole.trim()}" — jobs will appear here as they are found.`
+                ? `Searching for "${interestedRole.trim()}" — jobs will appear here as they are found.`
                 : canScrape
-                  ? "No open jobs yet. Enter an interested role above, then search Indeed or LinkedIn."
+                  ? "No open jobs yet. Enter an interested role above, then search any source or Search all."
                   : "No open jobs yet for this role. An assigned admin can search again after the 3-hour cache expires."}
           </p>
         </div>
@@ -808,7 +1094,7 @@ export function CandidateJobsSheet({
             <div className={styles.emptyActions}>
               <button
                 type="button"
-                className={styles.refreshBtn}
+                className={styles.searchBtn}
                 onClick={() => setKeywordsInput("")}
               >
                 Clear keywords
@@ -817,202 +1103,15 @@ export function CandidateJobsSheet({
           ) : null}
         </div>
       ) : (
-        <div className={styles.tableViewport}>
-          <table className={styles.excelTable}>
-            {isAppliedView ? (
-              <>
-                <thead>
-                  <tr>
-                    <th className={styles.rowNumHead}>#</th>
-                    <th>Source</th>
-                    <th>Job title</th>
-                    <th>Company</th>
-                    <th>Location</th>
-                    <th>Job URL</th>
-                    <th>Applied at</th>
-                    <th>Posted</th>
-                    <th className={styles.resumeHead}>Applied resume</th>
-                    <th className={styles.appliedHead}>Remove</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredJobs.map((job, index) => (
-                    <tr key={job.id} className={styles.rowApplied}>
-                      <td className={styles.rowNum}>{index + 1}</td>
-                      <td>
-                        <span
-                          className={`${styles.sourceBadge} ${sourceBadgeClass(job.source, job.jobUrl)}`}
-                        >
-                          {formatJobSourceLabel(job.source, job.jobUrl)}
-                        </span>
-                      </td>
-                      <td className={styles.cellStrong}>{job.role}</td>
-                      <td>{job.company}</td>
-                      <td>{job.location}</td>
-                      <td>
-                        <a
-                          href={job.jobUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={styles.jobLink}
-                        >
-                          Open
-                        </a>
-                      </td>
-                      <td className={styles.cellDate}>
-                        {job.appliedAt ? formatDate(job.appliedAt) : "—"}
-                      </td>
-                      <td className={styles.cellDate}>
-                        {job.postedAt ? (
-                          <>
-                            <span>{formatDate(job.postedAt)}</span>
-                            <span className={styles.freshnessBadge}>
-                              {formatJobFreshnessLabel(job.postedAt)}
-                            </span>
-                          </>
-                        ) : (
-                          <span className={styles.postedUnknown}>Unknown</span>
-                        )}
-                      </td>
-                      <td className={styles.resumeCell}>
-                        <div className={styles.resumeControl}>
-                          {job.applicationResumeDownloadUrl ? (
-                            <a
-                              href={job.applicationResumeDownloadUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={styles.resumeLink}
-                            >
-                              {job.applicationResumeFileName ?? "View resume"}
-                            </a>
-                          ) : (
-                            <span className={styles.resumeMissing}>No resume yet</span>
-                          )}
-                          <label className={styles.resumeUploadBtn}>
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                              className={styles.resumeFileInput}
-                              disabled={uploadingResumeJobId === job.id}
-                              onChange={(event) => {
-                                const file = event.target.files?.[0];
-                                void handleResumeUpload(job.id, file);
-                                event.target.value = "";
-                              }}
-                            />
-                            {uploadingResumeJobId === job.id ? "Uploading…" : "Attach resume"}
-                          </label>
-                        </div>
-                      </td>
-                      <td className={styles.appliedCell}>
-                        <label className={styles.appliedControl}>
-                          <input
-                            type="checkbox"
-                            checked
-                            onChange={() => handleToggleApplied(job.id, false)}
-                            aria-label={`Remove applied ${job.role} at ${job.company}`}
-                          />
-                          <span className={styles.appliedLabelOff}>Undo apply</span>
-                        </label>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </>
-            ) : (
-              <>
-                <thead>
-                  <tr>
-                    <th className={styles.rowNumHead}>#</th>
-                    <th>Shortlist</th>
-                    <th>Source</th>
-                    <th>Job title</th>
-                    <th>Company</th>
-                    <th>Location</th>
-                    <th>Job URL</th>
-                    <th className={styles.jdHead}>Description</th>
-                    <th>Scraped at</th>
-                    <th>Posted</th>
-                    <th className={styles.applyHead}>Apply</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredJobs.map((job, index) => (
-                    <tr
-                      key={job.id}
-                      className={job.selected ? styles.rowSelected : undefined}
-                    >
-                      <td className={styles.rowNum}>{index + 1}</td>
-                      <td>
-                        <input
-                          type="checkbox"
-                          checked={job.selected}
-                          onChange={(event) =>
-                            handleToggleSelected(job.id, event.target.checked)
-                          }
-                          aria-label={`Shortlist ${job.role} at ${job.company}`}
-                        />
-                      </td>
-                      <td>
-                        <span
-                          className={`${styles.sourceBadge} ${sourceBadgeClass(job.source, job.jobUrl)}`}
-                        >
-                          {formatJobSourceLabel(job.source, job.jobUrl)}
-                        </span>
-                      </td>
-                      <td className={styles.cellStrong}>{job.role}</td>
-                      <td>{job.company}</td>
-                      <td>{job.location}</td>
-                      <td>
-                        <a
-                          href={job.jobUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={styles.jobLink}
-                        >
-                          Open
-                        </a>
-                      </td>
-                      <td className={`${styles.cellWide} ${styles.jdCell}`}>{job.jdText ?? "—"}</td>
-                      <td className={styles.cellDate}>{formatDate(job.scrapedAt)}</td>
-                      <td className={styles.cellDate}>
-                        {job.postedAt ? (
-                          <>
-                            <span>{formatDate(job.postedAt)}</span>
-                            <span
-                              className={`${styles.freshnessBadge} ${
-                                isPostedWithinDays(job.postedAt, 3)
-                                  ? styles.freshnessBadgeFresh
-                                  : styles.freshnessBadgeStale
-                              }`}
-                            >
-                              {formatJobFreshnessLabel(job.postedAt)}
-                            </span>
-                          </>
-                        ) : (
-                          <span className={styles.postedUnknown}>Unknown</span>
-                        )}
-                      </td>
-                      <td className={styles.applyCell}>
-                        <label className={styles.appliedControl}>
-                          <input
-                            type="checkbox"
-                            checked={false}
-                            onChange={(event) =>
-                              handleToggleApplied(job.id, event.target.checked)
-                            }
-                            aria-label={`Apply to ${job.role} at ${job.company}`}
-                          />
-                          <span className={styles.appliedLabelOff}>Mark applied</span>
-                        </label>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </>
-            )}
-          </table>
-        </div>
+        <AdminJobList
+          jobs={filteredJobs}
+          viewMode={isAppliedView ? "applied" : "pipeline"}
+          uploadingResumeJobId={uploadingResumeJobId}
+          matchUsesAnalyzedResume={usingAnalyzedResume}
+          onToggleSelected={handleToggleSelected}
+          onToggleApplied={handleToggleApplied}
+          onResumeUpload={(jobId, file) => void handleResumeUpload(jobId, file)}
+        />
       )}
 
       </div>

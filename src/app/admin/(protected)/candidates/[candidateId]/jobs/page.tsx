@@ -4,11 +4,11 @@ import { CandidateJobsNav } from "@/components/admin/candidate-jobs-nav";
 import { CandidateJobsSheet } from "@/components/admin/candidate-jobs-sheet";
 import {
   getAdminUser,
+  staffCanAccessJobApplyPortal,
   staffCanScrapeJobs,
   toStaffContext,
 } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
-import { formatExperienceYears } from "@/lib/format-experience-years";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import {
   getCandidateAppliedJobCount,
@@ -36,6 +36,10 @@ export default async function AdminCandidateJobsPage({
   }
 
   const staff = toStaffContext(admin);
+  if (!staffCanAccessJobApplyPortal(staff)) {
+    redirect("/admin/candidates");
+  }
+
   const candidate = await getAdminCandidateById(params.candidateId, staff);
 
   if (!candidate) {
@@ -63,24 +67,9 @@ export default async function AdminCandidateJobsPage({
 
         <div className={styles.header}>
           <h1 className={styles.title}>
-            {staffCanScrapeJobs(staff) ? "Job scraper" : "Job listings"} for{" "}
+            {staffCanScrapeJobs(staff) ? "Apply for jobs" : "Job listings"} for{" "}
             <em className={styles.titleEm}>{displayName}</em>
           </h1>
-          <p className={styles.subtitle}>
-            {staffCanScrapeJobs(staff)
-              ? "Search Indeed and LinkedIn for your assigned candidates (once every 3 hours per role)."
-              : "Review stored jobs for"}{" "}
-            {candidate.email}
-            {candidate.submission?.branch ? ` · ${candidate.submission.branch}` : ""}
-            {candidate.submission?.interestedTechnology
-              ? ` · ${candidate.submission.interestedTechnology}`
-              : ""}
-            {defaultInterestedRole ? ` · Target role: ${defaultInterestedRole}` : ""}
-            {candidate.experienceYears !== null
-              ? ` · ${formatExperienceYears(candidate.experienceYears)} exp.`
-              : ""}
-            {candidate.resumeUrl ? " · Resume on file" : ""}.
-          </p>
         </div>
 
         <CandidateJobsNav
@@ -89,8 +78,9 @@ export default async function AdminCandidateJobsPage({
           active="pipeline"
         />
 
-        <section className={styles.section}>
+        <div className={styles.jobsSheetSection}>
           <CandidateJobsSheet
+            key={candidate.id}
             candidateId={candidate.id}
             candidateName={displayName}
             candidateExperienceYears={candidate.experienceYears}
@@ -100,8 +90,21 @@ export default async function AdminCandidateJobsPage({
             canScrape={staffCanScrapeJobs(staff)}
             viewMode="pipeline"
             appliedCount={appliedCount}
+            initialAnalyzedResumeText={candidate.analyzedResumeText}
+            candidateResumeMatch={{
+              workExperience: candidate.workExperience,
+              profileEducation: candidate.profileEducation,
+              specialization: candidate.specialization,
+              careerGoals: candidate.careerGoals,
+              branch: candidate.submission?.branch ?? null,
+              interestedTechnology: candidate.submission?.interestedTechnology ?? null,
+              graduationDetails: candidate.submission?.graduationDetails ?? null,
+              interestedRole: defaultInterestedRole,
+            }}
+            candidateResumeDownloadUrl={candidate.resumeDownloadUrl}
+            candidateResumeFileName={candidate.resumeFileName}
           />
-        </section>
+        </div>
       </main>
     </div>
   );

@@ -11,7 +11,7 @@
 
 .phoneGroup:focus-within {
   border-color: var(--blue-500);
-  box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
 }
 
 .phoneGroupError {
@@ -129,7 +129,7 @@
 
 .countryOption:hover,
 .countryOptionActive {
-  background: rgba(24, 119, 242, 0.08);
+  background: rgba(124, 58, 237, 0.08);
 }
 
 @media (max-width: 520px) {

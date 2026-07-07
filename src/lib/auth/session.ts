@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/server/db/supabase-server";
 
 export type SessionUser = {
@@ -6,13 +7,14 @@ export type SessionUser = {
   name?: string;
   avatarUrl?: string;
   memberId?: string | null;
+  role?: string | null;
 };
 
 /**
  * Reads the current user from the Supabase JWT stored in HTTP-only cookies.
- * Middleware refreshes the token on each request so SSR always sees a valid session.
+ * Cached per request so layouts, shell, and pages share one auth round-trip.
  */
-export async function getSessionUser(): Promise<SessionUser | null> {
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
@@ -32,7 +34,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("member_id")
+    .select("role, member_id")
     .eq("id", data.user.id)
     .maybeSingle();
 
@@ -42,5 +44,6 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     name,
     avatarUrl,
     memberId: profile?.member_id ?? null,
+    role: profile?.role ?? null,
   };
-}
+});

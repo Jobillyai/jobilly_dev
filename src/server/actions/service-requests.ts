@@ -8,6 +8,7 @@ import {
   toStaffContext,
 } from "@/lib/auth/admin";
 import {
+  assignCandidateToMentor,
   assignServiceRequestToMentor,
   listMentorAdmins,
   listServiceRequests,
@@ -71,6 +72,43 @@ export async function assignServiceRequestAction(
   }
 
   revalidatePath("/admin/requests");
+  revalidatePath("/admin/candidates");
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+const candidateAssignSchema = z.object({
+  candidateId: z.string().uuid(),
+  mentorId: z.string().uuid(),
+});
+
+export async function assignCandidateToMentorAction(
+  candidateId: string,
+  mentorId: string,
+): Promise<{ error?: string; success?: true }> {
+  const admin = await getAdminUser();
+  if (!admin || !staffIsManager(toStaffContext(admin))) {
+    return { error: "Only managers can assign mentors to candidates." };
+  }
+
+  const parsed = candidateAssignSchema.safeParse({ candidateId, mentorId });
+  if (!parsed.success) {
+    return { error: "Invalid assignment." };
+  }
+
+  const result = await assignCandidateToMentor(
+    parsed.data.candidateId,
+    parsed.data.mentorId,
+    admin.id,
+  );
+
+  if (result.error) {
+    return { error: result.error };
+  }
+
+  revalidatePath("/admin/candidates");
+  revalidatePath("/admin/requests");
+  revalidatePath("/admin");
   return { success: true };
 }
 

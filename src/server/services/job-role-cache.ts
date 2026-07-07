@@ -8,6 +8,8 @@ export const JOB_SCRAPE_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 const SOURCE_ERROR_PREFIX: Record<JobMarketSource, string> = {
   indeed: "Indeed:",
   linkedin: "LinkedIn:",
+  glassdoor: "Glassdoor:",
+  ziprecruiter: "ZipRecruiter:",
 };
 
 export function sourceScrapeHadError(
@@ -139,6 +141,12 @@ export type RoleScrapeCacheStatus = {
 };
 
 function formatSourceLabel(source: JobMarketSource): string {
+  if (source === "ziprecruiter") {
+    return "ZipRecruiter";
+  }
+  if (source === "linkedin") {
+    return "LinkedIn";
+  }
   return source.charAt(0).toUpperCase() + source.slice(1);
 }
 

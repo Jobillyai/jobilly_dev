@@ -49,6 +49,7 @@
   --jb-shadow-md: 0 12px 32px rgba(99, 102, 241, 0.1);
   --jb-shadow-lg: 0 24px 64px rgba(99, 102, 241, 0.14);
   --jb-shadow-brand: 0 12px 40px var(--jb-brand-glow);
+  --jb-focus-ring: rgba(124, 58, 237, 0.12);
 
   --blue-900: var(--jb-ink);
   --blue-500: var(--jb-brand);

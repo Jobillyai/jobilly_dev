@@ -2,7 +2,6 @@
 
 import { useFormStatus } from "react-dom";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { startRouteLoading } from "@/lib/route-loading";
 
 type LogoutFormProps = {
   action: () => void | Promise<void>;
@@ -12,11 +11,7 @@ type LogoutFormProps = {
 
 export function LogoutForm({ action, className, children }: LogoutFormProps) {
   return (
-    <form
-      action={action}
-      className={className}
-      onSubmit={() => startRouteLoading()}
-    >
+    <form action={action} className={className}>
       {children}
     </form>
   );

@@ -24,7 +24,7 @@ export function ManagerScrapePanel({ lastRunLabel }: ManagerScrapePanelProps) {
       if ("success" in result && result.success) {
         const { result: scrapeResult } = result;
         setMessage(
-          `Scrape complete — ${scrapeResult.candidatesProcessed} candidate${scrapeResult.candidatesProcessed === 1 ? "" : "s"} processed, ${scrapeResult.newJobsAdded} new job${scrapeResult.newJobsAdded === 1 ? "" : "s"} added.`,
+          `Search complete — ${scrapeResult.candidatesProcessed} candidate${scrapeResult.candidatesProcessed === 1 ? "" : "s"} processed, ${scrapeResult.newJobsAdded} new job${scrapeResult.newJobsAdded === 1 ? "" : "s"} added.`,
         );
       }
     });
@@ -32,13 +32,13 @@ export function ManagerScrapePanel({ lastRunLabel }: ManagerScrapePanelProps) {
 
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Manager scrape controls</h2>
+      <h2 className={styles.sectionTitle}>Apply for jobs — manager controls</h2>
       <p className={styles.subtitle}>
         Job listings refresh automatically every 3 hours. Mentors see stored jobs
-        when they log in — they do not run scrapes themselves.
+        when they log in — they do not run searches themselves.
       </p>
       {lastRunLabel ? (
-        <p className={styles.subtitle}>Last scrape run: {lastRunLabel}</p>
+        <p className={styles.subtitle}>Last search run: {lastRunLabel}</p>
       ) : null}
       <button
         type="button"
@@ -46,7 +46,7 @@ export function ManagerScrapePanel({ lastRunLabel }: ManagerScrapePanelProps) {
         onClick={handleScrapeAll}
         disabled={pending}
       >
-        {pending ? "Scraping all candidates…" : "Scrape all candidates now"}
+        {pending ? "Searching for all candidates…" : "Search jobs for all candidates"}
       </button>
       {message ? <p className={styles.subtitle}>{message}</p> : null}
     </section>

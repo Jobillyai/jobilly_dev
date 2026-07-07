@@ -7,6 +7,7 @@ import styles from "./welcome-page.module.css";
 import { CompaniesMarquee } from "./companies-marquee";
 import { HeroPreview } from "./hero-preview";
 import { WelcomeServicesSection } from "./welcome-services-section";
+import { JobenChatWidget } from "./joben-chat-widget";
 import { useScrollReveal } from "./use-scroll-reveal";
 
 export function WelcomePage() {
@@ -132,6 +133,8 @@ export function WelcomePage() {
           </div>
         </div>
       </div>
+
+      <JobenChatWidget />
     </div>
   );
 }

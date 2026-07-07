@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
-import { getAdminUser, toStaffContext } from "@/lib/auth/admin";
+import { getAdminUser, staffIsManager, toStaffContext } from "@/lib/auth/admin";
 import { getAdminCandidates } from "@/server/services/admin-dashboard";
+import { listMentorAdmins } from "@/server/services/service-requests";
+import { getDefaultGoogleMeetUrl } from "@/server/services/send-mentor-meeting-link";
 import { CandidatesList } from "@/components/admin/candidates-list";
 import styles from "../../admin.module.css";
 
@@ -12,8 +14,17 @@ export default async function AdminCandidatesPage() {
   }
 
   const staff = toStaffContext(admin);
-  const candidates = await getAdminCandidates(staff);
+  const isManager = staffIsManager(staff);
+  const isMentor = !isManager;
+  const defaultMeetUrl = getDefaultGoogleMeetUrl();
+  const [candidates, mentors] = await Promise.all([
+    getAdminCandidates(staff),
+    isManager ? listMentorAdmins() : Promise.resolve([]),
+  ]);
   const submissionCount = candidates.filter((candidate) => candidate.submission).length;
+  const unassignedCount = candidates.filter(
+    (candidate) => !candidate.assignedEmployeeId,
+  ).length;
 
   return (
     <div className={styles.adminPage}>
@@ -23,8 +34,13 @@ export default async function AdminCandidatesPage() {
             Candidate <em className={styles.titleEm}>details</em>
           </h1>
           <p className={styles.subtitle}>
-            View registered candidates and their education details from career advisory
-            submissions.
+            Browse {isManager ? "all" : "your assigned"} candidates. Expand a row for profile
+            and advisory details.
+            {isManager && unassignedCount > 0
+              ? ` ${unassignedCount} candidate${unassignedCount === 1 ? "" : "s"} still need a mentor assigned.`
+              : !isManager
+                ? " Use Apply for jobs to search listings and submit applications."
+                : ""}
           </p>
         </div>
 
@@ -33,7 +49,13 @@ export default async function AdminCandidatesPage() {
             All candidates ({candidates.length})
             {submissionCount > 0 ? ` · ${submissionCount} with submissions` : ""}
           </h2>
-          <CandidatesList candidates={candidates} />
+          <CandidatesList
+            candidates={candidates}
+            mentors={mentors}
+            isManager={isManager}
+            isMentor={isMentor}
+            defaultMeetUrl={defaultMeetUrl}
+          />
         </section>
       </main>
     </div>

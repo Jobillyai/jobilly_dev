@@ -7,13 +7,13 @@ import { AdminRecentActivity } from "@/components/admin/admin-recent-activity";
 import { ManagerTeamOverview } from "@/components/admin/manager-team-overview";
 import {
   getAdminUser,
-  staffCanScrapeJobs,
   staffIsManager,
   toStaffContext,
 } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import { getAdminDashboardOverview } from "@/server/services/admin-dashboard";
+import { countOpenNewCandidateSignups } from "@/server/services/service-requests";
 import styles from "../admin.module.css";
 
 export default async function AdminDashboardPage() {
@@ -25,8 +25,12 @@ export default async function AdminDashboardPage() {
 
   const staff = toStaffContext(admin);
   const isManager = staffIsManager(staff);
+  const [overview, openNewSignups] = await Promise.all([
+    getAdminDashboardOverview(staff),
+    isManager ? countOpenNewCandidateSignups() : Promise.resolve(0),
+  ]);
   const { stats, recentCandidates, recentSubmissions, upcomingMeetings, mentorActivity } =
-    await getAdminDashboardOverview(staff);
+    overview;
 
   const candidatesWithSubmission =
     stats.totalCandidates - stats.candidatesWithoutSubmission;
@@ -35,9 +39,10 @@ export default async function AdminDashboardPage() {
 
   const managerStatCards = [
     { label: "Total candidates", value: stats.totalCandidates },
+    { label: "New signups to assign", value: openNewSignups },
     { label: "Mentor admins", value: stats.mentorCount },
     { label: "Applications submitted", value: stats.appliedJobs },
-    { label: "Scraped jobs", value: stats.scrapedJobs },
+    { label: "Jobs found", value: stats.scrapedJobs },
     { label: "Shortlisted", value: stats.selectedJobs },
     { label: "Advisory submissions", value: stats.advisorySubmissions },
     { label: "Pending Meet invites", value: stats.pendingInvites },
@@ -47,7 +52,7 @@ export default async function AdminDashboardPage() {
   const mentorStatCards = [
     { label: "My candidates", value: stats.totalCandidates },
     { label: "Applications submitted", value: stats.appliedJobs },
-    { label: "Scraped jobs", value: stats.scrapedJobs },
+    { label: "Jobs found", value: stats.scrapedJobs },
     { label: "Shortlisted", value: stats.selectedJobs },
     { label: "Advisory submissions", value: stats.advisorySubmissions },
     { label: "Pending Meet invites", value: stats.pendingInvites },
@@ -79,7 +84,7 @@ export default async function AdminDashboardPage() {
               </>
             ) : null}{" "}
             {isManager
-              ? "Full access — monitor mentors, candidates, and applications across the team."
+              ? "Full access — monitor mentors, candidates, and team activity."
               : "Search jobs for your assigned candidates (once every 3 hours per role), shortlist roles, and submit applications."}
           </p>
         </div>
@@ -111,7 +116,7 @@ export default async function AdminDashboardPage() {
           unselectedJobs={unselectedJobs}
         />
 
-        <AdminQuickActions />
+        <AdminQuickActions showJobApply={!isManager} />
 
         <section className={styles.section}>
           <div className={styles.sectionHeaderRow}>
@@ -130,6 +135,7 @@ export default async function AdminDashboardPage() {
         <AdminRecentActivity
           recentCandidates={recentCandidates}
           recentSubmissions={recentSubmissions}
+          showJobApplyLinks={!isManager}
         />
       </main>
     </div>

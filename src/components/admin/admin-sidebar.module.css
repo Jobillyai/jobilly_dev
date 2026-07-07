@@ -1,90 +1,60 @@
-.adminSidebar {
+.sidebar {
   position: relative;
-  width: 260px;
+  width: 272px;
   flex-shrink: 0;
   min-height: 100%;
-  padding: 16px 12px;
+  padding: 20px 14px;
   display: flex;
   flex-direction: column;
   font-family: var(--jb-font-sans);
-  background: var(--jb-surface);
-  border-right: 1px solid var(--jb-border);
+  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+  border-right: 1px solid var(--jb-dark-border);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 8px 20px;
+  padding: 4px 10px 24px;
   margin-bottom: 8px;
-}
-
-.brandMark {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--jb-radius-sm);
-  background: var(--jb-brand);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.brandText {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--jb-ink);
-  letter-spacing: -0.02em;
-}
-
-.brandSub {
-  display: block;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--jb-ink-muted);
-  margin-top: 1px;
+  text-decoration: none;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   flex: 1;
 }
 
-.navLink,
-.signOutBtn {
+.navLink {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 11px 14px;
   border-radius: var(--jb-radius-sm);
   font-size: 14px;
   font-weight: 500;
-  color: var(--jb-ink-secondary);
+  color: rgba(226, 232, 240, 0.85);
   text-decoration: none;
   border: none;
   background: transparent;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.2s, color 0.2s;
   font-family: inherit;
   text-align: left;
 }
 
-.navLink:hover,
-.signOutBtn:hover {
-  background: var(--jb-surface-subtle);
-  color: var(--jb-ink);
+.navLink:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
 }
 
 .navLinkActive {
-  background: var(--jb-brand-soft);
-  color: var(--jb-brand);
+  background: rgba(124, 58, 237, 0.22);
+  color: #ddd6fe;
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.25);
 }
 
 .navIcon {
@@ -92,119 +62,24 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  opacity: 0.85;
-}
-
-.navLinkActive .navIcon {
-  opacity: 1;
+  opacity: 0.9;
 }
 
 .navLabel {
   flex: 1;
 }
 
-.navBadge {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: #1877f2;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 20px;
-  text-align: center;
-}
-
-.navLinkActive .navBadge {
-  background: #1d4ed8;
-}
-
-.footer {
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid var(--jb-border);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.userBlock {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  min-width: 0;
-}
-
-.userAvatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--jb-brand-soft);
-  color: var(--jb-brand);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.userAvatarImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.userMeta {
-  min-width: 0;
-}
-
-.userName {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--jb-ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.userEmail {
-  display: block;
-  font-size: 11px;
-  color: var(--jb-ink-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.userMemberId {
-  display: block;
-  margin: 2px 0 4px;
-}
-
-.signOutBtn {
-  color: var(--jb-ink-muted);
-}
-
-.signOutBtn:hover {
-  background: var(--jb-danger-soft);
-  color: var(--jb-danger);
-}
-
 @media (max-width: 900px) {
-  .adminSidebar {
-    width: 72px;
+  .sidebar {
+    width: 76px;
     padding: 16px 10px;
   }
 
-  .brandText,
-  .navLabel,
-  .brandSub,
-  .userMeta {
+  .brand :global([class*="wordmarkBlock"]) {
+    display: none;
+  }
+
+  .navLabel {
     display: none;
   }
 
@@ -213,14 +88,8 @@
     padding: 4px 0 16px;
   }
 
-  .navLink,
-  .signOutBtn {
+  .navLink {
     justify-content: center;
-    padding: 10px;
-  }
-
-  .userBlock {
-    justify-content: center;
-    padding: 8px;
+    padding: 11px;
   }
 }

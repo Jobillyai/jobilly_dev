@@ -62,6 +62,9 @@ export type Database = {
           graduation_year: number | null;
           specialization: string | null;
           work_experience: string | null;
+          analyzed_resume_text: string | null;
+          last_applications_digest_date: string | null;
+          welcome_email_sent_at: string | null;
           updated_at: string;
         };
         Insert: {
@@ -81,6 +84,9 @@ export type Database = {
           graduation_year?: number | null;
           specialization?: string | null;
           work_experience?: string | null;
+          analyzed_resume_text?: string | null;
+          last_applications_digest_date?: string | null;
+          welcome_email_sent_at?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["candidate_profiles"]["Insert"]
@@ -185,6 +191,7 @@ export type Database = {
           company: string;
           role: string;
           job_url: string;
+          apply_url: string | null;
           jd_text: string | null;
           relevance_score: number | null;
           selected: boolean;
@@ -207,6 +214,7 @@ export type Database = {
           company: string;
           role: string;
           job_url: string;
+          apply_url?: string | null;
           jd_text?: string | null;
           relevance_score?: number | null;
           selected?: boolean;
@@ -244,6 +252,8 @@ export type Database = {
       service_requests: {
         Row: {
           id: string;
+          request_type: "contact" | "new_candidate";
+          candidate_user_id: string | null;
           first_name: string;
           last_name: string;
           email: string;
@@ -258,6 +268,8 @@ export type Database = {
         };
         Insert: {
           id?: string;
+          request_type?: "contact" | "new_candidate";
+          candidate_user_id?: string | null;
           first_name: string;
           last_name: string;
           email: string;

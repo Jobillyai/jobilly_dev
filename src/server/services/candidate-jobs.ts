@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/server/db/database.types";
 import type { AdminCandidate } from "@/server/services/admin-dashboard";
 import {
+  isJobrightListing,
   JOB_MARKET_SOURCES,
   type JobMarketSource,
 } from "@/server/services/job-market-search";
@@ -35,6 +36,7 @@ export type CandidateJobListing = {
   company: string;
   role: string;
   jobUrl: string;
+  applyUrl: string | null;
   location: string;
   jdText: string | null;
   relevanceScore: number;
@@ -70,6 +72,7 @@ type ScrapedJobRow = {
   company: string;
   role: string;
   job_url: string;
+  apply_url: string | null;
   jd_text: string | null;
   relevance_score: number | null;
   selected: boolean;
@@ -87,7 +90,7 @@ type ScrapedJobRow = {
 };
 
 const JOB_SELECT =
-  "id, company, role, job_url, jd_text, relevance_score, selected, applied, applied_at, scraped_at, posted_at, location, source, search_role, preparation_tips, candidate_viewed_at, application_resume_path, application_resume_file_name";
+  "id, company, role, job_url, apply_url, jd_text, relevance_score, selected, applied, applied_at, scraped_at, posted_at, location, source, search_role, preparation_tips, candidate_viewed_at, application_resume_path, application_resume_file_name";
 
 type AppSupabase = SupabaseClient<Database>;
 
@@ -102,6 +105,7 @@ function mapDbRow(row: ScrapedJobRow): CandidateJobListing {
     company: row.company,
     role: row.role,
     jobUrl: row.job_url,
+    applyUrl: row.apply_url,
     location: row.location ?? "United States",
     jdText: row.jd_text,
     relevanceScore: score,
@@ -111,7 +115,7 @@ function mapDbRow(row: ScrapedJobRow): CandidateJobListing {
     appliedAt: row.applied_at,
     scrapedAt: row.scraped_at,
     postedAt: row.posted_at,
-    source: row.source ?? "Indeed",
+    source: row.source ?? "Unknown",
     searchRole: row.search_role,
     applicationResumeFileName: row.application_resume_file_name,
     applicationResumeDownloadUrl: null,
@@ -122,7 +126,9 @@ async function attachApplicationResumeUrls(
   rows: ScrapedJobRow[],
 ): Promise<CandidateJobListing[]> {
   return Promise.all(
-    rows.map(async (row) => {
+    rows
+      .filter((row) => !isJobrightListing(row.source, row.job_url))
+      .map(async (row) => {
       const listing = mapDbRow(row);
       if (!row.application_resume_path) {
         return listing;
@@ -204,9 +210,9 @@ async function appendJobsForRole(
   searchRole: string,
   jobs: JobSearchResult[],
   db?: AppSupabase,
-): Promise<{ inserted: number; error?: string }> {
+): Promise<{ inserted: number; updated: number; error?: string }> {
   if (jobs.length === 0) {
-    return { inserted: 0 };
+    return { inserted: 0, updated: 0 };
   }
 
   const supabase = await resolveDb(db);
@@ -214,8 +220,11 @@ async function appendJobsForRole(
   const existingUrls = await getExistingJobUrlsForRole(candidateId, searchRole, db);
   const batchUrls = new Set<string>();
 
-  const rows = jobs
+  const newRows = jobs
     .filter((job) => {
+      if (isJobrightListing(job.source, job.jobUrl)) {
+        return false;
+      }
       if (existingUrls.has(job.jobUrl) || batchUrls.has(job.jobUrl)) {
         return false;
       }
@@ -229,6 +238,7 @@ async function appendJobsForRole(
       company: job.company,
       role: job.role,
       job_url: job.jobUrl,
+      apply_url: job.applyUrl ?? null,
       jd_text: job.jdText,
       relevance_score: job.relevanceScore,
       location: job.location,
@@ -240,20 +250,50 @@ async function appendJobsForRole(
       posted_at: job.postedAt,
     }));
 
-  if (rows.length === 0) {
-    return { inserted: 0 };
+  let inserted = 0;
+  if (newRows.length > 0) {
+    const { error } = await supabase.from("scraped_jobs").upsert(newRows, {
+      onConflict: "candidate_id,search_role,job_url",
+      ignoreDuplicates: true,
+    });
+
+    if (error) {
+      return { inserted: 0, updated: 0, error: error.message };
+    }
+
+    inserted = newRows.length;
   }
 
-  const { error } = await supabase.from("scraped_jobs").upsert(rows, {
-    onConflict: "candidate_id,search_role,job_url",
-    ignoreDuplicates: true,
-  });
+  const jobsToRefresh = jobs.filter(
+    (job) =>
+      !isJobrightListing(job.source, job.jobUrl) && existingUrls.has(job.jobUrl),
+  );
 
-  if (error) {
-    return { inserted: 0, error: error.message };
+  let updated = 0;
+  for (const job of jobsToRefresh) {
+    const { error } = await supabase
+      .from("scraped_jobs")
+      .update({
+        apply_url: job.applyUrl ?? null,
+        jd_text: job.jdText,
+        relevance_score: job.relevanceScore,
+        posted_at: job.postedAt,
+        scraped_at: scrapedAt,
+        location: job.location,
+        source: job.source,
+      })
+      .eq("candidate_id", candidateId)
+      .eq("search_role", searchRole)
+      .eq("job_url", job.jobUrl);
+
+    if (error) {
+      return { inserted, updated, error: error.message };
+    }
+
+    updated += 1;
   }
 
-  return { inserted: rows.length };
+  return { inserted, updated };
 }
 
 export type PreviousSearchRole = {
@@ -411,7 +451,7 @@ export async function getCandidateAppliedJobs(
 
   return Promise.all(
     (data as ScrapedJobRow[])
-      .filter((row) => row.applied_at)
+      .filter((row) => row.applied_at && !isJobrightListing(row.source, row.job_url))
       .map((row) => mapAppliedJobRow(row)),
   );
 }
@@ -430,7 +470,7 @@ async function mapAppliedJobRow(row: ScrapedJobRow): Promise<CandidateAppliedJob
     location: row.location ?? "United States",
     jdText: row.jd_text,
     appliedAt: row.applied_at as string,
-    source: row.source ?? "Indeed",
+    source: row.source ?? "Unknown",
     preparationTips:
       tips.length > 0
         ? tips
@@ -487,6 +527,56 @@ export async function loadCandidateJobsForRole(
   ]);
 
   return { jobs, searchRole, cacheStatus };
+}
+
+export async function runCandidateJobScrapeForSources(input: {
+  candidate: AdminCandidate;
+  adminUserId: string;
+  sources: JobMarketSource[];
+  interestedRole: string;
+  searchKeywords?: string | null;
+  db?: AppSupabase;
+}): Promise<{ newJobsAdded: number; scrapeErrors: string[]; fatalError?: string }> {
+  const searchRole = normalizeSearchRole(input.interestedRole);
+  const searchKeywords = input.searchKeywords?.trim() || null;
+  const scrapeErrors: string[] = [];
+  let newJobsAdded = 0;
+
+  for (const source of input.sources) {
+    const scraped = await scrapeJobsForCandidate(
+      input.candidate,
+      [source],
+      input.interestedRole,
+      {
+        experienceYears: input.candidate.experienceYears,
+        searchKeywords,
+      },
+    );
+    scrapeErrors.push(...scraped.errors);
+
+    const appendResult = await appendJobsForRole(
+      input.candidate.id,
+      input.adminUserId,
+      searchRole,
+      scraped.jobs,
+      input.db,
+    );
+    newJobsAdded += appendResult.inserted;
+
+    if (appendResult.error) {
+      return {
+        newJobsAdded,
+        scrapeErrors,
+        fatalError: appendResult.error,
+      };
+    }
+
+    if (!sourceScrapeHadError(source, scraped.errors)) {
+      await markRoleScraped(input.candidate.id, searchRole, source, input.db);
+    }
+  }
+
+  return { newJobsAdded, scrapeErrors };
 }
 
 export async function refreshCandidateJobListings(
@@ -560,49 +650,34 @@ export async function refreshCandidateJobListings(
   if (sourcesToScrape.length > 0 && allowScrape) {
     scrapeCalled = true;
 
-    for (const source of sourcesToScrape) {
-      const scraped = await scrapeJobsForCandidate(
-        candidate,
-        [source],
-        roleInput,
-        {
-          experienceYears: candidate.experienceYears,
-          searchKeywords,
-        },
-      );
-      scrapeErrors.push(...scraped.errors);
+    const scrapeResult = await runCandidateJobScrapeForSources({
+      candidate,
+      adminUserId,
+      sources: sourcesToScrape,
+      interestedRole: roleInput,
+      searchKeywords,
+      db,
+    });
+    scrapeErrors.push(...scrapeResult.scrapeErrors);
+    newJobsAdded = scrapeResult.newJobsAdded;
 
-      const appendResult = await appendJobsForRole(
-        candidate.id,
-        adminUserId,
+    if (scrapeResult.fatalError) {
+      return {
+        jobs: await getCandidateJobListings(candidate.id, searchRole),
+        searchTerms,
+        searchQuery,
         searchRole,
-        scraped.jobs,
-        db,
-      );
-      newJobsAdded += appendResult.inserted;
-
-      if (appendResult.error) {
-        return {
-          jobs: await getCandidateJobListings(candidate.id, searchRole),
-          searchTerms,
-          searchQuery,
+        cacheStatus: await getRoleScrapeCache(
+          candidate.id,
           searchRole,
-          cacheStatus: await getRoleScrapeCache(
-            candidate.id,
-            searchRole,
-            sources,
-            db,
-          ),
-          scrapeCalled,
-          newJobsAdded,
-          error: appendResult.error,
-          warning: scrapeErrors.length > 0 ? scrapeErrors.join(" ") : undefined,
-        };
-      }
-
-      if (!sourceScrapeHadError(source, scraped.errors)) {
-        await markRoleScraped(candidate.id, searchRole, source, db);
-      }
+          sources,
+          db,
+        ),
+        scrapeCalled,
+        newJobsAdded,
+        error: scrapeResult.fatalError,
+        warning: scrapeErrors.length > 0 ? scrapeErrors.join(" ") : undefined,
+      };
     }
   }
 

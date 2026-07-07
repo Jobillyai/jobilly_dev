@@ -9,8 +9,10 @@ import {
   updateCandidateJobRoleAction,
 } from "@/server/actions/candidate-jobs";
 import {
+  experienceLevelFromYears,
   formatExperienceYears,
-  parseExperienceYears,
+  yearsFromExperienceLevel,
+  type ExperienceLevel,
 } from "@/lib/format-experience-years";
 import styles from "./manager-candidate-scrape-panel.module.css";
 
@@ -55,19 +57,17 @@ export function ManagerCandidateScrapePanel({
       Object.fromEntries(
         candidates.map((candidate) => [
           candidate.id,
-          candidate.savedExperienceYears ?? candidate.defaultExperienceYears ?? "",
+          experienceLevelFromYears(
+            candidate.savedExperienceYears ?? candidate.defaultExperienceYears,
+          ) ?? "",
         ]),
       ),
     [candidates],
   );
 
   const [roles, setRoles] = useState<Record<string, string>>(initialRoles);
-  const [experiences, setExperiences] = useState<
-    Record<string, number | "">
-  >(
-    Object.fromEntries(
-      Object.entries(initialExperiences).map(([id, value]) => [id, value]),
-    ) as Record<string, number | "">,
+  const [experiences, setExperiences] = useState<Record<string, ExperienceLevel | "">>(
+    initialExperiences as Record<string, ExperienceLevel | "">,
   );
   const [rowStatus, setRowStatus] = useState<Record<string, RowStatus>>({});
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
@@ -77,11 +77,7 @@ export function ManagerCandidateScrapePanel({
 
   useEffect(() => {
     setRoles(initialRoles);
-    setExperiences(
-      Object.fromEntries(
-        Object.entries(initialExperiences).map(([id, value]) => [id, value]),
-      ) as Record<string, number | "">,
-    );
+    setExperiences(initialExperiences as Record<string, ExperienceLevel | "">);
   }, [initialRoles, initialExperiences]);
 
   function setRole(candidateId: string, value: string) {
@@ -92,11 +88,10 @@ export function ManagerCandidateScrapePanel({
     }));
   }
 
-  function setExperienceYears(candidateId: string, value: string) {
-    const parsed = value === "" ? "" : parseExperienceYears(value);
+  function setExperienceLevel(candidateId: string, value: ExperienceLevel | "") {
     setExperiences((current) => ({
       ...current,
-      [candidateId]: parsed === null ? "" : parsed,
+      [candidateId]: value,
     }));
     setRowStatus((current) => ({
       ...current,
@@ -106,11 +101,11 @@ export function ManagerCandidateScrapePanel({
 
   async function saveCandidateDetails(candidateId: string) {
     const role = roles[candidateId]?.trim() ?? "";
-    const experienceYearsValue = experiences[candidateId];
+    const experienceLevel = experiences[candidateId];
     const experienceYears =
-      experienceYearsValue === "" || experienceYearsValue === undefined
+      experienceLevel === "" || experienceLevel === undefined
         ? null
-        : experienceYearsValue;
+        : yearsFromExperienceLevel(experienceLevel);
 
     if (!role) {
       setRowStatus((current) => ({
@@ -164,11 +159,11 @@ export function ManagerCandidateScrapePanel({
   }
 
   function experienceYearsForCandidate(candidateId: string): number | null {
-    const value = experiences[candidateId];
-    if (value === "" || value === undefined) {
+    const level = experiences[candidateId];
+    if (!level) {
       return null;
     }
-    return value;
+    return yearsFromExperienceLevel(level);
   }
 
   function handleScrapeOne(candidate: ManagerCandidateRow) {
@@ -186,7 +181,7 @@ export function ManagerCandidateScrapePanel({
       ...current,
       [candidate.id]: {
         kind: "scraping",
-        message: "Scrape started — open Jobs to watch listings update.",
+        message: "Search started — open Jobs to watch listings update.",
       },
     }));
     setBulkMessage(null);
@@ -236,14 +231,14 @@ export function ManagerCandidateScrapePanel({
       const experienceYears = experienceYearsForCandidate(candidate.id);
 
       setBulkProgress(
-        `Scraping ${processed + 1} of ${ordered.length}: ${candidate.displayName}…`,
+        `Searching ${processed + 1} of ${ordered.length}: ${candidate.displayName}…`,
       );
       setRowStatus((current) => ({
         ...current,
         [candidate.id]: role
           ? {
               kind: "scraping",
-              message: "Scraping in background — open Jobs to watch.",
+              message: "Searching in background — open Jobs to watch.",
             }
           : { kind: "error", message: "No role set — skipped." },
       }));
@@ -294,13 +289,13 @@ export function ManagerCandidateScrapePanel({
     setBulkProgress(null);
     setIsSequentialRunning(false);
     setBulkMessage(
-      `Sequential scrape complete — ${processed} candidate${processed === 1 ? "" : "s"} processed, ${newJobsTotal} new job${newJobsTotal === 1 ? "" : "s"} added.${errors.length > 0 ? ` ${errors.length} warning${errors.length === 1 ? "" : "s"}.` : ""}`,
+      `Sequential search complete — ${processed} candidate${processed === 1 ? "" : "s"} processed, ${newJobsTotal} new job${newJobsTotal === 1 ? "" : "s"} added.${errors.length > 0 ? ` ${errors.length} warning${errors.length === 1 ? "" : "s"}.` : ""}`,
     );
   }
 
   function handleScrapeAllServer() {
     setBulkMessage(null);
-    setBulkProgress("Running bulk scrape on server…");
+    setBulkProgress("Running bulk job search on server…");
 
     startTransition(async () => {
       const result = await scrapeAllCandidatesJobsAction();
@@ -314,7 +309,7 @@ export function ManagerCandidateScrapePanel({
       if ("success" in result && result.success) {
         const { result: scrapeResult } = result;
         setBulkMessage(
-          `Bulk scrape complete — ${scrapeResult.candidatesProcessed} processed, ${scrapeResult.newJobsAdded} new jobs added.`,
+          `Bulk search complete — ${scrapeResult.candidatesProcessed} processed, ${scrapeResult.newJobsAdded} new jobs added.`,
         );
 
         const nextStatus: Record<string, RowStatus> = {};
@@ -335,14 +330,14 @@ export function ManagerCandidateScrapePanel({
     <section className={styles.panel}>
       <div className={styles.panelHeader}>
         <div>
-          <h2 className={styles.title}>Manager scrape controls</h2>
+          <h2 className={styles.title}>Apply for jobs — manager controls</h2>
           <p className={styles.subtitle}>
             Set each candidate&apos;s target role and years of experience, then
-            scrape. Searches combine the role, career advisory keywords, and
-            experience level on Indeed and LinkedIn.
+            search for jobs. Searches combine the role, career advisory keywords, and
+            experience level on Indeed, LinkedIn, Glassdoor, and ZipRecruiter.
           </p>
           {lastRunLabel ? (
-            <p className={styles.meta}>Last scrape run: {lastRunLabel}</p>
+            <p className={styles.meta}>Last search run: {lastRunLabel}</p>
           ) : null}
         </div>
         <div className={styles.bulkActions}>
@@ -352,7 +347,7 @@ export function ManagerCandidateScrapePanel({
             onClick={() => void handleScrapeAllSequential()}
             disabled={pending || isSequentialRunning || candidates.length === 0}
           >
-            Scrape all (sequential)
+            Search all (sequential)
           </button>
           <button
             type="button"
@@ -360,7 +355,7 @@ export function ManagerCandidateScrapePanel({
             onClick={handleScrapeAllServer}
             disabled={pending || isSequentialRunning || candidates.length === 0}
           >
-            Quick bulk scrape
+            Quick bulk search
           </button>
         </div>
       </div>
@@ -369,7 +364,7 @@ export function ManagerCandidateScrapePanel({
       {bulkMessage ? <p className={styles.summary}>{bulkMessage}</p> : null}
 
       {candidates.length === 0 ? (
-        <p className={styles.empty}>No candidates to scrape yet.</p>
+        <p className={styles.empty}>No candidates to search yet.</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -378,7 +373,7 @@ export function ManagerCandidateScrapePanel({
                 <th>#</th>
                 <th>Candidate</th>
                 <th>Job role</th>
-                <th>Years exp.</th>
+                <th>Experience</th>
                 <th>Jobs</th>
                 <th>Actions</th>
               </tr>
@@ -424,18 +419,22 @@ export function ManagerCandidateScrapePanel({
                       />
                     </td>
                     <td>
-                      <input
-                        type="number"
-                        min={0}
-                        max={50}
+                      <select
                         className={styles.experienceInput}
-                        value={experienceValue === "" ? "" : experienceValue}
+                        value={experienceValue}
                         onChange={(event) =>
-                          setExperienceYears(candidate.id, event.target.value)
+                          setExperienceLevel(
+                            candidate.id,
+                            event.target.value as ExperienceLevel | "",
+                          )
                         }
-                        placeholder=""
-                        aria-label={`Years of experience for ${candidate.displayName}`}
-                      />
+                        aria-label={`Experience level for ${candidate.displayName}`}
+                      >
+                        <option value="">Not set</option>
+                        <option value="entry">Entry level</option>
+                        <option value="mid">Mid level</option>
+                        <option value="senior">Senior</option>
+                      </select>
                     </td>
                     <td>{candidate.totalJobs}</td>
                     <td>
@@ -454,16 +453,16 @@ export function ManagerCandidateScrapePanel({
                           onClick={() => handleScrapeOne(candidate)}
                           disabled={pending || isSequentialRunning}
                         >
-                          Scrape
+                          Search jobs
                         </button>
                         <Link
                           href={`/admin/candidates/${candidate.id}/jobs`}
                           className={styles.linkBtn}
                         >
-                          Jobs
+                          Apply for jobs
                         </Link>
                       </div>
-                      <p className={styles.scrapeHint}>Saves role + years, then scrapes</p>
+                      <p className={styles.scrapeHint}>Saves role + years, then searches for jobs</p>
                       {status?.message ? (
                         <p
                           className={

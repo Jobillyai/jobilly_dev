@@ -81,6 +81,21 @@ export function parseJobPostedDate(raw: unknown, referenceDate = new Date()): st
     return subtractDays(referenceDate, 30);
   }
 
+  const shortDayMatch = lower.match(/^(\d+)d$/);
+  if (shortDayMatch) {
+    return subtractDays(referenceDate, Number(shortDayMatch[1]));
+  }
+
+  const shortWeekMatch = lower.match(/^(\d+)w$/);
+  if (shortWeekMatch) {
+    return subtractDays(referenceDate, Number(shortWeekMatch[1]) * 7);
+  }
+
+  const shortMonthMatch = lower.match(/^(\d+)mo$/);
+  if (shortMonthMatch) {
+    return subtractDays(referenceDate, Number(shortMonthMatch[1]) * 30);
+  }
+
   return null;
 }
 

@@ -6,9 +6,11 @@
 }
 
 .main {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 40px 36px 72px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: clamp(32px, 4vw, 48px) clamp(28px, 5vw, 64px) clamp(48px, 6vw, 72px);
+  box-sizing: border-box;
 }
 
 .header {
@@ -35,7 +37,7 @@
   font-size: 15px;
   line-height: 1.65;
   color: var(--jb-ink-muted);
-  max-width: 560px;
+  max-width: none;
 }
 
 @media (max-width: 768px) {

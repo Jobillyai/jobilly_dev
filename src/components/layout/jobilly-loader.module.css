@@ -3,9 +3,9 @@
   align-items: center;
   justify-content: center;
   gap: 0;
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: var(--jb-font-sans);
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.02em;
   line-height: 1;
   background: transparent;
 }
@@ -24,32 +24,32 @@
 
 .aiLetter {
   font-weight: 800;
-  color: #0a1628;
+  color: var(--jb-ink);
 }
 
 .default {
-  color: #4a9fff;
+  color: var(--jb-brand);
 }
 
 .light {
-  color: #4a9fff;
+  color: var(--jb-brand);
 }
 
 .light .aiLetter {
-  color: #0a1628;
+  color: var(--jb-ink);
 }
 
 .inverse .letter:not(.aiLetter) {
-  color: #7ec8ff;
+  color: #c4b5fd;
 }
 
 .inverse .aiLetter {
-  color: #0a1628;
+  color: #ffffff;
 }
 
 .sm {
   font-size: 16px;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.02em;
 }
 
 .md {

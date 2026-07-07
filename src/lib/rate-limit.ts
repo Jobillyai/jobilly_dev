@@ -96,6 +96,19 @@ export function rateLimitErrorMessage(retryAfterSeconds?: number): string {
   return `Too many attempts. Try again in about ${minutes} minute${minutes === 1 ? "" : "s"}.`;
 }
 
+async function withRateLimitTimeout<T>(
+  promise: Promise<T>,
+  fallback: T,
+  timeoutMs = 2500,
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => {
+      setTimeout(() => resolve(fallback), timeoutMs);
+    }),
+  ]);
+}
+
 export async function checkRateLimit(
   limiterKey: LimiterKey,
   identifier: string,
@@ -110,16 +123,28 @@ export async function checkRateLimit(
   }
 
   const limiter = getLimiter(limiterKey);
-  const { success, reset } = await limiter.limit(identifier);
 
-  if (!success) {
-    return {
-      allowed: false,
-      retryAfterSeconds: retryAfterSeconds(reset),
-    };
+  try {
+    const result = await withRateLimitTimeout(limiter.limit(identifier), {
+      success: true,
+      reset: Date.now(),
+      limit: LIMITER_CONFIG[limiterKey].requests,
+      remaining: LIMITER_CONFIG[limiterKey].requests,
+      pending: Promise.resolve(),
+    });
+
+    if (!result.success) {
+      return {
+        allowed: false,
+        retryAfterSeconds: retryAfterSeconds(result.reset),
+      };
+    }
+
+    return { allowed: true };
+  } catch (error) {
+    console.warn(`[rate-limit] ${limiterKey} failed open:`, error);
+    return { allowed: true };
   }
-
-  return { allowed: true };
 }
 
 async function enforceDualRateLimits(
@@ -128,12 +153,16 @@ async function enforceDualRateLimits(
   email: string,
 ): Promise<RateLimitOutcome> {
   const ip = await getRequestIp();
-  const ipResult = await checkRateLimit(ipLimiterKey, ip);
+  const [ipResult, emailResult] = await Promise.all([
+    checkRateLimit(ipLimiterKey, ip),
+    checkRateLimit(emailLimiterKey, normalizeEmail(email)),
+  ]);
+
   if (!ipResult.allowed) {
     return ipResult;
   }
 
-  return checkRateLimit(emailLimiterKey, normalizeEmail(email));
+  return emailResult;
 }
 
 export async function enforceLoginRateLimits(

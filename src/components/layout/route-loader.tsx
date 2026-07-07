@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ROUTE_LOADING_START } from "@/lib/route-loading";
-import { JobillyLoader } from "./jobilly-loader";
 import styles from "./route-loader.module.css";
 
 function isInternalNavigationLink(anchor: HTMLAnchorElement) {
@@ -65,7 +64,7 @@ export function RouteLoader() {
     }, 12000);
   }
 
-  function stopLoading(delay = 350) {
+  function stopLoading(delay = 80) {
     if (hideTimerRef.current) {
       clearTimeout(hideTimerRef.current);
     }
@@ -132,9 +131,6 @@ export function RouteLoader() {
     >
       <div className={styles.routeLoaderBar}>
         <div className={styles.routeLoaderBarInner} />
-      </div>
-      <div className={styles.routeLoaderOverlay} aria-live="polite" aria-busy={loading}>
-        <JobillyLoader variant="default" size="md" />
       </div>
     </div>
   );

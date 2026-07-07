@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jobilly AI — Daily Development Activities</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue-900: #0a1628;
+      --blue-700: #1e3a5f;
+      --blue-500: #1877f2;
+      --blue-100: #dbeafe;
+      --blue-50: #f0f6ff;
+      --mint-500: #10b981;
+      --mint-100: #d1fae5;
+      --amber-500: #f59e0b;
+      --amber-100: #fef3c7;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-400: #94a3b8;
+      --gray-600: #475569;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: var(--blue-50);
+      color: var(--blue-900);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 40px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--blue-500);
+    }
+
+    .brand-name {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--blue-500);
+    }
+
+    .title {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+
+    .title em {
+      font-family: "Instrument Serif", serif;
+      font-style: italic;
+      font-weight: 400;
+      color: var(--blue-500);
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--gray-600);
+      max-width: 560px;
+    }
+
+    .date-range {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 8px 16px;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-600);
+    }
+
+    .downloads {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      background: var(--white);
+      color: var(--blue-900);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .download-btn:hover {
+      border-color: var(--blue-500);
+      background: var(--blue-50);
+    }
+
+    .download-btn-primary {
+      background: var(--blue-500);
+      border-color: var(--blue-500);
+      color: var(--white);
+    }
+
+    .download-btn-primary:hover {
+      background: #1565d8;
+      border-color: #1565d8;
+    }
+
+    .download-btn svg {
+      flex-shrink: 0;
+    }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .stat {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--blue-900);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-top: 4px;
+    }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+    }
+
+    .day-group {
+      margin-bottom: 32px;
+    }
+
+    .day-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 16px;
+      position: sticky;
+      top: 0;
+      background: var(--blue-50);
+      padding: 12px 0;
+      z-index: 2;
+    }
+
+    .day-date {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--blue-900);
+    }
+
+    .day-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-400);
+    }
+
+    .day-count {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--blue-500);
+      background: var(--blue-100);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-left: 20px;
+      border-left: 2px solid var(--gray-200);
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 18px 20px;
+      position: relative;
+      transition: border-color 0.15s;
+    }
+
+    .card:hover {
+      border-color: var(--blue-500);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      left: -27px;
+      top: 22px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 2px solid var(--blue-500);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .module {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .module-auth { background: #ede9fe; color: #6d28d9; }
+    .module-portal { background: #dbeafe; color: #1d4ed8; }
+    .module-admin { background: #fce7f3; color: #be185d; }
+    .module-jobs { background: #d1fae5; color: #047857; }
+    .module-marketing { background: #ffedd5; color: #c2410c; }
+    .module-ui { background: #e0e7ff; color: #4338ca; }
+    .module-email { background: #ccfbf1; color: #0f766e; }
+    .module-devops { background: var(--gray-100); color: var(--gray-600); }
+    .module-setup { background: var(--blue-100); color: var(--blue-700); }
+    .module-default { background: var(--gray-100); color: var(--gray-600); }
+
+    .status {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 999px;
+      margin-left: auto;
+    }
+
+    .status-completed { background: var(--mint-100); color: #065f46; }
+    .status-paused { background: var(--amber-100); color: #92400e; }
+    .status-progress { background: var(--blue-100); color: #1e40af; }
+
+    .tasks {
+      font-size: 14px;
+      color: var(--gray-600);
+      line-height: 1.65;
+    }
+
+    .notes {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--gray-100);
+      font-size: 12px;
+      color: var(--gray-400);
+      font-style: italic;
+    }
+
+    .footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: gap;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+
+    @media print {
+      body { background: white; }
+      .day-header { position: static; }
+      .card:hover { border-color: var(--gray-200); }
+      .downloads { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-name">Jobilly AI</span>
+      </div>
+      <h1 class="title">Daily Development <em>Activities</em></h1>
+      <p class="subtitle">Complete log of platform development from project kickoff through the latest feature work.</p>
+      <div class="date-range">
+        <span>Jun 17, 2026</span>
+        <span>→</span>
+        <span>Jul 7, 2026</span>
+      </div>
+      <div class="downloads">
+        <button type="button" class="download-btn download-btn-primary" id="download-csv">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download CSV
+        </button>
+        <button type="button" class="download-btn" id="download-html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download HTML
+        </button>
+        <button type="button" class="download-btn" id="download-pdf">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Save as PDF
+        </button>
+      </div>
+    </header>
+
+    <div class="stats" id="stats"></div>
+    <div class="timeline" id="timeline"></div>
+
+    <footer class="footer">
+      <span>Jobilly.ai · Development Log</span>
+      <span id="generated"></span>
+    </footer>
+  </div>
+
+  <script>
+    const entries = [
+      { date: "2026-06-17", day: "Tuesday", module: "Project Setup", tasks: "Initial repository created; loaded codebase from GitHub; fixed dev server / environment issues", status: "Completed", notes: "Project kickoff" },
+      { date: "2026-06-18", day: "Wednesday", module: "Authentication", tasks: "Built login & signup pages with Supabase token auth; navbar login/signup toggle; removed early-access button; redesigned forms to match welcome page; normal email signup", status: "Completed", notes: "Committed: Login page signup page and dashboard" },
+      { date: "2026-06-18", day: "Wednesday", module: "Candidate Portal", tasks: "Dashboard with welcome-page-style service boxes; session persistence after login; global footer; user icon + edit profile; profile photo upload; signup success → redirect to login", status: "Completed", notes: "" },
+      { date: "2026-06-18", day: "Wednesday", module: "Password Reset", tasks: "Forgot-password flow attempted (OTP + reset link); email rate-limit issues; feature removed temporarily for stability", status: "Paused", notes: "Later replaced with simpler reset-link flow" },
+      { date: "2026-06-18", day: "Wednesday", module: "Resume ATS", tasks: "Added resume ATS score checker on candidate dashboard", status: "Completed", notes: "" },
+      { date: "2026-06-18", day: "Wednesday", module: "Career Advisory", tasks: "Career advisory intake form; Google Meet invite email on submit (local/dev only)", status: "Completed", notes: "Committed: career advisory form and Meet invites" },
+      { date: "2026-06-18", day: "Wednesday", module: "Admin Portal", tasks: "Admin login + protected dashboard; admin credentials; left sidebar (Dashboard, Tasks, Candidate Details, Calendar); removed public admin navbar link", status: "Completed", notes: "Committed: admin dashboard and job scraping polish" },
+      { date: "2026-06-18", day: "Wednesday", module: "Documentation", tasks: "Updated README with features and setup", status: "Completed", notes: "" },
+      { date: "2026-06-18", day: "Wednesday", module: "Deployment", tasks: "Netlify deployment guidance; NEXT_PUBLIC_APP_URL configured", status: "In Progress", notes: "jobillyai.netlify.app" },
+      { date: "2026-06-22", day: "Monday", module: "Career Advisory", tasks: "Candidate-selected session booking time; branded invite emails; admin calendar for scheduled sessions", status: "Completed", notes: "" },
+      { date: "2026-06-23", day: "Tuesday", module: "Admin Portal", tasks: "Admin calendar + meeting tasks pages; improved career advisory save reliability", status: "Completed", notes: "" },
+      { date: "2026-06-23", day: "Tuesday", module: "UI/Design", tasks: "Switched layouts to cleaner plain-white backgrounds", status: "Completed", notes: "" },
+      { date: "2026-06-25", day: "Thursday", module: "Resume & Jobs", tasks: "ATS scoring enhancements; Apify job scraping integration; candidate portal job features", status: "Completed", notes: "" },
+      { date: "2026-06-26", day: "Friday", module: "Marketing", tasks: "Products, Community, Contact Us navbar; products page with pricing tiers; marketing pages and design system polish", status: "Completed", notes: "" },
+      { date: "2026-06-26", day: "Friday", module: "Welcome Page", tasks: "Animated two-row company logo marquee (18 companies) with IntersectionObserver stagger animation", status: "Completed", notes: "" },
+      { date: "2026-06-27", day: "Saturday", module: "Job Scraping", tasks: "Indeed, LinkedIn, Google Jobs sources; applied-job updates visible to candidates; job source column in listings", status: "Completed", notes: "" },
+      { date: "2026-06-30", day: "Monday", module: "Roles & Auth", tasks: "Manager role + mentor admin role; production auth hardening; member ID badges", status: "Completed", notes: "" },
+      { date: "2026-06-30", day: "Monday", module: "Candidate Profile", tasks: "Expanded profile fields; contact/service request form; UI polish", status: "Completed", notes: "" },
+      { date: "2026-06-30", day: "Monday", module: "Job Scraping", tasks: "24-hour role cache stored in DB; previous searches dropdown; interested role field before search", status: "Completed", notes: "Reduces Apify billing" },
+      { date: "2026-06-30", day: "Monday", module: "Build", tasks: "Fixed ESLint prefer-const error blocking production build", status: "Completed", notes: "" },
+      { date: "2026-07-03", day: "Friday", module: "UI Redesign", tasks: "Created UI branch; ChronoTask-inspired redesign; new brand logo; removed repetitive/clumsy UI elements", status: "Completed", notes: "Pushed to UI branch" },
+      { date: "2026-07-03", day: "Friday", module: "Git/DevOps", tasks: "Pushed to main; sandbox repo copy; cleaned up branches", status: "Completed", notes: "" },
+      { date: "2026-07-03", day: "Friday", module: "Admin Jobs", tasks: "Admin job workflow updates; scrape-related DB migrations", status: "Completed", notes: "" },
+      { date: "2026-07-05", day: "Sunday", module: "DevOps", tasks: "Dev server run / maintenance", status: "Completed", notes: "No major feature commits" },
+      { date: "2026-07-06", day: "Monday", module: "Portal UX", tasks: "Removed veteran field; US/India phone picker with flags; logout + user block top-right; welcome-page footer on candidate portal", status: "Completed", notes: "Committed: portal UX polish" },
+      { date: "2026-07-06", day: "Monday", module: "UI-2 Branch", tasks: "Created UI-2 branch; login/signup split layout with gradient logo panel; privacy & terms pages; loading spinner brand colors", status: "Completed", notes: "" },
+      { date: "2026-07-06", day: "Monday", module: "Candidate Dashboard", tasks: "Wider layout; applications list with expand; mock interview placeholder button per job", status: "Completed", notes: "" },
+      { date: "2026-07-06", day: "Monday", module: "Admin Portal", tasks: "Admin sidebar matches candidate portal; job sheet redesigned to expandable list; scraped/posted dates on jobs", status: "Completed", notes: "" },
+      { date: "2026-07-06", day: "Monday", module: "Job Scraping", tasks: "Renamed to Apply for jobs; Entry/Mid/Senior experience levels; resume upload for match %; apply URL field; removed Jobright", status: "Completed", notes: "" },
+      { date: "2026-07-06", day: "Monday", module: "Candidate Details", tasks: "Candidate list with expand-for-details; apply actions moved to Apply for jobs page only", status: "Completed", notes: "" },
+      { date: "2026-07-07", day: "Tuesday", module: "Job Scraping", tasks: "Glassdoor & ZipRecruiter sources; Job board dropdown + Search UI; per-candidate resume; managers blocked from Apply for jobs", status: "Completed", notes: "" },
+      { date: "2026-07-07", day: "Tuesday", module: "Copy/UI Cleanup", tasks: "Removed 3-hour cache hints, match-% hints, candidate page subtitles, and API billing wording", status: "Completed", notes: "" },
+      { date: "2026-07-07", day: "Tuesday", module: "Email — Daily Digest", tasks: "End-of-day applied-jobs email to candidates; cron route + migration 0039; manual Send mail button", status: "Completed", notes: "Needs migrations 0039/0040 applied" },
+      { date: "2026-07-07", day: "Tuesday", module: "Manager Workflow", tasks: "New candidate signup → service request + manager email alert; assign mentor UI on Candidate Details", status: "Completed", notes: "" },
+      { date: "2026-07-07", day: "Tuesday", module: "Mentor Meetings", tasks: "Mentors can send Google Meet links to assigned candidates (email + calendar invite)", status: "Completed", notes: "Uses RESEND_API_KEY in production" },
+      { date: "2026-07-07", day: "Tuesday", module: "Bug Fixes", tasks: "Fixed .next cache error; Supabase relationship embed error; JSX syntax errors; resume upload error", status: "Completed", notes: "Delete .next and restart dev if cache corrupts" },
+    ];
+
+    function moduleClass(m) {
+      const key = m.toLowerCase();
+      if (key.includes("auth") || key.includes("password") || key.includes("roles")) return "module-auth";
+      if (key.includes("portal") || key.includes("candidate") || key.includes("profile") || key.includes("resume")) return "module-portal";
+      if (key.includes("admin") || key.includes("manager") || key.includes("mentor")) return "module-admin";
+      if (key.includes("job") || key.includes("scraping") || key.includes("apply")) return "module-jobs";
+      if (key.includes("marketing") || key.includes("welcome") || key.includes("product")) return "module-marketing";
+      if (key.includes("ui") || key.includes("design") || key.includes("copy")) return "module-ui";
+      if (key.includes("email") || key.includes("career") || key.includes("meeting")) return "module-email";
+      if (key.includes("git") || key.includes("devops") || key.includes("deploy") || key.includes("build")) return "module-devops";
+      if (key.includes("setup") || key.includes("documentation")) return "module-setup";
+      return "module-default";
+    }
+
+    function statusClass(s) {
+      if (s === "Completed") return "status-completed";
+      if (s === "Paused") return "status-paused";
+      return "status-progress";
+    }
+
+    function formatDate(iso) {
+      return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(iso + "T12:00:00"));
+    }
+
+    const uniqueDays = new Set(entries.map(e => e.date)).size;
+    const modules = new Set(entries.map(e => e.module)).size;
+    const completed = entries.filter(e => e.status === "Completed").length;
+
+    document.getElementById("stats").innerHTML = `
+      <div class="stat"><div class="stat-value">${uniqueDays}</div><div class="stat-label">Active Days</div></div>
+      <div class="stat"><div class="stat-value">${entries.length}</div><div class="stat-label">Total Tasks</div></div>
+      <div class="stat"><div class="stat-value">${modules}</div><div class="stat-label">Modules</div></div>
+      <div class="stat"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div>
+    `;
+
+    const byDate = {};
+    entries.forEach(e => {
+      if (!byDate[e.date]) byDate[e.date] = { day: e.day, items: [] };
+      byDate[e.date].items.push(e);
+    });
+
+    const timeline = document.getElementById("timeline");
+    Object.keys(byDate).sort().forEach(date => {
+      const group = byDate[date];
+      const section = document.createElement("section");
+      section.className = "day-group";
+      section.innerHTML = `
+        <div class="day-header">
+          <span class="day-date">${formatDate(date)}</span>
+          <span class="day-name">${group.day}</span>
+          <span class="day-count">${group.items.length} task${group.items.length === 1 ? "" : "s"}</span>
+        </div>
+        <div class="cards">
+          ${group.items.map(e => `
+            <article class="card">
+              <div class="card-top">
+                <span class="module ${moduleClass(e.module)}">${e.module}</span>
+                <span class="status ${statusClass(e.status)}">${e.status}</span>
+              </div>
+              <p class="tasks">${e.tasks}</p>
+              ${e.notes ? `<p class="notes">${e.notes}</p>` : ""}
+            </article>
+          `).join("")}
+        </div>
+      `;
+      timeline.appendChild(section);
+    });
+
+    document.getElementById("generated").textContent = "Generated " + new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date());
+
+    function weekForDate(iso) {
+      const start = new Date("2026-06-17T12:00:00");
+      const d = new Date(iso + "T12:00:00");
+      const diff = Math.floor((d - start) / (7 * 24 * 60 * 60 * 1000));
+      return "Week " + (diff + 1);
+    }
+
+    function statusLabel(s) {
+      if (s === "Completed") return "✅ Completed";
+      if (s === "Paused") return "⏸ Paused";
+      return "🔄 In Progress";
+    }
+
+    function downloadBlob(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeCsv(value) {
+      const text = String(value ?? "");
+      if (/[",\n]/.test(text)) {
+        return '"' + text.replace(/"/g, '""') + '"';
+      }
+      return text;
+    }
+
+    document.getElementById("download-csv").addEventListener("click", () => {
+      const header = ["Date", "Day", "Week", "Module", "Tasks Completed", "Status", "Notes"];
+      const rows = entries.map((e) => [
+        e.date,
+        e.day,
+        weekForDate(e.date),
+        e.module,
+        e.tasks,
+        statusLabel(e.status),
+        e.notes || "",
+      ]);
+      const csv = [header, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\r\n");
+      downloadBlob("jobilly-daily-development-activities.csv", csv, "text/csv;charset=utf-8");
+    });
+
+    document.getElementById("download-html").addEventListener("click", () => {
+      downloadBlob("jobilly-daily-development-activities.html", document.documentElement.outerHTML, "text/html;charset=utf-8");
+    });
+
+    document.getElementById("download-pdf").addEventListener("click", () => {
+      window.print();
+    });
+  </script>
+</body>
+</html>

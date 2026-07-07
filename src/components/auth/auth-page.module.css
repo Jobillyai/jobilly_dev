@@ -1,40 +1,53 @@
 .shell {
   position: relative;
-  min-height: calc(100vh - 68px);
-  font-family: "Plus Jakarta Sans", sans-serif;
-  background: #ffffff;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  min-height: 100vh;
+  font-family: var(--jb-font-sans);
   color: var(--text-primary);
   overflow: hidden;
 }
 
-.content {
+.formPanel {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
-  min-height: calc(100vh - 68px);
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 560px;
+  justify-self: start;
+  padding: clamp(40px, 6vh, 72px) clamp(32px, 5vw, 64px) clamp(40px, 6vh, 72px)
+    clamp(20px, 3vw, 40px);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  min-height: auto;
+  margin: 0;
+}
+
+.mobileBrand {
+  display: none;
+  margin-bottom: 28px;
 }
 
 .card {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 440px;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: 1.5px solid rgba(13, 148, 136, 0.15);
-  border-radius: var(--jb-radius-xl);
-  padding: 40px 36px;
-  box-shadow: var(--jb-shadow-lg);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
 .header {
-  margin-bottom: 32px;
-  text-align: center;
+  margin-bottom: 28px;
+  text-align: left;
 }
 
 .title {
@@ -47,10 +60,10 @@
 }
 
 .titleEm {
-  font-family: "Instrument Serif", serif;
+  font-family: var(--jb-font-display);
   font-style: italic;
   font-weight: 400;
-  color: var(--blue-500);
+  color: var(--jb-brand);
   letter-spacing: -0.5px;
 }
 
@@ -108,10 +121,10 @@
 }
 
 .googleBtn:hover:not(:disabled) {
-  border-color: rgba(24, 119, 242, 0.35);
-  background: var(--blue-50);
+  border-color: rgba(124, 58, 237, 0.35);
+  background: var(--jb-brand-soft);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.12);
 }
 
 .googleBtn:disabled {
@@ -174,8 +187,8 @@
 }
 
 .input:focus {
-  border-color: var(--blue-500);
-  box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.1);
+  border-color: var(--jb-brand);
+  box-shadow: 0 0 0 4px var(--jb-focus-ring);
 }
 
 .inputError {
@@ -200,14 +213,14 @@
 .forgotLink {
   font-size: 13px;
   font-weight: 600;
-  color: var(--blue-500);
+  color: var(--jb-brand);
   text-decoration: none;
   transition: color 0.2s;
   white-space: nowrap;
 }
 
 .forgotLink:hover {
-  color: var(--accent-dark);
+  color: var(--jb-brand-hover);
 }
 
 .passwordWrap {
@@ -241,9 +254,9 @@
 .infoAlert {
   font-size: 14px;
   font-weight: 500;
-  color: #1d4ed8;
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--jb-brand-hover);
+  background: var(--jb-brand-soft);
+  border: 1px solid var(--jb-brand-border);
   border-radius: 10px;
   padding: 12px 14px;
   text-align: center;
@@ -334,20 +347,20 @@
 
 .footer {
   margin-top: 28px;
-  text-align: center;
+  text-align: left;
   font-size: 14px;
   color: var(--text-muted);
 }
 
 .footerLink {
   font-weight: 600;
-  color: var(--blue-500);
+  color: var(--jb-brand);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .footerLink:hover {
-  color: var(--accent-dark);
+  color: var(--jb-brand-hover);
 }
 
 .backLink {
@@ -357,13 +370,13 @@
   margin-bottom: 24px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--blue-500);
+  color: var(--jb-brand);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .backLink:hover {
-  color: var(--accent-dark);
+  color: var(--jb-brand-hover);
 }
 
 .memberIdHint {
@@ -388,18 +401,24 @@
   margin: 0 auto 20px;
   border-radius: 16px;
   background: var(--blue-50);
-  border: 1.5px solid rgba(24, 119, 242, 0.15);
+  border: 1.5px solid rgba(124, 58, 237, 0.15);
   color: var(--blue-500);
   font-size: 24px;
 }
 
-@media (max-width: 600px) {
-  .card {
-    padding: 32px 24px;
-    border-radius: 16px;
+@media (max-width: 720px) {
+  .shell {
+    grid-template-columns: 1fr;
   }
 
-  .content {
-    padding: 32px 20px;
+  .formPanel {
+    grid-column: 1;
+    justify-self: center;
+    max-width: min(100%, 560px);
+    padding: 40px 24px 56px;
+  }
+
+  .mobileBrand {
+    display: block;
   }
 }

@@ -22,13 +22,13 @@
 
 .tab:hover {
   background: #f8fbff;
-  border-color: #1877f2;
+  border-color: var(--jb-brand);
   color: #0a1628;
 }
 
 .tabActive {
-  background: #1877f2;
-  border-color: #1877f2;
+  background: var(--jb-brand);
+  border-color: var(--jb-brand);
   color: #ffffff;
 }
 
@@ -56,5 +56,5 @@
 
 .tab:not(.tabActive) .count {
   background: #eff6ff;
-  color: #1d4ed8;
+  color: var(--jb-brand-hover);
 }

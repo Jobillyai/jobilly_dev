@@ -9,6 +9,7 @@ import styles from "@/app/admin/admin.module.css";
 type AdminRecentActivityProps = {
   recentCandidates: AdminRecentCandidate[];
   recentSubmissions: AdminRecentSubmission[];
+  showJobApplyLinks?: boolean;
 };
 
 function formatDate(value: string): string {
@@ -37,6 +38,7 @@ function formatSessionDateTime(value: string | null): string {
 export function AdminRecentActivity({
   recentCandidates,
   recentSubmissions,
+  showJobApplyLinks = true,
 }: AdminRecentActivityProps) {
   return (
     <div className={styles.recentGrid}>
@@ -65,7 +67,7 @@ export function AdminRecentActivity({
                       Joined {formatDate(candidate.createdAt)}
                       {candidate.hasSubmission ? " · Advisory submitted" : " · No submission"}
                       {candidate.scrapedJobCount > 0
-                        ? ` · ${candidate.scrapedJobCount} scraped jobs`
+                        ? ` · ${candidate.scrapedJobCount} jobs found`
                         : ""}
                     </p>
                   </div>
@@ -73,12 +75,14 @@ export function AdminRecentActivity({
                     <Link href="/admin/candidates" className={styles.recentLink}>
                       Profile
                     </Link>
-                    <Link
-                      href={`/admin/candidates/${candidate.id}/jobs`}
-                      className={styles.recentLinkPrimary}
-                    >
-                      Jobs
-                    </Link>
+                    {showJobApplyLinks ? (
+                      <Link
+                        href={`/admin/candidates/${candidate.id}/jobs`}
+                        className={styles.recentLinkPrimary}
+                      >
+                        Jobs
+                      </Link>
+                    ) : null}
                   </div>
                 </li>
               );

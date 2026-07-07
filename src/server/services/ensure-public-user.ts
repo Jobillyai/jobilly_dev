@@ -8,22 +8,9 @@ import {
   getAuthUserFirstLastName,
 } from "@/lib/auth/user-display-name";
 import { createAdminClient } from "@/server/db/supabase-admin";
+import { registerNewCandidateSignup } from "@/server/services/register-new-candidate-signup";
 
-export async function ensurePublicUserRecord(
-  user: User,
-): Promise<{ error?: string }> {
-  const admin = createAdminClient();
-
-  const { data: existing } = await admin
-    .from("users")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (existing) {
-    return {};
-  }
-
+function resolveUserNames(user: User) {
   const { firstName, lastName, fullName } = getNameFromMetadata(user.user_metadata);
   const resolvedFirst = firstName || getAuthUserFirstLastName(user).firstName;
   const resolvedLast = lastName || getAuthUserFirstLastName(user).lastName;
@@ -32,6 +19,31 @@ export async function ensurePublicUserRecord(
     getAuthUserDisplayName(user) ||
     combineFirstLastName(resolvedFirst, resolvedLast) ||
     null;
+
+  return { resolvedFirst, resolvedLast, name };
+}
+
+export async function ensurePublicUserRecord(
+  user: User,
+): Promise<{ error?: string }> {
+  const admin = createAdminClient();
+  const { resolvedFirst, resolvedLast, name } = resolveUserNames(user);
+
+  const { data: existing } = await admin
+    .from("users")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (existing) {
+    await registerNewCandidateSignup({
+      userId: user.id,
+      email: user.email ?? "",
+      firstName: resolvedFirst,
+      lastName: resolvedLast,
+    });
+    return {};
+  }
 
   const { error } = await admin.from("users").insert({
     id: user.id,
@@ -49,6 +61,13 @@ export async function ensurePublicUserRecord(
 
     return { error: error.message };
   }
+
+  await registerNewCandidateSignup({
+    userId: user.id,
+    email: user.email ?? "",
+    firstName: resolvedFirst,
+    lastName: resolvedLast,
+  });
 
   return {};
 }

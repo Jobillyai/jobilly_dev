@@ -27,6 +27,13 @@ function formatDate(value: string): string {
   }).format(new Date(value));
 }
 
+function requestTypeLabel(type: ServiceRequestRow["requestType"]): string {
+  if (type === "new_candidate") {
+    return "New signup";
+  }
+  return "Contact";
+}
+
 function statusLabel(status: ServiceRequestRow["status"]): string {
   if (status === "open") {
     return "Open";
@@ -54,6 +61,13 @@ export function ServiceRequestsPanel({
     () => rows.filter((row) => row.status === "open").length,
     [rows],
   );
+  const newSignupCount = useMemo(
+    () =>
+      rows.filter(
+        (row) => row.requestType === "new_candidate" && row.status === "open",
+      ).length,
+    [rows],
+  );
 
   function handleAssign(requestId: string) {
     const mentorId = selectedMentor[requestId];
@@ -71,6 +85,7 @@ export function ServiceRequestsPanel({
         return;
       }
 
+      const assignedRequest = rows.find((row) => row.id === requestId);
       const mentor = mentors.find((entry) => entry.id === mentorId);
       setRows((current) =>
         current.map((row) =>
@@ -87,7 +102,11 @@ export function ServiceRequestsPanel({
         ),
       );
       setMessageKind("success");
-      setMessage("Request assigned to mentor.");
+      setMessage(
+        assignedRequest?.requestType === "new_candidate"
+          ? "Mentor assigned. The candidate is now linked to this mentor admin."
+          : "Request assigned to mentor.",
+      );
     });
   }
 
@@ -114,7 +133,7 @@ export function ServiceRequestsPanel({
     return (
       <div className={styles.empty}>
         {isManager
-          ? "No service requests yet. New submissions from the contact form will appear here."
+          ? "No requests yet. New candidate signups and contact form submissions will appear here."
           : "No requests assigned to you yet."}
       </div>
     );
@@ -125,6 +144,9 @@ export function ServiceRequestsPanel({
       {isManager ? (
         <p className={styles.summary}>
           {rows.length} request{rows.length === 1 ? "" : "s"} · {openCount} open
+          {newSignupCount > 0
+            ? ` · ${newSignupCount} new signup${newSignupCount === 1 ? "" : "s"} need mentor`
+            : ""}
         </p>
       ) : null}
 
@@ -142,11 +164,23 @@ export function ServiceRequestsPanel({
           <article key={request.id} className={styles.card}>
             <div className={styles.cardHeader}>
               <div>
-                <h3 className={styles.name}>
-                  {request.firstName} {request.lastName}
-                </h3>
+                <div className={styles.titleRow}>
+                  <h3 className={styles.name}>
+                    {request.firstName} {request.lastName}
+                  </h3>
+                  <span
+                    className={`${styles.badge} ${
+                      request.requestType === "new_candidate"
+                        ? styles.badgeSignup
+                        : styles.badgeContact
+                    }`}
+                  >
+                    {requestTypeLabel(request.requestType)}
+                  </span>
+                </div>
                 <p className={styles.meta}>
-                  {request.email} · {request.phone}
+                  {request.email}
+                  {request.requestType === "contact" ? ` · ${request.phone}` : ""}
                 </p>
                 <p className={styles.metaMuted}>
                   Submitted {formatDate(request.createdAt)}

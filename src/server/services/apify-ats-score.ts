@@ -129,6 +129,64 @@ export function extractCustomKeywords(jobDescription: string): string | undefine
   return keywords.join(", ");
 }
 
+export function mapInterestedRoleToAtsTarget(
+  interestedRole: string | null | undefined,
+): AtsTargetRole {
+  const role = interestedRole?.trim();
+  if (!role) {
+    return "Software Engineer";
+  }
+
+  const lower = role.toLowerCase();
+  const exact = ATS_TARGET_ROLES.find((entry) => entry.toLowerCase() === lower);
+  if (exact) {
+    return exact;
+  }
+
+  for (const entry of ATS_TARGET_ROLES) {
+    const entryLower = entry.toLowerCase();
+    if (lower.includes(entryLower) || entryLower.includes(lower)) {
+      return entry;
+    }
+  }
+
+  if (lower.includes("frontend") || lower.includes("front-end")) {
+    return "Frontend Developer";
+  }
+  if (lower.includes("backend") || lower.includes("back-end")) {
+    return "Backend Developer";
+  }
+  if (lower.includes("full stack") || lower.includes("fullstack")) {
+    return "Full Stack Developer";
+  }
+  if (lower.includes("devops")) {
+    return "DevOps Engineer";
+  }
+  if (lower.includes("machine learning") || lower.includes("ml engineer")) {
+    return "Machine Learning Engineer";
+  }
+  if (lower.includes("data scientist")) {
+    return "Data Scientist";
+  }
+  if (lower.includes("data analyst")) {
+    return "Data Analyst";
+  }
+  if (lower.includes("product manager")) {
+    return "Product Manager";
+  }
+  if (lower.includes("project manager")) {
+    return "Project Manager";
+  }
+  if (lower.includes("business analyst")) {
+    return "Business Analyst";
+  }
+  if (lower.includes("ux") || lower.includes("ui designer")) {
+    return "UX/UI Designer";
+  }
+
+  return "Software Engineer";
+}
+
 function normalizeAtsResult(raw: Record<string, unknown>): AtsScoreResult {
   return {
     atsScore: Number(raw.atsScore ?? 0),

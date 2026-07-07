@@ -1,6 +1,6 @@
 .sessionCalendarPanel {
   --blue-900: #0a1628;
-  --blue-500: #1877f2;
+  --blue-500: var(--jb-brand);
   --blue-50: #f0f6ff;
   --white: #ffffff;
   --gray-200: #e5e7eb;
@@ -108,7 +108,7 @@
 
 .calendarDayCellToday {
   border-color: var(--blue-500);
-  box-shadow: inset 0 0 0 1px rgba(24, 119, 242, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.15);
 }
 
 .calendarDayHeader {
@@ -173,8 +173,8 @@
 
 .calendarEventUpcoming {
   background: #eff6ff;
-  border-left-color: #1877f2;
-  color: #1d4ed8;
+  border-left-color: var(--jb-brand);
+  color: var(--jb-brand-hover);
 }
 
 .calendarEventPending {

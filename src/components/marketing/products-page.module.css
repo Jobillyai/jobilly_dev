@@ -1,41 +1,17 @@
 .page {
-  /* Self-contained tokens so styles work even if globals load late */
-  --jb-font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
-  --jb-ink: #0b1220;
-  --jb-ink-secondary: #334155;
-  --jb-ink-muted: #64748b;
-  --jb-ink-subtle: #94a3b8;
-  --jb-brand: #7c3aed;
-  --jb-brand-hover: #6d28d9;
-  --jb-brand-soft: #f5f3ff;
-  --jb-brand-border: #ddd6fe;
-  --jb-surface: #ffffff;
-  --jb-surface-subtle: #f8fafc;
-  --jb-border: #e2e8f0;
-  --jb-success: #059669;
-  --jb-success-soft: #ecfdf5;
-  --jb-warning-soft: #fff7ed;
-  --jb-radius-sm: 8px;
-  --jb-radius-md: 12px;
-  --jb-radius-lg: 16px;
-  --jb-radius-xl: 20px;
-  --jb-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --jb-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
-  --jb-shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.08);
-
   font-family: var(--jb-font-sans);
   background: var(--jb-surface-subtle);
   color: var(--jb-ink);
   min-height: 100vh;
 }
 
-/* Hero — Hustle Hive-style centered pitch */
+/* Hero — centered pitch */
 .hero {
   position: relative;
   padding: 96px 24px 56px;
   background:
     radial-gradient(ellipse 70% 60% at 50% 0%, rgba(167, 139, 250, 0.2), transparent 55%),
-    linear-gradient(180deg, #f8f7ff 0%, #ffffff 100%);
+    linear-gradient(180deg, var(--jb-brand-soft) 0%, var(--jb-surface) 100%);
   border-bottom: 1px solid var(--jb-border);
   overflow: hidden;
   text-align: center;
@@ -187,7 +163,7 @@
 
 .planCompareCardActive {
   border-color: var(--jb-brand);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+  box-shadow: 0 0 0 3px var(--jb-focus-ring);
   background: var(--jb-brand-soft);
 }
 
@@ -558,7 +534,7 @@
 }
 
 .journeyDiscover {
-  border-top-color: #1d4ed8;
+  border-top-color: var(--jb-brand);
 }
 
 .journeyPrepare {
@@ -616,7 +592,7 @@
 .journeyBar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--jb-brand) 0%, #4a9fff 100%);
+  background: linear-gradient(90deg, var(--jb-brand) 0%, var(--jb-brand-bright) 100%);
   border-radius: 100px;
 }
 

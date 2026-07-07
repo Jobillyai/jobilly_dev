@@ -1,7 +1,9 @@
 import { Resend } from "resend";
+import type { ServiceRequestType } from "@/server/services/service-requests";
 
 type NotifyManagerInput = {
   requestId: string;
+  requestType?: ServiceRequestType;
   firstName: string;
   lastName: string;
   email: string;
@@ -15,22 +17,28 @@ function resendFromAddress(): string {
 }
 
 function buildHtml(input: NotifyManagerInput, adminUrl: string): string {
+  const isNewCandidate = input.requestType === "new_candidate";
+  const title = isNewCandidate ? "New candidate signup" : "New service request";
+  const intro = isNewCandidate
+    ? "A candidate just signed up on Jobilly.ai. Assign a mentor admin to support their job search and applications."
+    : "A visitor submitted the contact form on Jobilly.ai.";
+
   return `
     <div style="font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#0a1628;max-width:560px;">
-      <h1 style="font-size:22px;margin-bottom:12px;">New service request</h1>
+      <h1 style="font-size:22px;margin-bottom:12px;">${title}</h1>
       <p style="font-size:15px;line-height:1.6;color:#374151;">
-        A visitor submitted the contact form on Jobilly.ai.
+        ${intro}
       </p>
       <ul style="font-size:14px;line-height:1.7;color:#374151;padding-left:20px;">
         <li><strong>Name:</strong> ${input.firstName} ${input.lastName}</li>
         <li><strong>Email:</strong> ${input.email}</li>
-        <li><strong>Phone:</strong> ${input.phone}</li>
+        ${isNewCandidate ? "" : `<li><strong>Phone:</strong> ${input.phone}</li>`}
       </ul>
-      <p style="font-size:14px;line-height:1.7;color:#374151;"><strong>Enquiry:</strong></p>
+      <p style="font-size:14px;line-height:1.7;color:#374151;"><strong>Details:</strong></p>
       <p style="font-size:14px;line-height:1.7;color:#374151;white-space:pre-wrap;">${input.enquiry}</p>
       <p style="margin:24px 0;">
         <a href="${adminUrl}" style="display:inline-block;background:#1877f2;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px;">
-          Assign in admin portal
+          Assign mentor in admin portal
         </a>
       </p>
     </div>`;
@@ -49,12 +57,16 @@ export async function notifyManagersOfServiceRequest(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
   const adminUrl = `${appUrl}/admin/requests`;
+  const isNewCandidate = input.requestType === "new_candidate";
+  const subject = isNewCandidate
+    ? `New candidate signup — assign mentor for ${input.firstName} ${input.lastName}`
+    : `New contact request — ${input.firstName} ${input.lastName}`;
 
   const resend = new Resend(resendApiKey);
   const { error } = await resend.emails.send({
     from: resendFromAddress(),
     to: input.managerEmails,
-    subject: `New contact request — ${input.firstName} ${input.lastName}`,
+    subject,
     html: buildHtml(input, adminUrl),
   });
 

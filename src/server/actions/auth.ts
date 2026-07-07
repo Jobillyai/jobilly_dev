@@ -10,6 +10,7 @@ import {
 } from "@/lib/rate-limit";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { createClient } from "@/server/db/supabase-server";
+import { registerNewCandidateSignup } from "@/server/services/register-new-candidate-signup";
 
 const signupSchema = z.object({
   firstName: z.string().min(1, "Enter your first name").max(100),
@@ -86,7 +87,7 @@ export async function signupAction(
 
   if (shouldAutoConfirmSignup()) {
     const admin = createAdminClient();
-    const { error: createError } = await admin.auth.admin.createUser({
+    const { data: created, error: createError } = await admin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
@@ -97,12 +98,21 @@ export async function signupAction(
       return { error: formatAuthError(createError.message) };
     }
 
+    if (created.user?.id) {
+      await registerNewCandidateSignup({
+        userId: created.user.id,
+        email,
+        firstName,
+        lastName,
+      });
+    }
+
     redirect("/login?signup=success");
   }
 
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -113,6 +123,15 @@ export async function signupAction(
 
   if (error) {
     return { error: formatAuthError(error.message) };
+  }
+
+  if (data.user?.id) {
+    await registerNewCandidateSignup({
+      userId: data.user.id,
+      email,
+      firstName,
+      lastName,
+    });
   }
 
   redirect("/login?signup=success");
@@ -161,7 +180,7 @@ export async function loginAction(
       .from("users")
       .select("role")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
     if (isAdminPortalRole(profile?.role)) {
       redirect("/admin");

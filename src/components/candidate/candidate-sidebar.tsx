@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   UserCircle,
 } from "lucide-react";
+import { JobillyLogo } from "@/components/brand/jobilly-logo";
 import styles from "./candidate-sidebar.module.css";
 
 const navItems = [
@@ -60,10 +61,12 @@ export function CandidateSidebar({ unreadApplications = 0 }: CandidateSidebarPro
 
   return (
     <aside className={styles.sidebar}>
-      <div className={styles.brand}>
-        <div className={styles.brandMark}>Jb</div>
-        <span className={styles.brandText}>jobilly.ai</span>
-      </div>
+      <JobillyLogo
+        href="/dashboard"
+        markSize={40}
+        onDark
+        className={styles.brand}
+      />
 
       <nav className={styles.nav} aria-label="Candidate navigation">
         {navItems.map((item) => {

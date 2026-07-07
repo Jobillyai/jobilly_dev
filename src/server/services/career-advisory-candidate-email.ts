@@ -1,23 +1,10 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { formatSessionDateTime } from "@/server/services/career-advisory-invite";
+import {
+  buildEmailLogoHtml,
+  getCandidateInviteLogoAttachment,
+} from "@/server/services/email-logo";
 
-const LOGO_CID = "jobilly-logo";
-
-export function getCandidateInviteLogoAttachment() {
-  try {
-    const logoPath = join(process.cwd(), "public/brand/jobilly-email-logo.png");
-    const content = readFileSync(logoPath).toString("base64");
-
-    return {
-      filename: "jobilly-email-logo.png",
-      content,
-      contentId: LOGO_CID,
-    };
-  } catch {
-    return null;
-  }
-}
+export { getCandidateInviteLogoAttachment };
 
 export function buildCandidateInviteHtml(input: {
   recipientName: string;
@@ -27,9 +14,8 @@ export function buildCandidateInviteHtml(input: {
 }): string {
   const when = formatSessionDateTime(input.sessionStart);
   const firstName = input.recipientName.trim().split(/\s+/)[0] || input.recipientName;
-  const logoHtml = input.hasLogo
-    ? `<img src="cid:${LOGO_CID}" alt="Jobilly AI" width="180" height="44" style="display:block;border:0;outline:none;text-decoration:none;background:transparent;" />`
-    : `<div style="font-size:28px;font-weight:800;letter-spacing:-0.5px;background:transparent;"><span style="color:#4a9fff;">Jobilly</span><span style="color:#0a1628;"> AI</span></div>`;
+  const logoHtml = buildEmailLogoHtml(input.hasLogo, "header");
+  const footerLogoHtml = buildEmailLogoHtml(input.hasLogo, "footer");
 
   return `
 <!DOCTYPE html>
@@ -101,7 +87,7 @@ export function buildCandidateInviteHtml(input: {
                 <table role="presentation" cellspacing="0" cellpadding="0">
                   <tr>
                     <td style="padding-right:14px;vertical-align:middle;">
-                      ${input.hasLogo ? `<img src="cid:${LOGO_CID}" alt="Jobilly AI" width="128" height="32" style="display:block;border:0;background:transparent;" />` : logoHtml}
+                      ${footerLogoHtml}
                     </td>
                     <td style="vertical-align:middle;">
                       <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#0a1628;">Warm regards,</p>

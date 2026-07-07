@@ -11,6 +11,7 @@ import {
   UserCircle,
   Users,
 } from "lucide-react";
+import { JobillyLogo } from "@/components/brand/jobilly-logo";
 import styles from "./admin-sidebar.module.css";
 
 const navItems = [
@@ -19,47 +20,61 @@ const navItems = [
     label: "Dashboard",
     icon: LayoutDashboard,
     exact: true,
+    jobApplyOnly: false,
   },
   {
     href: "/admin/candidates" as const,
     label: "Candidate Details",
     icon: Users,
     exact: false,
+    jobApplyOnly: false,
   },
   {
     href: "/admin/jobs" as const,
-    label: "Job Scraping",
+    label: "Apply for jobs",
     icon: Briefcase,
     exact: false,
+    jobApplyOnly: true,
   },
   {
     href: "/admin/requests" as const,
     label: "Service Requests",
     icon: Inbox,
     exact: false,
+    jobApplyOnly: false,
   },
   {
     href: "/admin/tasks" as const,
     label: "Tasks",
     icon: ClipboardList,
     exact: false,
+    jobApplyOnly: false,
   },
   {
     href: "/admin/calendar" as const,
     label: "Calendar",
     icon: Calendar,
     exact: false,
+    jobApplyOnly: false,
   },
   {
     href: "/admin/profile" as const,
     label: "My profile",
     icon: UserCircle,
     exact: false,
+    jobApplyOnly: false,
   },
 ];
 
-export function AdminSidebar() {
+type AdminSidebarProps = {
+  showJobApplyNav?: boolean;
+};
+
+export function AdminSidebar({ showJobApplyNav = true }: AdminSidebarProps) {
   const pathname = usePathname();
+  const visibleNavItems = navItems.filter(
+    (item) => !item.jobApplyOnly || showJobApplyNav,
+  );
 
   function isActive(href: string, exact: boolean) {
     if (exact) {
@@ -69,9 +84,17 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className={styles.adminSidebar}>
+    <aside className={styles.sidebar}>
+      <JobillyLogo
+        href="/admin"
+        markSize={40}
+        onDark
+        subtitle="Admin portal"
+        className={styles.brand}
+      />
+
       <nav className={styles.nav} aria-label="Admin navigation">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href, item.exact);
 

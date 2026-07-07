@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import type { SessionUser } from "@/lib/auth/session";
 import type { AdminUser } from "@/lib/auth/admin";
-import { usesPortalTopBar } from "@/components/layout/nav-switcher";
+import { usesPortalTopBar, isAuthRoute } from "@/components/layout/nav-switcher";
 
 type ShellContentProps = {
   children: React.ReactNode;
@@ -12,11 +12,7 @@ type ShellContentProps = {
 };
 
 function usesAuthShell(pathname: string): boolean {
-  return (
-    pathname === "/login" ||
-    pathname === "/signup" ||
-    pathname.startsWith("/admin/login")
-  );
+  return isAuthRoute(pathname);
 }
 
 function usesSidebarShell(pathname: string): boolean {

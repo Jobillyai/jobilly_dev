@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminMeetingTasks } from "@/components/admin/admin-meeting-tasks";
-import { getAdminUser } from "@/lib/auth/admin";
+import { getAdminUser, staffIsManager, toStaffContext } from "@/lib/auth/admin";
 import { getAdminMeetingTasks } from "@/server/services/admin-dashboard";
+import { getDefaultGoogleMeetUrl } from "@/server/services/send-mentor-meeting-link";
 import styles from "../../admin.module.css";
 
 export default async function AdminTasksPage() {
@@ -12,7 +13,10 @@ export default async function AdminTasksPage() {
     redirect("/admin/login");
   }
 
+  const staff = toStaffContext(admin);
+  const isMentor = !staffIsManager(staff);
   const tasks = await getAdminMeetingTasks();
+  const defaultMeetUrl = getDefaultGoogleMeetUrl();
 
   return (
     <div className={styles.adminPage}>
@@ -22,8 +26,8 @@ export default async function AdminTasksPage() {
             Admin <em className={styles.titleEm}>tasks</em>
           </h1>
           <p className={styles.subtitle}>
-            Career advisory meetings booked by candidates. Join the Google Meet
-            at the scheduled time or open the candidate profile for details.
+            Career advisory meetings booked by candidates. Mentors can send a Google Meet
+            link from here or from the candidate profile.
           </p>
         </div>
 
@@ -38,6 +42,8 @@ export default async function AdminTasksPage() {
           </div>
           <AdminMeetingTasks
             tasks={tasks}
+            isMentor={isMentor}
+            defaultMeetUrl={defaultMeetUrl}
             emptyMessage="No meetings scheduled yet. Tasks appear here when candidates book a career advisory session."
           />
         </section>

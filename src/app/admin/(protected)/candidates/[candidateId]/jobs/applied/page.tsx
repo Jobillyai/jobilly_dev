@@ -4,6 +4,7 @@ import { CandidateJobsNav } from "@/components/admin/candidate-jobs-nav";
 import { CandidateJobsSheet } from "@/components/admin/candidate-jobs-sheet";
 import {
   getAdminUser,
+  staffCanAccessJobApplyPortal,
   staffCanScrapeJobs,
   toStaffContext,
 } from "@/lib/auth/admin";
@@ -34,6 +35,10 @@ export default async function AdminCandidateAppliedJobsPage({
   }
 
   const staff = toStaffContext(admin);
+  if (!staffCanAccessJobApplyPortal(staff)) {
+    redirect("/admin/candidates");
+  }
+
   const candidate = await getAdminCandidateById(params.candidateId, staff);
 
   if (!candidate) {
@@ -81,19 +86,33 @@ export default async function AdminCandidateAppliedJobsPage({
           active="applied"
         />
 
-        <section className={styles.section}>
+        <div className={styles.jobsSheetSection}>
           <CandidateJobsSheet
+            key={candidate.id}
             candidateId={candidate.id}
             candidateName={displayName}
             candidateExperienceYears={candidate.experienceYears}
-            defaultInterestedRole={defaultInterestedRole}
+            defaultInterestedRole=""
             initialJobs={jobs}
             initialPreviousSearches={previousSearches}
             canScrape={staffCanScrapeJobs(staff)}
             viewMode="applied"
             appliedCount={appliedCount}
+            initialAnalyzedResumeText={candidate.analyzedResumeText}
+            candidateResumeMatch={{
+              workExperience: candidate.workExperience,
+              profileEducation: candidate.profileEducation,
+              specialization: candidate.specialization,
+              careerGoals: candidate.careerGoals,
+              branch: candidate.submission?.branch ?? null,
+              interestedTechnology: candidate.submission?.interestedTechnology ?? null,
+              graduationDetails: candidate.submission?.graduationDetails ?? null,
+              interestedRole: defaultInterestedRole,
+            }}
+            candidateResumeDownloadUrl={candidate.resumeDownloadUrl}
+            candidateResumeFileName={candidate.resumeFileName}
           />
-        </section>
+        </div>
       </main>
     </div>
   );

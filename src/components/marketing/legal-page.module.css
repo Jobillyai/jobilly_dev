@@ -1,0 +1,126 @@
+.page {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 72px);
+  padding: 48px clamp(20px, 4vw, 48px) 80px;
+  font-family: var(--jb-font-sans);
+  background:
+    radial-gradient(ellipse 85% 70% at 20% 0%, rgba(167, 139, 250, 0.18), transparent 55%),
+    linear-gradient(180deg, var(--jb-brand-soft) 0%, var(--jb-surface-subtle) 100%);
+  color: var(--jb-ink);
+  overflow: hidden;
+}
+
+.background {
+  z-index: 0;
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 36px;
+  max-width: 900px;
+}
+
+.title {
+  font-size: clamp(32px, 5vw, 42px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--jb-ink);
+  margin: 16px 0 12px;
+}
+
+.titleEm {
+  font-family: var(--jb-font-display);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--jb-brand);
+}
+
+.subtitle {
+  font-size: clamp(16px, 2vw, 18px);
+  line-height: 1.7;
+  color: var(--jb-ink-muted);
+  margin: 0 0 12px;
+}
+
+.meta {
+  font-size: 14px;
+  color: var(--jb-ink-muted);
+  margin: 0;
+}
+
+.content {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid var(--jb-border);
+  border-radius: var(--jb-radius-xl);
+  padding: clamp(28px, 4vw, 48px) clamp(24px, 5vw, 56px);
+  box-shadow: var(--jb-shadow-lg);
+}
+
+.section + .section {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid var(--jb-border);
+}
+
+.sectionTitle {
+  font-size: clamp(17px, 2vw, 20px);
+  font-weight: 700;
+  color: var(--jb-ink);
+  margin: 0 0 16px;
+  letter-spacing: -0.02em;
+}
+
+.prose {
+  width: 100%;
+}
+
+.paragraph {
+  font-size: clamp(15px, 1.6vw, 16px);
+  line-height: 1.85;
+  color: var(--jb-ink-muted);
+  margin: 0 0 16px;
+  text-align: left;
+}
+
+.paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--jb-border);
+  font-size: 15px;
+}
+
+.footerLinks a {
+  color: var(--jb-brand);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footerLinks a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 32px 16px 64px;
+  }
+
+  .content {
+    padding: 24px 20px;
+  }
+}

@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   getAdminUser,
-  staffCanScrapeJobs,
-  staffIsManager,
+  staffCanAccessJobApplyPortal,
   toStaffContext,
 } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
@@ -21,8 +20,10 @@ export default async function AdminJobsPage() {
   }
 
   const staff = toStaffContext(admin);
-  const isManager = staffIsManager(staff);
-  const canScrape = staffCanScrapeJobs(staff);
+  if (!staffCanAccessJobApplyPortal(staff)) {
+    redirect("/admin");
+  }
+
   const candidates = await getAdminCandidates(staff);
 
   const supabase = await createClient();
@@ -59,36 +60,20 @@ export default async function AdminJobsPage() {
       <main className={styles.main}>
         <div className={styles.header}>
           <h1 className={styles.title}>
-            Job <em className={styles.titleEm}>listings</em>
+            Apply for <em className={styles.titleEm}>jobs</em>
           </h1>
           <p className={styles.subtitle}>
-            {canScrape
-              ? "Search Indeed and LinkedIn for your assigned candidates from each job sheet. Each role can be searched once every 3 hours to control API billing."
-              : isManager
-                ? "Review scraped jobs across candidates. Job searches are run by assigned admins from each candidate sheet."
-                : "Review stored jobs for your assigned candidates, then mark applications."}
+            Search Indeed, LinkedIn, Glassdoor, and ZipRecruiter for your assigned candidates from each job sheet.
+            Each role can be searched once every 3 hours.
           </p>
         </div>
 
-        {canScrape ? (
-          <div className={styles.section}>
-            <p className={styles.subtitle}>
-              Open a candidate&apos;s job sheet below to search. Bulk scraping all candidates is
-              disabled.
-            </p>
-          </div>
-        ) : null}
-
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>
-            {isManager ? "All candidates" : "Your assigned candidates"} ({candidates.length})
+            Your assigned candidates ({candidates.length})
           </h2>
           {candidates.length === 0 ? (
-            <div className={styles.emptyState}>
-              {isManager
-                ? "No candidates yet."
-                : "No candidates assigned to you yet."}
-            </div>
+            <div className={styles.emptyState}>No candidates assigned to you yet.</div>
           ) : (
             <div className={styles.tableWrap}>
               <table className={styles.table}>
@@ -99,7 +84,7 @@ export default async function AdminJobsPage() {
                     <th>Target role</th>
                     <th>Years exp.</th>
                     <th>Advisory</th>
-                    <th>Scraped jobs</th>
+                    <th>Jobs found</th>
                     <th>Shortlisted</th>
                     <th>Applied</th>
                     <th>Action</th>
@@ -144,7 +129,7 @@ export default async function AdminJobsPage() {
                             href={`/admin/candidates/${candidate.id}/jobs`}
                             className={styles.jobsBtn}
                           >
-                            Open job sheet
+                            Apply for jobs
                           </Link>
                         </td>
                       </tr>

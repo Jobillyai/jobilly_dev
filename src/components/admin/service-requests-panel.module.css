@@ -58,8 +58,16 @@
   margin-bottom: 12px;
 }
 
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 .name {
-  margin: 0 0 4px;
+  margin: 0;
   font-size: 18px;
   font-weight: 700;
 }
@@ -87,7 +95,7 @@
 
 .badgeOpen {
   background: #eff6ff;
-  color: #1d4ed8;
+  color: var(--jb-brand-hover);
 }
 
 .badgeAssigned {
@@ -98,6 +106,16 @@
 .badgeClosed {
   background: #f1f5f9;
   color: #475569;
+}
+
+.badgeSignup {
+  background: #f5f3ff;
+  color: var(--jb-brand-hover, #6d28d9);
+}
+
+.badgeContact {
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .enquiry {
@@ -141,7 +159,7 @@
 
 .primaryBtn {
   border: none;
-  background: var(--jb-brand, #1877f2);
+  background: var(--jb-brand, var(--jb-brand));
   color: #fff;
 }
 

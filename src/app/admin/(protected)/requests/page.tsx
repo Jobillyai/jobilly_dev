@@ -34,7 +34,7 @@ export default async function AdminServiceRequestsPage() {
           </h1>
           <p className={styles.subtitle}>
             {isManager
-              ? "Review contact form submissions and assign each request to a mentor admin."
+              ? "New candidate signups and contact form submissions appear here. Assign each new signup to a mentor admin."
               : "Requests assigned to you by the manager. Mark them closed when resolved."}
           </p>
         </div>

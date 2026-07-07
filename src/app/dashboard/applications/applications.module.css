@@ -1,5 +1,4 @@
 .main {
-  max-width: 920px;
   text-align: left;
 }
 
@@ -11,16 +10,17 @@
   font-size: 15px;
   line-height: 1.65;
   color: var(--jb-ink-muted);
-  max-width: 620px;
+  max-width: none;
   margin: 0;
 }
 
 .emptyCard {
-  padding: 40px 32px;
-  border: 1px dashed var(--jb-brand-border);
-  border-radius: var(--jb-radius-lg);
-  background: linear-gradient(135deg, var(--jb-brand-soft) 0%, var(--jb-surface) 100%);
-  text-align: center;
+  padding: 32px 0 0;
+  border: none;
+  border-top: 1px solid var(--jb-border);
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
 }
 
 .emptyTitle {
@@ -32,8 +32,8 @@
 }
 
 .emptyText {
-  margin: 0 auto;
-  max-width: 420px;
+  margin: 0;
+  max-width: none;
   font-size: 14px;
   line-height: 1.65;
   color: var(--jb-ink-muted);

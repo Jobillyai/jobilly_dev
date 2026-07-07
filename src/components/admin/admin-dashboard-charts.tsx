@@ -151,7 +151,7 @@ export function AdminDashboardCharts({
           description="Free vs premium candidate accounts"
           segments={[
             { label: "Free candidates", value: freeCandidates, color: "#4a9fff" },
-            { label: "Premium candidates", value: premiumCandidates, color: "#1877f2" },
+            { label: "Premium candidates", value: premiumCandidates, color: "#7c3aed" },
           ]}
         />
         <ChartCard
@@ -179,10 +179,10 @@ export function AdminDashboardCharts({
           ]}
         />
         <ChartCard
-          title="Scraped jobs pipeline"
+          title="Jobs pipeline"
           description="Jobs selected for admin apply workflow"
           segments={[
-            { label: "Marked to apply", value: selectedJobs, color: "#1877f2" },
+            { label: "Marked to apply", value: selectedJobs, color: "#8b5cf6" },
             { label: "Not selected yet", value: unselectedJobs, color: "#93c5fd" },
           ]}
         />

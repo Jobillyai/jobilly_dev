@@ -1,33 +1,42 @@
-import type { CSSProperties } from "react";
-import { USE_ABSTRACT_BACKGROUNDS } from "@/lib/ui/background-style";
-import { AbstractBackground } from "@/components/layout/abstract-background";
+import Link from "next/link";
+import { JobillyMark } from "@/components/brand/jobilly-mark";
 import styles from "./auth-background.module.css";
 
-const floatingCards = [
-  { title: "Career Advisory", detail: "Expert mentor sessions", tone: styles.cardBlue, motion: styles.floatA, delay: "0s", position: styles.cardLeftTop },
-  { title: "Growth School", detail: "AI micro-lessons & quizzes", tone: styles.cardGreen, motion: styles.floatB, delay: "0.8s", position: styles.cardRightMid },
-  { title: "Mock Interviews", detail: "Voice AI with company personas", tone: styles.cardPurple, motion: styles.floatC, delay: "1.6s", position: styles.cardRightBottom },
-  { title: "We apply for you", detail: "Jobs on your behalf", tone: styles.cardViolet, motion: styles.floatD, delay: "2.4s", position: styles.cardLeftBottom },
-];
+const patternMarks = Array.from({ length: 18 }, (_, index) => index);
 
 export function AuthBackground() {
   return (
-    <>
-      <AbstractBackground />
-      {USE_ABSTRACT_BACKGROUNDS ? (
-        <div className={styles.floatingCards} aria-hidden>
-          {floatingCards.map((card) => (
-            <div
-              key={card.title}
-              className={`${styles.floatingCard} ${card.tone} ${card.motion} ${card.position}`}
-              style={{ "--float-delay": card.delay } as CSSProperties}
-            >
-              <span className={styles.floatingCardTitle}>{card.title}</span>
-              <span className={styles.floatingCardDetail}>{card.detail}</span>
-            </div>
+    <div className={styles.backdrop}>
+      <div className={styles.decorLayer} aria-hidden>
+        <div className={styles.baseGradient} />
+
+        <div className={styles.patternField}>
+          {patternMarks.map((index) => (
+            <JobillyMark
+              key={index}
+              size={56}
+              gradientId={`authPattern${index}`}
+              className={styles.patternMark}
+            />
           ))}
         </div>
-      ) : null}
-    </>
+      </div>
+
+      <div className={styles.featureBrand}>
+        <Link href="/" className={styles.featureLogo}>
+          <JobillyMark size={112} gradientId="authFeatureMark" className={styles.featureMark} />
+          <span className={styles.featureWordmarkBlock}>
+            <span className={styles.featureWordmark}>
+              jobilly<span className={styles.featureWordmarkAccent}>.ai</span>
+            </span>
+            <span className={styles.featureSubtitle}>From graduation to first job</span>
+          </span>
+        </Link>
+        <p className={styles.featureCopy}>
+          Career advisory, AI learning, mock interviews, and managed applications — all in one
+          place.
+        </p>
+      </div>
+    </div>
   );
 }

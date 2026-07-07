@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { MentorActivityRow } from "@/server/services/admin-dashboard";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
@@ -32,9 +31,6 @@ export function ManagerTeamOverview({
             applications submitted on behalf of students.
           </p>
         </div>
-        <Link href="/admin/jobs" className={styles.sectionLink}>
-          Job scraping
-        </Link>
       </div>
 
       <div className={`${styles.statsGrid} ${styles.statsGridCompact}`}>

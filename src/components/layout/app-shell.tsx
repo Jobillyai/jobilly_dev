@@ -1,17 +1,13 @@
+import { getShellAuth } from "@/lib/auth/shell-auth";
 import { NavSwitcher } from "@/components/layout/nav-switcher";
 import { ShellContent } from "@/components/layout/shell-content";
-import { getAdminUser } from "@/lib/auth/admin";
-import { getSessionUser } from "@/lib/auth/session";
 
 export default async function AppShell({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [user, adminUser] = await Promise.all([
-    getSessionUser(),
-    getAdminUser(),
-  ]);
+  const { user, adminUser } = await getShellAuth();
 
   return (
     <>

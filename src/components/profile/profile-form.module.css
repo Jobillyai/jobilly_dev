@@ -8,11 +8,13 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 20px 24px;
-  background: var(--jb-surface);
-  border: 1px solid var(--jb-border);
-  border-radius: var(--jb-radius-xl);
-  box-shadow: var(--jb-shadow-sm);
+  padding: 0 0 24px;
+  margin-bottom: 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--jb-border);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .avatarWrap {
@@ -131,11 +133,17 @@
 }
 
 .card {
-  background: var(--jb-surface);
-  border: 1px solid var(--jb-border);
-  border-radius: var(--jb-radius-lg);
-  padding: 20px 24px;
-  box-shadow: var(--jb-shadow-sm);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--jb-border);
+  border-radius: 0;
+  padding: 28px 0 0;
+  box-shadow: none;
+}
+
+.card:first-of-type {
+  border-top: none;
+  padding-top: 0;
 }
 
 .cardTitle {
@@ -196,7 +204,7 @@
 .select:focus,
 .textarea:focus {
   border-color: var(--jb-brand);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+  box-shadow: 0 0 0 3px var(--jb-focus-ring);
 }
 
 .input:read-only,
@@ -332,11 +340,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 16px 20px;
-  background: var(--jb-surface);
-  border: 1px solid var(--jb-border);
-  border-radius: var(--jb-radius-lg);
-  box-shadow: var(--jb-shadow-sm);
+  padding: 24px 0 0;
+  margin-top: 8px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--jb-border);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .primaryBtn {

@@ -21,13 +21,13 @@
   height: 3px;
   z-index: 1;
   overflow: hidden;
-  background: rgba(24, 119, 242, 0.12);
+  background: var(--jb-focus-ring);
 }
 
 .routeLoaderBarInner {
   height: 100%;
   width: 40%;
-  background: linear-gradient(90deg, #1877f2, #4a9fff);
+  background: linear-gradient(90deg, var(--jb-brand), var(--jb-brand-bright));
   border-radius: 0 2px 2px 0;
   animation: routeLoaderSlide 1s ease-in-out infinite;
 }
@@ -38,8 +38,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(2px);
+  background: rgba(248, 247, 255, 0.72);
+  backdrop-filter: blur(4px);
 }
 
 @keyframes routeLoaderSlide {

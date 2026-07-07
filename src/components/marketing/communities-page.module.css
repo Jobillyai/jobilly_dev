@@ -1,22 +1,4 @@
 .page {
-  --jb-font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
-  --jb-ink: #0b1220;
-  --jb-ink-secondary: #334155;
-  --jb-ink-muted: #64748b;
-  --jb-brand: #1d4ed8;
-  --jb-brand-hover: #1e40af;
-  --jb-brand-soft: #eff6ff;
-  --jb-brand-border: #bfdbfe;
-  --jb-surface: #ffffff;
-  --jb-surface-subtle: #f8fafc;
-  --jb-border: #e2e8f0;
-  --jb-radius-md: 12px;
-  --jb-radius-lg: 16px;
-  --jb-radius-xl: 20px;
-  --jb-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --jb-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
-  --jb-shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.08);
-
   font-family: var(--jb-font-sans);
   background: var(--jb-surface-subtle);
   color: var(--jb-ink);
@@ -26,7 +8,9 @@
 .hero {
   position: relative;
   padding: 72px 24px 40px;
-  background: var(--jb-surface);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(167, 139, 250, 0.2), transparent 55%),
+    linear-gradient(180deg, var(--jb-brand-soft) 0%, var(--jb-surface) 100%);
   border-bottom: 1px solid var(--jb-border);
   overflow: hidden;
   text-align: center;

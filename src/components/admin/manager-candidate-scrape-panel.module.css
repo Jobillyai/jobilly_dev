@@ -63,7 +63,7 @@
 }
 
 .primaryBtn:hover:not(:disabled) {
-  background: var(--jb-brand-dark, #1d4ed8);
+  background: var(--jb-brand-dark, var(--jb-brand-hover));
 }
 
 .primaryBtn:disabled,
@@ -79,7 +79,7 @@
 }
 
 .secondaryBtn:hover:not(:disabled) {
-  border-color: rgba(29, 78, 216, 0.25);
+  border-color: rgba(109, 40, 217, 0.25);
   color: var(--jb-brand);
 }
 
@@ -159,8 +159,8 @@
 
 .experienceInput {
   width: 100%;
-  min-width: 88px;
-  max-width: 120px;
+  min-width: 220px;
+  max-width: 240px;
   padding: 8px 10px;
   border: 1.5px solid var(--jb-border);
   border-radius: 8px;
@@ -172,7 +172,7 @@
 .experienceInput:focus {
   outline: none;
   border-color: var(--jb-brand);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.12);
 }
 
 .roleInput {
@@ -188,7 +188,7 @@
 .roleInput:focus {
   outline: none;
   border-color: var(--jb-brand);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.12);
 }
 
 .scrapeHint {

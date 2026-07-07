@@ -1,6 +1,9 @@
 import { Resend } from "resend";
 import { createAdminClient } from "@/server/db/supabase-admin";
-import { getCandidateInviteLogoAttachment } from "@/server/services/career-advisory-candidate-email";
+import {
+  buildEmailLogoHtml,
+  getCandidateInviteLogoAttachment,
+} from "@/server/services/email-logo";
 
 export const PASSWORD_RESET_SUBJECT = "Reset your Jobilly password";
 
@@ -26,10 +29,7 @@ export function buildPasswordResetEmailHtml(input: {
   resetUrl: string;
   hasLogo: boolean;
 }): string {
-  const logoAttachment = input.hasLogo;
-  const logoHtml = logoAttachment
-    ? `<img src="cid:jobilly-logo" alt="Jobilly AI" width="180" height="44" style="display:block;border:0;outline:none;text-decoration:none;" />`
-    : `<div style="font-size:28px;font-weight:800;letter-spacing:-0.5px;"><span style="color:#4a9fff;">Jobilly</span><span style="color:#0a1628;"> AI</span></div>`;
+  const logoHtml = buildEmailLogoHtml(input.hasLogo, "header");
 
   return `
 <!DOCTYPE html>

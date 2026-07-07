@@ -15,7 +15,7 @@ const CANDIDATE_ROLES = [
 ] as const;
 
 const CANDIDATE_PROFILE_SELECT =
-  "user_id, education, career_goals, linkedin_url, resume_url, assigned_employee_id, job_search_role, experience_years, gender, graduation_college, graduation_year, specialization, work_experience";
+  "user_id, education, career_goals, linkedin_url, resume_url, analyzed_resume_text, assigned_employee_id, job_search_role, experience_years, gender, graduation_college, graduation_year, specialization, work_experience";
 
 export type CareerAdvisorySubmission = {
   id: string;
@@ -47,6 +47,7 @@ export type AdminCandidate = {
   resumeUrl: string | null;
   resumeDownloadUrl: string | null;
   resumeFileName: string | null;
+  analyzedResumeText: string | null;
   jobSearchRole: string | null;
   experienceYears: number | null;
   gender: string | null;
@@ -107,9 +108,11 @@ export type AdminMeetingTask = {
   id: string;
   candidateId: string;
   candidateName: string;
+  candidateEmail: string;
   sessionScheduledAt: string | null;
   googleMeetLink: string | null;
   inviteSent: boolean;
+  inviteSentAt: string | null;
 };
 
 export type AdminCalendarSession = {
@@ -300,9 +303,11 @@ async function getFullAdminDashboardOverview(): Promise<AdminDashboardOverview> 
       id: session.id,
       candidateId: session.candidateId,
       candidateName: session.name,
+      candidateEmail: session.email,
       sessionScheduledAt: session.sessionScheduledAt,
       googleMeetLink: session.googleMeetLink,
       inviteSent: Boolean(session.inviteSentAt),
+      inviteSentAt: session.inviteSentAt,
     }))
     .sort(
       (a, b) =>
@@ -422,9 +427,11 @@ export async function getAdminMeetingTasks(): Promise<AdminMeetingTask[]> {
       id: session.id,
       candidateId: session.candidateId,
       candidateName: session.name,
+      candidateEmail: session.email,
       sessionScheduledAt: session.sessionScheduledAt,
       googleMeetLink: session.googleMeetLink,
       inviteSent: Boolean(session.inviteSentAt),
+      inviteSentAt: session.inviteSentAt,
     }))
     .sort(
       (a, b) =>
@@ -529,6 +536,7 @@ function mapUserToCandidate(
         graduation_year: number | null;
         specialization: string | null;
         work_experience: string | null;
+        analyzed_resume_text: string | null;
       }
     | undefined,
   submission: CareerAdvisorySubmission | null,
@@ -547,6 +555,7 @@ function mapUserToCandidate(
     resumeUrl: profile?.resume_url ?? null,
     resumeDownloadUrl: null,
     resumeFileName: null,
+    analyzedResumeText: profile?.analyzed_resume_text ?? null,
     jobSearchRole: profile?.job_search_role ?? null,
     experienceYears: profile?.experience_years ?? null,
     gender: profile?.gender ?? null,
@@ -692,9 +701,11 @@ async function getMentorDashboardOverview(
       id: session.id,
       candidateId: session.candidateId,
       candidateName: session.name,
+      candidateEmail: session.email,
       sessionScheduledAt: session.sessionScheduledAt,
       googleMeetLink: session.googleMeetLink,
       inviteSent: Boolean(session.inviteSentAt),
+      inviteSentAt: session.inviteSentAt,
     }))
     .sort(
       (a, b) =>

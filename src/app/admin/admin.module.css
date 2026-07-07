@@ -1,14 +1,16 @@
 .adminPage {
   min-height: 100vh;
   font-family: var(--jb-font-sans);
-  background: var(--jb-surface-subtle);
+  background: transparent;
   color: var(--jb-ink);
 }
 
 .main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 24px 80px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: clamp(32px, 4vw, 48px) clamp(28px, 5vw, 64px) clamp(48px, 6vw, 72px);
+  box-sizing: border-box;
 }
 
 .header {
@@ -34,6 +36,7 @@
   font-size: 15px;
   line-height: 1.6;
   color: var(--jb-ink-secondary);
+  max-width: none;
 }
 
 .statsGrid {
@@ -70,6 +73,16 @@
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(10, 22, 40, 0.04);
+}
+
+.jobsSheetSection {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .sectionTitle {
@@ -169,8 +182,8 @@
 
 .quickActionCard:hover {
   transform: translateY(-2px);
-  border-color: rgba(24, 119, 242, 0.25);
-  box-shadow: 0 10px 28px rgba(24, 119, 242, 0.1);
+  border-color: rgba(124, 58, 237, 0.25);
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.1);
 }
 
 .quickActionIcon {
@@ -180,7 +193,7 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: rgba(24, 119, 242, 0.1);
+  background: rgba(124, 58, 237, 0.1);
   color: var(--blue-500);
 }
 
@@ -325,7 +338,7 @@
 }
 
 .badgeSubmitted {
-  background: rgba(24, 119, 242, 0.1);
+  background: rgba(124, 58, 237, 0.1);
   color: var(--blue-500);
 }
 
@@ -381,14 +394,14 @@
   font-weight: 700;
   text-decoration: none;
   transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 4px 16px rgba(24, 119, 242, 0.25);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.25);
   white-space: nowrap;
 }
 
 .jobsBtn:hover {
   background: #0f5fd0;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.32);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.32);
 }
 
 .backLink {
@@ -684,7 +697,7 @@
 
 .calendarDayCellToday {
   border-color: var(--blue-500);
-  box-shadow: inset 0 0 0 1px rgba(24, 119, 242, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.15);
 }
 
 .calendarDayHeader {
@@ -749,8 +762,8 @@
 
 .calendarEventUpcoming {
   background: #eff6ff;
-  border-left-color: #1877f2;
-  color: #1d4ed8;
+  border-left-color: var(--jb-brand);
+  color: var(--jb-brand-hover);
 }
 
 .calendarEventPending {
@@ -937,5 +950,11 @@
 
   .calendarEventName {
     white-space: normal;
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 28px 20px 56px;
   }
 }

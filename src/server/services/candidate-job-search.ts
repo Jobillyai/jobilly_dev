@@ -1,12 +1,17 @@
 import type { AdminCandidate } from "@/server/services/admin-dashboard";
+import { experienceLevelSearchTerms } from "@/lib/format-experience-years";
 import {
-  experienceYearsSearchHint,
-  formatExperienceYears,
-} from "@/lib/format-experience-years";
+  buildCandidateResumeCorpus,
+  calculateResumeJobMatchPercent,
+  resumeMatchLevel,
+} from "@/lib/resume-job-match";
 import {
   composeJobSearchPosition,
+  isJobrightListing,
+  jobMatchesSearchCriteria,
   searchJobsBySources,
   type JobListing,
+  type JobListingSource,
   type JobMarketSource,
   JOB_MARKET_SOURCES,
 } from "@/server/services/job-market-search";
@@ -15,11 +20,12 @@ export type JobSearchResult = {
   company: string;
   role: string;
   jobUrl: string;
+  applyUrl?: string | null;
   location: string;
   jdText: string;
   relevanceScore: number;
   resumeMatch: "high" | "medium" | "low";
-  source: JobMarketSource;
+  source: JobListingSource;
   postedAt: string | null;
 };
 
@@ -59,18 +65,7 @@ export function buildCandidateJobSearchQuery(
 }
 
 function experienceSearchTokens(years: number | null | undefined): string[] {
-  if (years === null || years === undefined) {
-    return [];
-  }
-
-  const hint = experienceYearsSearchHint(years);
-  return [
-    String(years),
-    `${years} years`,
-    `${years} year`,
-    formatExperienceYears(years),
-    hint ?? "",
-  ].filter((token) => token.length > 0);
+  return experienceLevelSearchTerms(years);
 }
 
 export function buildCandidateSearchTerms(
@@ -104,38 +99,33 @@ export function buildCandidateSearchTerms(
   return [...tokens].slice(0, 24);
 }
 
+function buildResumeCorpusForCandidate(
+  candidate: AdminCandidate,
+  interestedRole?: string | null,
+): string {
+  return buildCandidateResumeCorpus({
+    workExperience: candidate.workExperience,
+    profileEducation: candidate.profileEducation,
+    specialization: candidate.specialization,
+    careerGoals: candidate.careerGoals,
+    branch: candidate.submission?.branch,
+    interestedTechnology: candidate.submission?.interestedTechnology,
+    graduationDetails: candidate.submission?.graduationDetails,
+    interestedRole: interestedRole?.trim() || candidate.jobSearchRole?.trim() || null,
+  });
+}
+
 function scoreJobListing(
   job: JobListing,
-  searchTerms: string[],
-  hasResume: boolean,
+  resumeCorpus: string,
 ): { score: number; resumeMatch: "high" | "medium" | "low" } {
-  const haystack = [job.role, job.company, job.location, job.jdText]
-    .join(" ")
-    .toLowerCase();
+  const score = calculateResumeJobMatchPercent(resumeCorpus, {
+    role: job.role,
+    company: job.company,
+    jdText: job.jdText,
+  });
 
-  let hits = 0;
-  for (const term of searchTerms) {
-    if (haystack.includes(term)) {
-      hits += term.length > 5 ? 2 : 1;
-    }
-  }
-
-  const maxPossible = Math.max(searchTerms.length * 2, 1);
-  const normalized = Math.min(100, Math.round((hits / maxPossible) * 100));
-  const score = Math.max(normalized, hits > 0 ? 40 : 20);
-
-  let resumeMatch: "high" | "medium" | "low" = "low";
-  if (hasResume) {
-    if (score >= 70) {
-      resumeMatch = "high";
-    } else if (score >= 45) {
-      resumeMatch = "medium";
-    }
-  } else if (score >= 55) {
-    resumeMatch = "medium";
-  }
-
-  return { score, resumeMatch };
+  return { score, resumeMatch: resumeMatchLevel(score) };
 }
 
 export async function scrapeJobsForCandidate(
@@ -149,13 +139,7 @@ export async function scrapeJobsForCandidate(
 ): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[] }> {
   const experienceYears = options?.experienceYears ?? candidate.experienceYears;
   const searchKeywords = options?.searchKeywords;
-  const searchTerms = buildCandidateSearchTerms(
-    candidate,
-    interestedRole,
-    experienceYears,
-    searchKeywords,
-  );
-  const hasResume = Boolean(candidate.resumeUrl);
+  const resumeCorpus = buildResumeCorpusForCandidate(candidate, interestedRole);
   const { position, location } = buildCandidateJobSearchQuery(candidate, interestedRole, {
     experienceYears,
     searchKeywords,
@@ -169,13 +153,18 @@ export async function scrapeJobsForCandidate(
     maxItemsPerSource: 30,
   });
 
+  const roleForFilter = interestedRole?.trim() || candidate.jobSearchRole?.trim() || position;
+
   const ranked = apifyResult.jobs
+    .filter((job) => !isJobrightListing(job.source, job.jobUrl))
+    .filter((job) => jobMatchesSearchCriteria(job, roleForFilter, searchKeywords))
     .map((job) => {
-      const { score, resumeMatch } = scoreJobListing(job, searchTerms, hasResume);
+      const { score, resumeMatch } = scoreJobListing(job, resumeCorpus);
       return {
         company: job.company,
         role: job.role,
         jobUrl: job.jobUrl,
+        applyUrl: job.applyUrl ?? null,
         location: job.location,
         jdText: job.jdText,
         relevanceScore: score,

@@ -12,6 +12,17 @@ type NavSwitcherProps = {
   adminUser: AdminUser | null;
 };
 
+export function isAuthRoute(pathname: string): boolean {
+  return (
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname === "/confirm" ||
+    pathname.startsWith("/admin/login")
+  );
+}
+
 function usesPortalTopBar(
   pathname: string,
   user: SessionUser | null,
@@ -37,6 +48,10 @@ function usesPortalTopBar(
 
 export function NavSwitcher({ user, adminUser }: NavSwitcherProps) {
   const pathname = usePathname();
+
+  if (isAuthRoute(pathname)) {
+    return null;
+  }
 
   if (usesPortalTopBar(pathname, user, adminUser) && user) {
     return <PortalLogoutBar user={user} />;

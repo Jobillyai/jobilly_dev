@@ -7,6 +7,8 @@ export const MARKETING_ROUTES = [
   "/products",
   "/communities",
   "/contact",
+  "/privacy",
+  "/terms",
 ] as const;
 
 export type MarketingRoute = (typeof MARKETING_ROUTES)[number];

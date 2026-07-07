@@ -5,6 +5,7 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     typedRoutes: true,
+    serverComponentsExternalPackages: ["pdf-parse", "pdfjs-dist", "mammoth"],
   },
   webpack: (config, { dev }) => {
     // OneDrive sync corrupts webpack chunks (undefined factory / CSS 404).
