@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Compass, GraduationCap, Briefcase, Mic } from "lucide-react";
 import { servicePhases } from "@/lib/candidate-services";
@@ -11,6 +12,13 @@ const phaseIcons = {
 } as const;
 
 const journeyPhases = servicePhases.filter((phase) => phase.id !== "all");
+
+const phaseImages = {
+  discover: "/marketing/welcome-discover.png",
+  prepare: "/marketing/welcome-prepare.png",
+  practice: "/marketing/welcome-practice.png",
+  apply: "/marketing/welcome-apply.png",
+} as const;
 
 export function WelcomeServicesSection() {
   return (
@@ -32,8 +40,20 @@ export function WelcomeServicesSection() {
         <div className={styles.servicesGrid}>
           {journeyPhases.map((phase) => {
             const Icon = phaseIcons[phase.id as keyof typeof phaseIcons] ?? Compass;
+            const imageSrc =
+              phaseImages[phase.id as keyof typeof phaseImages] ?? phaseImages.discover;
+
             return (
               <article key={phase.id} className={styles.serviceDetailCard}>
+                <div className={styles.serviceDetailImage} aria-hidden>
+                  <Image
+                    src={imageSrc}
+                    alt=""
+                    fill
+                    className={styles.serviceDetailImageImg}
+                    sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 25vw"
+                  />
+                </div>
                 <div className={styles.serviceDetailIcon}>
                   <Icon size={20} strokeWidth={2} aria-hidden />
                 </div>

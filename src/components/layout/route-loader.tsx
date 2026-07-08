@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ROUTE_LOADING_START } from "@/lib/route-loading";
+import { LoadingOverlay } from "./loading-overlay";
 import styles from "./route-loader.module.css";
 
 function isInternalNavigationLink(anchor: HTMLAnchorElement) {
@@ -64,7 +65,7 @@ export function RouteLoader() {
     }, 12000);
   }
 
-  function stopLoading(delay = 80) {
+  function stopLoading(delay = 120) {
     if (hideTimerRef.current) {
       clearTimeout(hideTimerRef.current);
     }
@@ -128,10 +129,9 @@ export function RouteLoader() {
     <div
       className={`${styles.routeLoaderRoot} ${loading ? styles.routeLoaderVisible : ""}`}
       aria-hidden={!loading}
+      aria-busy={loading}
     >
-      <div className={styles.routeLoaderBar}>
-        <div className={styles.routeLoaderBarInner} />
-      </div>
+      {loading ? <LoadingOverlay /> : null}
     </div>
   );
 }

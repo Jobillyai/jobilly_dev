@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { MessageCircle, Send, X } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { JOBEN_SUGGESTED_PROMPTS } from "@/lib/joben/public-knowledge";
 import { askJobenAction } from "@/server/actions/joben-chat";
+import { JobenAvatar } from "@/components/marketing/joben-avatar";
 import styles from "./joben-chat-widget.module.css";
 
 type ChatMessage = {
@@ -157,11 +158,13 @@ export function JobenChatWidget() {
         >
           <header className={styles.header}>
             <div className={styles.headerIdentity}>
-              <span className={styles.avatar} aria-hidden>
-                J
-              </span>
+              <JobenAvatar size="md" showOnline />
               <div>
                 <p className={styles.headerName}>Joben</p>
+                <p className={styles.headerStatus}>
+                  <span className={styles.statusDot} aria-hidden />
+                  Online
+                </p>
               </div>
             </div>
             <button
@@ -185,9 +188,7 @@ export function JobenChatWidget() {
                 }
               >
                 {message.role === "assistant" ? (
-                  <span className={styles.messageAvatar} aria-hidden>
-                    J
-                  </span>
+                  <JobenAvatar size="sm" />
                 ) : null}
                 <p className={styles.messageText}>
                   {message.role === "assistant"
@@ -198,9 +199,12 @@ export function JobenChatWidget() {
             ))}
             {pending ? (
               <div className={styles.typing} aria-label="Joben is typing">
-                <span />
-                <span />
-                <span />
+                <JobenAvatar size="sm" />
+                <div className={styles.typingDots}>
+                  <span />
+                  <span />
+                  <span />
+                </div>
               </div>
             ) : null}
           </div>
@@ -262,11 +266,10 @@ export function JobenChatWidget() {
         aria-label={open ? "Close Joben chat" : "Open Joben chat"}
       >
         {open ? (
-          <X size={22} aria-hidden />
+          <X size={20} aria-hidden />
         ) : (
-          <MessageCircle size={22} aria-hidden />
+          <JobenAvatar size="launcher" showOnline className={styles.launcherAvatar} />
         )}
-        <span className={styles.launcherLabel}>Joben</span>
       </button>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import type { JobenChatTurn } from "@/lib/joben/joben-prompt";
 import { respondToJobenQuery } from "@/lib/joben/public-knowledge";
-import { runAnthropicJobenChat } from "@/server/services/anthropic-joben-chat";
+import { runGeminiJobenChat } from "@/server/services/gemini-joben-chat";
 
 export async function askJobenAction(
   message: string,
@@ -31,7 +31,7 @@ export async function askJobenAction(
       content: turn.content.trim().slice(0, 2000),
     }));
 
-  const aiResult = await runAnthropicJobenChat({
+  const aiResult = await runGeminiJobenChat({
     message: trimmed,
     history: sanitizedHistory,
   });

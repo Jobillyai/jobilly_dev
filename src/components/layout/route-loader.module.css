@@ -1,53 +1,7 @@
 .routeLoaderRoot {
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
   pointer-events: none;
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .routeLoaderVisible {
-  visibility: visible;
-  opacity: 1;
-}
-
-.routeLoaderBar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  z-index: 1;
-  overflow: hidden;
-  background: var(--jb-focus-ring);
-}
-
-.routeLoaderBarInner {
-  height: 100%;
-  width: 40%;
-  background: linear-gradient(90deg, var(--jb-brand), var(--jb-brand-bright));
-  border-radius: 0 2px 2px 0;
-  animation: routeLoaderSlide 1s ease-in-out infinite;
-}
-
-.routeLoaderOverlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(248, 247, 255, 0.72);
-  backdrop-filter: blur(4px);
-}
-
-@keyframes routeLoaderSlide {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(350%);
-  }
+  pointer-events: none;
 }

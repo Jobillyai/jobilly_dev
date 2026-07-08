@@ -1,0 +1,232 @@
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: transparent;
+}
+
+.svg {
+  width: 16rem;
+  height: 16rem;
+  user-select: none;
+  filter: drop-shadow(0 12px 28px rgba(44, 96, 255, 0.18));
+}
+
+.wordmark {
+  font-family: var(--jb-font-display, "Instrument Serif", Georgia, serif);
+}
+
+.arrowHead {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: arrowAccelerate var(--jb-loop-duration, 1.2s) cubic-bezier(0.25, 1, 0.2, 1) infinite;
+}
+
+.trail1 {
+  transform-box: fill-box;
+  transform-origin: right center;
+  animation: trail1Anim var(--jb-loop-duration, 1.2s) cubic-bezier(0.25, 1, 0.2, 1) infinite;
+}
+
+.trail2 {
+  transform-box: fill-box;
+  transform-origin: right center;
+  animation: trail2Anim var(--jb-loop-duration, 1.2s) cubic-bezier(0.25, 1, 0.2, 1) infinite;
+}
+
+.trail3 {
+  transform-box: fill-box;
+  transform-origin: right center;
+  animation: trail3Anim var(--jb-loop-duration, 1.2s) cubic-bezier(0.25, 1, 0.2, 1) infinite;
+}
+
+.dropletLeft {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dropletLeftAnim var(--jb-loop-duration, 1.2s) cubic-bezier(0.25, 1, 0.2, 1) infinite;
+}
+
+.dropletSmall {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dropletSmallAnim var(--jb-loop-duration, 1.2s) cubic-bezier(0.25, 1, 0.2, 1) infinite;
+}
+
+.sweep {
+  animation: lightSweep var(--jb-loop-duration, 1.2s) ease-in-out infinite;
+}
+
+@keyframes arrowAccelerate {
+  0% {
+    transform: translateX(0) scaleX(1) scaleY(1);
+    opacity: 1;
+  }
+
+  15% {
+    transform: translateX(18px) scaleX(1.12) scaleY(0.95);
+    opacity: 1;
+  }
+
+  30% {
+    transform: translateX(55px) scaleX(1.22) scaleY(0.9);
+    opacity: 1;
+  }
+
+  45% {
+    transform: translateX(95px) scaleX(1.15) scaleY(0.93);
+    opacity: 1;
+  }
+
+  52% {
+    transform: translateX(110px) scaleX(1) scaleY(1);
+    opacity: 0;
+  }
+
+  55% {
+    transform: translateX(-60px) scaleX(1) scaleY(1);
+    opacity: 0;
+  }
+
+  72% {
+    transform: translateX(-25px) scaleX(0.95) scaleY(1.02);
+    opacity: 0.6;
+  }
+
+  88%,
+  100% {
+    transform: translateX(0) scaleX(1) scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes trail1Anim {
+  0%,
+  15% {
+    opacity: 0;
+    transform: translateX(0) scaleX(1);
+  }
+
+  25% {
+    opacity: 0.65;
+    transform: translateX(25px) scaleX(1.15);
+  }
+
+  38% {
+    opacity: 0.2;
+    transform: translateX(60px) scaleX(1.08);
+  }
+
+  48%,
+  100% {
+    opacity: 0;
+    transform: translateX(90px) scaleX(1);
+  }
+}
+
+@keyframes trail2Anim {
+  0%,
+  18% {
+    opacity: 0;
+    transform: translateX(0) scaleX(1);
+  }
+
+  28% {
+    opacity: 0.5;
+    transform: translateX(20px) scaleX(1.12);
+  }
+
+  42%,
+  100% {
+    opacity: 0;
+    transform: translateX(72px) scaleX(1);
+  }
+}
+
+@keyframes trail3Anim {
+  0%,
+  20% {
+    opacity: 0;
+    transform: translateX(0) scaleX(1);
+  }
+
+  30% {
+    opacity: 0.38;
+    transform: translateX(16px) scaleX(1.1);
+  }
+
+  44%,
+  100% {
+    opacity: 0;
+    transform: translateX(58px) scaleX(1);
+  }
+}
+
+@keyframes dropletLeftAnim {
+  0%,
+  15% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+
+  28% {
+    transform: translate(-38px, -2px) scale(0.85);
+    opacity: 0.8;
+  }
+
+  42% {
+    transform: translate(-65px, -4px) scale(0.5);
+    opacity: 0.3;
+  }
+
+  52%,
+  100% {
+    transform: translate(-80px, -5px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes dropletSmallAnim {
+  0%,
+  18% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.85;
+  }
+
+  32% {
+    transform: translate(-28px, 2px) scale(0.7);
+    opacity: 0.5;
+  }
+
+  48%,
+  100% {
+    transform: translate(-48px, 3px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes lightSweep {
+  0%,
+  60% {
+    transform: translateX(-150%);
+  }
+
+  85%,
+  100% {
+    transform: translateX(150%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrowHead,
+  .trail1,
+  .trail2,
+  .trail3,
+  .dropletLeft,
+  .dropletSmall,
+  .sweep {
+    animation: none;
+  }
+}

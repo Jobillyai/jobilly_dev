@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import styles from "./welcome-page.module.css";
@@ -93,6 +94,15 @@ export function WelcomePage() {
       <div id="community" className={styles.instSection}>
         <div className={styles.instInner}>
           <div className={styles.revealLeft} data-reveal data-reveal-visible-class={styles.revealLeftVisible}>
+            <div className={styles.instVisual}>
+              <Image
+                src="/marketing/welcome-institutions.png"
+                alt="Universities and companies partnering on career outcomes"
+                width={560}
+                height={560}
+                className={styles.instVisualImg}
+              />
+            </div>
             <div className={`${styles.label} ${styles.instLabel}`}>
               <div className={styles.labelDot} /> For universities &amp; companies
             </div>
