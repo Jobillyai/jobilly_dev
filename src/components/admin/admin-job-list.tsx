@@ -101,44 +101,50 @@ function AdminJobRow({
             <span className={styles.dot} aria-hidden>
               ·
             </span>
-            {isAppliedView ? (
-              <span className={styles.metaText}>
-                Applied {job.appliedAt ? formatSummaryDate(job.appliedAt) : "—"}
-              </span>
-            ) : (
-              <>
-                <span className={styles.metaText}>{job.location}</span>
-                <span className={styles.dot} aria-hidden>
-                  ·
-                </span>
-                <span
-                  className={`${styles.sourceBadge} ${sourceBadgeClass(job.source, job.jobUrl)}`}
-                >
-                  {formatJobSourceLabel(job.source, job.jobUrl)}
-                </span>
-              </>
-            )}
-          </p>
-          <p className={styles.summaryDates}>
-            <span>Found {formatSummaryDate(job.scrapedAt)}</span>
+            <span className={styles.metaText}>{job.location}</span>
             <span className={styles.dot} aria-hidden>
               ·
             </span>
-            {job.postedAt ? (
+            <span
+              className={`${styles.sourceBadge} ${sourceBadgeClass(job.source, job.jobUrl)}`}
+            >
+              {formatJobSourceLabel(job.source, job.jobUrl)}
+            </span>
+          </p>
+          <p className={styles.summaryDates}>
+            {isAppliedView ? (
               <>
-                <span>Posted {formatSummaryDate(job.postedAt)}</span>
-                <span
-                  className={`${styles.freshnessBadge} ${
-                    isPostedWithinDays(job.postedAt, 3)
-                      ? styles.freshnessFresh
-                      : styles.freshnessStale
-                  }`}
-                >
-                  {formatJobFreshnessLabel(job.postedAt)}
+                <span className={styles.appliedDateLabel}>
+                  Applied {job.appliedAt ? formatSummaryDate(job.appliedAt) : "—"}
                 </span>
+                <span className={styles.dot} aria-hidden>
+                  ·
+                </span>
+                <span>Found {formatSummaryDate(job.scrapedAt)}</span>
               </>
             ) : (
-              <span className={styles.unknown}>Posted unknown</span>
+              <>
+                <span>Found {formatSummaryDate(job.scrapedAt)}</span>
+                <span className={styles.dot} aria-hidden>
+                  ·
+                </span>
+                {job.postedAt ? (
+                  <>
+                    <span>Posted {formatSummaryDate(job.postedAt)}</span>
+                    <span
+                      className={`${styles.freshnessBadge} ${
+                        isPostedWithinDays(job.postedAt, 3)
+                          ? styles.freshnessFresh
+                          : styles.freshnessStale
+                      }`}
+                    >
+                      {formatJobFreshnessLabel(job.postedAt)}
+                    </span>
+                  </>
+                ) : (
+                  <span className={styles.unknown}>Posted unknown</span>
+                )}
+              </>
             )}
           </p>
         </div>
@@ -220,7 +226,9 @@ function AdminJobRow({
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>Job description</h3>
             {job.jdText ? (
-              <p className={styles.jdText}>{job.jdText}</p>
+              <div className={styles.jdPanel}>
+                <div className={styles.jdText}>{job.jdText}</div>
+              </div>
             ) : (
               <p className={styles.jdEmpty}>No description captured.</p>
             )}

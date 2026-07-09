@@ -1,4 +1,5 @@
 import { createClient } from "@/server/db/supabase-server";
+import { createAdminClient } from "@/server/db/supabase-admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/server/db/database.types";
 import type { AdminCandidate } from "@/server/services/admin-dashboard";
@@ -63,6 +64,7 @@ export type CandidateAppliedJob = {
   source: string;
   preparationTips: string[];
   isNew: boolean;
+  hasApplicationResume: boolean;
   applicationResumeFileName: string | null;
   applicationResumeDownloadUrl: string | null;
 };
@@ -480,6 +482,7 @@ async function mapAppliedJobRow(row: ScrapedJobRow): Promise<CandidateAppliedJob
             jdText: row.jd_text,
           }),
     isNew: row.applied && !row.candidate_viewed_at,
+    hasApplicationResume: Boolean(row.application_resume_path),
     applicationResumeFileName: row.application_resume_file_name,
     applicationResumeDownloadUrl: downloadUrl,
   };
@@ -860,8 +863,8 @@ export async function setAppliedJobResume(
   storagePath: string,
   fileName: string,
 ): Promise<boolean> {
-  const supabase = await createClient();
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from("scraped_jobs")
     .update({
       application_resume_path: storagePath,

@@ -204,12 +204,22 @@
   color: var(--jb-brand-hover);
 }
 
+.jdPanel {
+  max-height: min(70vh, 720px);
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: var(--jb-radius-md);
+  border: 1px solid var(--jb-brand-border);
+  background: rgba(255, 255, 255, 0.72);
+}
+
 .jdText {
   margin: 0;
   font-size: 14px;
   line-height: 1.7;
   color: var(--jb-ink-secondary);
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .jdEmpty {
@@ -258,7 +268,9 @@
   color: var(--jb-brand);
   font-size: 14px;
   font-weight: 700;
+  font-family: var(--jb-font-sans);
   text-decoration: none;
+  cursor: pointer;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
@@ -266,6 +278,58 @@
   color: var(--jb-brand-hover);
   background: var(--jb-brand-soft);
   border-color: var(--jb-brand);
+}
+
+.resumeLink:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.resumeSummaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--jb-radius-sm);
+  border: 1px solid var(--jb-brand-border);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--jb-brand);
+  font-family: var(--jb-font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.resumeSummaryBtn:hover {
+  background: var(--jb-brand-soft);
+  border-color: var(--jb-brand);
+}
+
+.resumeSummaryBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.candidateResumeBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.resumePending {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--jb-ink-muted);
+  font-style: italic;
+}
+
+.resumeError {
+  margin: 0;
+  font-size: 13px;
+  color: #b91c1c;
 }
 
 .details .section:last-child {

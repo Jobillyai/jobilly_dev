@@ -67,6 +67,8 @@ type ApifyIndeedJob = {
   url?: string;
   location?: string;
   description?: string;
+  descriptionHTML?: string;
+  jobDescription?: string;
   postedAt?: string;
   datePublished?: string | number;
   dateOnIndeed?: string | number;
@@ -80,6 +82,7 @@ type ApifyLinkedInJob = {
   location?: string;
   descriptionText?: string;
   description?: string;
+  jobDescription?: string;
   postedAt?: string;
   postedAtTimestamp?: number;
   postedDate?: string;
@@ -251,11 +254,32 @@ export function buildJobSearchFromInterests(input: {
 
 export const buildIndeedSearchFromInterests = buildJobSearchFromInterests;
 
-function truncate(text: string, max = 1500): string {
-  const cleaned = text.replace(/\s+/g, " ").trim();
+function normalizeJobDescription(text: string, max = 30000): string {
+  const cleaned = text
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#39;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+
+  if (!cleaned) {
+    return "";
+  }
+
   if (cleaned.length <= max) {
     return cleaned;
   }
+
   return `${cleaned.slice(0, max - 1)}…`;
 }
 
@@ -343,6 +367,13 @@ async function runApifyActor<T>(
   return { items: payload as T[] };
 }
 
+function pickLongestDescription(...values: Array<string | null | undefined>): string {
+  return values
+    .map((value) => value?.trim() ?? "")
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)[0] ?? "";
+}
+
 function normalizeGlassdoorJob(raw: ApifyGlassdoorJob): JobListing | null {
   const role = raw.title?.trim();
   const jobUrl = raw.jobUrl?.trim();
@@ -352,14 +383,14 @@ function normalizeGlassdoorJob(raw: ApifyGlassdoorJob): JobListing | null {
     return null;
   }
 
-  const description = [raw.description, raw.salary].filter(Boolean).join(" · ");
+  const description = [raw.description, raw.salary].filter(Boolean).join("\n\n");
 
   return {
     company,
     role,
     jobUrl: getCleanJobListingUrl(jobUrl, "glassdoor"),
     location: raw.location?.trim() || "United States",
-    jdText: truncate(description),
+    jdText: normalizeJobDescription(description),
     source: "glassdoor",
     postedAt: extractJobPostedDate(raw as Record<string, unknown>),
   };
@@ -374,14 +405,14 @@ function normalizeZipRecruiterJob(raw: ApifyZipRecruiterJob): JobListing | null 
     return null;
   }
 
-  const description = raw.description ?? "";
+  const description = pickLongestDescription(raw.description);
 
   return {
     company,
     role,
     jobUrl: getCleanJobListingUrl(jobUrl, "ziprecruiter"),
     location: raw.location?.trim() || "United States",
-    jdText: truncate(description),
+    jdText: normalizeJobDescription(description),
     source: "ziprecruiter",
     postedAt: extractJobPostedDate(raw as Record<string, unknown>),
   };
@@ -396,14 +427,18 @@ function normalizeIndeedJob(raw: ApifyIndeedJob): JobListing | null {
     return null;
   }
 
-  const description = raw.description ?? "";
+  const description = pickLongestDescription(
+    raw.description,
+    raw.descriptionHTML,
+    raw.jobDescription,
+  );
 
   return {
     company,
     role,
     jobUrl: getCleanJobListingUrl(jobUrl, "indeed"),
     location: raw.location?.trim() || "United States",
-    jdText: truncate(description),
+    jdText: normalizeJobDescription(description),
     source: "indeed",
     postedAt: extractJobPostedDate(raw as Record<string, unknown>),
   };
@@ -420,7 +455,11 @@ function normalizeLinkedInJob(raw: ApifyLinkedInJob): JobListing | null {
 
   const jobUrl = getCleanJobListingUrl(rawLink, "linkedin");
   const applyUrl = resolveExternalApplyUrl(raw.applyUrl, jobUrl);
-  const description = raw.descriptionText ?? raw.description ?? "";
+  const description = pickLongestDescription(
+    raw.descriptionText,
+    raw.description,
+    raw.jobDescription,
+  );
 
   return {
     company,
@@ -428,7 +467,7 @@ function normalizeLinkedInJob(raw: ApifyLinkedInJob): JobListing | null {
     jobUrl,
     applyUrl,
     location: raw.location?.trim() || "United States",
-    jdText: truncate(description),
+    jdText: normalizeJobDescription(description),
     source: "linkedin",
     postedAt: extractJobPostedDate(raw as Record<string, unknown>),
   };
@@ -545,7 +584,7 @@ export async function searchIndeedJobs(input: {
     location: input.location ?? "United States",
     maxItems: input.maxItems ?? 20,
     saveOnlyUniqueItems: true,
-    parseCompanyDetails: false,
+    parseCompanyDetails: true,
   });
 
   if ("error" in result) {

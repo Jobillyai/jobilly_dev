@@ -119,6 +119,11 @@
   color: var(--jb-ink-muted);
 }
 
+.appliedDateLabel {
+  font-weight: 700;
+  color: var(--jb-brand-hover);
+}
+
 .dot {
   margin: 0 8px;
   color: var(--jb-ink-subtle);
@@ -298,12 +303,22 @@
   color: var(--jb-brand-hover);
 }
 
+.jdPanel {
+  max-height: min(70vh, 720px);
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: var(--jb-radius-md);
+  border: 1px solid var(--jb-brand-border);
+  background: rgba(255, 255, 255, 0.72);
+}
+
 .jdText {
   margin: 0;
   font-size: 14px;
   line-height: 1.65;
   color: var(--jb-ink-secondary);
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .jdEmpty {

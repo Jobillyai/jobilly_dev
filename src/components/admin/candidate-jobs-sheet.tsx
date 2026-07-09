@@ -358,11 +358,19 @@ export function CandidateJobsSheet({
         .filter(
           (job) =>
             jobListingMatchesSource(job.source, sourceFilter, job.jobUrl, job.location) &&
-            jobMatchesFreshnessFilter(job.postedAt, freshnessFilter) &&
+            (isAppliedView || jobMatchesFreshnessFilter(job.postedAt, freshnessFilter)) &&
             jobMatchesKeywordFilter(job, keywordsInput),
         )
-        .sort((a, b) => b.relevanceScore - a.relevanceScore),
-    [jobsWithMatch, sourceFilter, freshnessFilter, keywordsInput],
+        .sort((a, b) => {
+          if (isAppliedView) {
+            const aTime = a.appliedAt ? new Date(a.appliedAt).getTime() : 0;
+            const bTime = b.appliedAt ? new Date(b.appliedAt).getTime() : 0;
+            return bTime - aTime;
+          }
+
+          return b.relevanceScore - a.relevanceScore;
+        }),
+    [jobsWithMatch, sourceFilter, freshnessFilter, keywordsInput, isAppliedView],
   );
 
   const sourceCounts = useMemo(() => countJobsBySource(jobs), [jobs]);
@@ -992,37 +1000,39 @@ export function CandidateJobsSheet({
                 <option value="other">Other USA sources ({sourceCounts.other})</option>
               </select>
             </div>
-            <div className={styles.filterGroup}>
-              <label htmlFor="freshnessFilter" className={styles.fieldLabel}>
-                Posted
-              </label>
-              <select
-                id="freshnessFilter"
-                value={freshnessFilter}
-                onChange={(event) =>
-                  setFreshnessFilter(event.target.value as JobFreshnessFilter)
-                }
-                className={styles.fieldSelect}
-                disabled={loadingPreviousSearch || scrapeInProgress}
-              >
-                <option value="all">All posting dates ({jobs.length})</option>
-                <option value="last_24h">Posted today / 24h ({freshnessCounts.last_24h})</option>
-                <option value="last_3d">Posted last 3 days ({freshnessCounts.last_3d})</option>
-                <option value="last_7d">Posted last 7 days ({freshnessCounts.last_7d})</option>
-                <option value="older">Posted 7+ days ago ({freshnessCounts.older})</option>
-              </select>
-            </div>
+            {!isAppliedView ? (
+              <div className={styles.filterGroup}>
+                <label htmlFor="freshnessFilter" className={styles.fieldLabel}>
+                  Posted
+                </label>
+                <select
+                  id="freshnessFilter"
+                  value={freshnessFilter}
+                  onChange={(event) =>
+                    setFreshnessFilter(event.target.value as JobFreshnessFilter)
+                  }
+                  className={styles.fieldSelect}
+                  disabled={loadingPreviousSearch || scrapeInProgress}
+                >
+                  <option value="all">All posting dates ({jobs.length})</option>
+                  <option value="last_24h">Posted today / 24h ({freshnessCounts.last_24h})</option>
+                  <option value="last_3d">Posted last 3 days ({freshnessCounts.last_3d})</option>
+                  <option value="last_7d">Posted last 7 days ({freshnessCounts.last_7d})</option>
+                  <option value="older">Posted 7+ days ago ({freshnessCounts.older})</option>
+                </select>
+              </div>
+            ) : null}
             <p className={styles.filterSummary}>
               Showing {filteredJobs.length} of {jobs.length} job
               {jobs.length === 1 ? "" : "s"}
               {sourceFilter !== "all" ||
-              freshnessFilter !== "all" ||
+              (!isAppliedView && freshnessFilter !== "all") ||
               keywordsInput.trim()
                 ? " · filtered"
                 : ""}
             </p>
           </div>
-          {freshnessCounts.unknown > 0 ? (
+          {!isAppliedView && freshnessCounts.unknown > 0 ? (
             <p className={styles.filterHint}>
               {freshnessCounts.unknown} job{freshnessCounts.unknown === 1 ? "" : "s"} missing a
               posting date — search again to populate.
@@ -1085,9 +1095,11 @@ export function CandidateJobsSheet({
         <div className={styles.empty}>
           <p>
             {keywordsInput.trim()
-              ? `No jobs match your keywords (“${keywordsInput.trim()}”). Clear keywords or adjust source/posted filters.`
-              : sourceFilter !== "all" || freshnessFilter !== "all"
-                ? "No jobs match the selected source or posted date filters."
+              ? `No jobs match your keywords (“${keywordsInput.trim()}”). Clear keywords or adjust source filters.`
+              : sourceFilter !== "all" || (!isAppliedView && freshnessFilter !== "all")
+                ? isAppliedView
+                  ? "No jobs match the selected source filter."
+                  : "No jobs match the selected source or posted date filters."
                 : "No jobs match the current filters."}
           </p>
           {keywordsInput.trim() ? (

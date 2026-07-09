@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { CheckCircle2, ChevronDown, ExternalLink, FileText, Mic } from "lucide-react";
 import { formatJobSourceLabel } from "@/server/services/job-market-search";
-import { markApplicationsViewedAction } from "@/server/actions/candidate-applications";
+import {
+  getApplicationResumeDownloadAction,
+  markApplicationsViewedAction,
+} from "@/server/actions/candidate-applications";
 import type { CandidateAppliedJob } from "@/server/services/candidate-jobs";
 import styles from "./applied-jobs-list.module.css";
 
@@ -18,6 +21,7 @@ export type AppliedJobListItem = {
   source: string;
   preparationTips: string[];
   isNew?: boolean;
+  hasApplicationResume?: boolean;
   applicationResumeFileName: string | null;
   applicationResumeDownloadUrl: string | null;
   postedAt?: string | null;
@@ -53,6 +57,30 @@ function AppliedJobRow({
 }: AppliedJobRowProps) {
   const detailsId = `application-details-${job.id}`;
   const isAdmin = variant === "admin";
+  const [resumePending, startResumeTransition] = useTransition();
+  const [resumeError, setResumeError] = useState<string | null>(null);
+
+  function openTailoredResume() {
+    setResumeError(null);
+    startResumeTransition(async () => {
+      if (isAdmin && job.applicationResumeDownloadUrl) {
+        window.open(job.applicationResumeDownloadUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      const result = await getApplicationResumeDownloadAction(job.id);
+      if ("error" in result) {
+        setResumeError(result.error);
+        return;
+      }
+
+      window.open(result.downloadUrl, "_blank", "noopener,noreferrer");
+    });
+  }
+
+  const showResumeAction = isAdmin
+    ? Boolean(job.applicationResumeDownloadUrl || job.hasApplicationResume)
+    : Boolean(job.hasApplicationResume || job.applicationResumeDownloadUrl);
 
   return (
     <li
@@ -78,6 +106,17 @@ function AppliedJobRow({
 
         <div className={styles.summaryActions}>
           {job.isNew ? <span className={styles.newBadge}>New</span> : null}
+          {showResumeAction ? (
+            <button
+              type="button"
+              className={styles.resumeSummaryBtn}
+              onClick={openTailoredResume}
+              disabled={resumePending}
+            >
+              <FileText size={16} aria-hidden />
+              <span>{resumePending ? "Opening…" : "Tailored resume"}</span>
+            </button>
+          ) : null}
           {!isAdmin ? (
             <button
               type="button"
@@ -125,11 +164,11 @@ function AppliedJobRow({
             ) : null}
           </p>
 
-          {isAdmin ? (
+          {job.jobUrl ? (
             <p className={styles.meta}>
               <a href={job.jobUrl} target="_blank" rel="noreferrer" className={styles.jobLink}>
                 <ExternalLink size={14} aria-hidden />
-                View job listing
+                View original listing on {formatJobSourceLabel(job.source, job.jobUrl)}
               </a>
             </p>
           ) : null}
@@ -137,7 +176,9 @@ function AppliedJobRow({
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Job description</h2>
             {job.jdText ? (
-              <p className={styles.jdText}>{job.jdText}</p>
+              <div className={styles.jdPanel}>
+                <div className={styles.jdText}>{job.jdText}</div>
+              </div>
             ) : (
               <p className={styles.jdEmpty}>
                 {isAdmin
@@ -162,19 +203,21 @@ function AppliedJobRow({
           ) : null}
 
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Resume used</h2>
+            <h2 className={styles.sectionTitle}>
+              {isAdmin ? "Resume used" : "Tailored resume"}
+            </h2>
             {isAdmin ? (
               <div className={styles.adminResumeControl}>
                 {job.applicationResumeDownloadUrl ? (
-                  <a
-                    href={job.applicationResumeDownloadUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
                     className={styles.resumeLink}
+                    onClick={openTailoredResume}
+                    disabled={resumePending}
                   >
                     <FileText size={16} aria-hidden />
                     <span>{job.applicationResumeFileName ?? "View resume"}</span>
-                  </a>
+                  </button>
                 ) : (
                   <span className={styles.resumeMissing}>No resume attached yet</span>
                 )}
@@ -195,17 +238,29 @@ function AppliedJobRow({
                   {uploadingResumeJobId === job.id ? "Uploading…" : "Attach resume"}
                 </label>
               </div>
-            ) : job.applicationResumeDownloadUrl ? (
-              <a
-                href={job.applicationResumeDownloadUrl}
-                target="_blank"
-                rel="noreferrer"
-                className={styles.resumeLink}
-              >
-                <FileText size={16} aria-hidden />
-                <span>{job.applicationResumeFileName ?? "Download resume"}</span>
-              </a>
-            ) : null}
+            ) : showResumeAction ? (
+              <div className={styles.candidateResumeBlock}>
+                <button
+                  type="button"
+                  className={styles.resumeLink}
+                  onClick={openTailoredResume}
+                  disabled={resumePending}
+                >
+                  <FileText size={16} aria-hidden />
+                  <span>
+                    {resumePending
+                      ? "Opening…"
+                      : job.applicationResumeFileName ?? "Download tailored resume"}
+                  </span>
+                </button>
+                {resumeError ? <p className={styles.resumeError}>{resumeError}</p> : null}
+              </div>
+            ) : (
+              <p className={styles.resumePending}>
+                Your tailored resume will appear here once our team attaches it to this
+                application.
+              </p>
+            )}
           </section>
 
           {isAdmin && onUndoApply ? (
@@ -290,6 +345,7 @@ export function toAppliedJobListItem(job: CandidateAppliedJob): AppliedJobListIt
     source: job.source,
     preparationTips: job.preparationTips,
     isNew: job.isNew,
+    hasApplicationResume: job.hasApplicationResume,
     applicationResumeFileName: job.applicationResumeFileName,
     applicationResumeDownloadUrl: job.applicationResumeDownloadUrl,
   };

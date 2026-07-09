@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { AppliedJobsList } from "@/components/dashboard/applied-jobs-list";
 import { getSessionUser } from "@/lib/auth/session";
@@ -22,8 +24,8 @@ export default async function CandidateApplicationsPage() {
             My <em className={styles.titleEm}>Applications</em>
           </h1>
           <p className={pageStyles.subtitle}>
-            When our team applies to a role on your behalf, you&apos;ll see the job
-            description and tailored preparation tips here.
+            When our team applies to a role on your behalf, you&apos;ll see the full job
+            description, tailored resume, and preparation tips here.
           </p>
         </div>
 
