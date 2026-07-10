@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AdminCalendarView } from "@/components/admin/admin-calendar-view";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { getAdminUser } from "@/lib/auth/admin";
 import { getAdminCalendarOverview } from "@/server/services/admin-dashboard";
 import styles from "../../admin.module.css";
@@ -17,15 +18,11 @@ export default async function AdminCalendarPage() {
   return (
     <div className={styles.adminPage}>
       <main className={styles.main}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            Admin <em className={styles.titleEm}>calendar</em>
-          </h1>
-          <p className={styles.subtitle}>
-            Career advisory sessions and Google Meet invites sent to candidates after
-            form submission.
-          </p>
-        </div>
+        <AdminPageHeader
+          eyebrow="Schedule"
+          title="Calendar"
+          subtitle="Career advisory sessions and Google Meet invites sent to candidates after form submission."
+        />
 
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>

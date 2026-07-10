@@ -12,17 +12,13 @@
   position: relative;
   width: 100%;
   box-sizing: border-box;
-  padding: 16px 20px 16px 24px;
-  border: 1px solid var(--jb-border);
-  border-radius: var(--jb-radius-md);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.92) 0%,
-    rgba(245, 243, 255, 0.55) 100%
-  );
-  box-shadow: var(--jb-shadow-sm);
+  padding: 20px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  background: var(--jb-portal-card);
+  box-shadow: var(--jb-portal-shadow);
   overflow: hidden;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: transform 0.15s, box-shadow 0.2s;
 }
 
 .card::before {
@@ -32,29 +28,26 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: linear-gradient(180deg, var(--jb-brand-bright) 0%, var(--jb-brand) 100%);
-  border-radius: var(--jb-radius-md) 0 0 var(--jb-radius-md);
+  background: var(--jb-portal-gradient);
+  border-radius: 18px 0 0 18px;
 }
 
 .card:hover {
-  border-color: var(--jb-brand-border);
+  transform: translateY(-1px);
+  box-shadow: var(--jb-portal-shadow-hover);
 }
 
 .cardExpanded {
-  box-shadow: var(--jb-shadow-md);
+  box-shadow: var(--jb-portal-shadow-hover);
 }
 
 .cardNew {
-  border-color: var(--jb-brand-border);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    var(--jb-brand-soft) 100%
-  );
+  background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
+  border-color: #e0e7ff;
 }
 
 .cardNew.cardExpanded {
-  box-shadow: var(--jb-shadow-brand);
+  box-shadow: var(--jb-shadow-md);
 }
 
 .summary {
@@ -82,7 +75,7 @@
   flex-shrink: 0;
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--jb-brand);
+  background: var(--jb-portal-gradient);
   color: #ffffff;
   font-size: 10px;
   font-weight: 800;
@@ -146,10 +139,10 @@
   align-items: center;
   gap: 4px;
   padding: 8px 12px;
-  border: 1px solid var(--jb-border);
-  border-radius: var(--jb-radius-sm);
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--jb-brand);
+  border: 1px solid #e0e7ff;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--jb-portal-accent-indigo);
   font-family: var(--jb-font-sans);
   font-size: 13px;
   font-weight: 700;
@@ -158,9 +151,9 @@
 }
 
 .moreBtn:hover {
-  background: var(--jb-brand-soft);
-  border-color: var(--jb-brand-border);
-  color: var(--jb-brand-hover);
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: var(--jb-portal-accent-purple);
 }
 
 .moreIcon {
@@ -201,16 +194,16 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--jb-brand-hover);
+  color: var(--jb-portal-accent-indigo);
 }
 
 .jdPanel {
   max-height: min(70vh, 720px);
   overflow: auto;
   padding: 14px 16px;
-  border-radius: var(--jb-radius-md);
-  border: 1px solid var(--jb-brand-border);
-  background: rgba(255, 255, 255, 0.72);
+  border-radius: 14px;
+  border: 1px solid #e0e7ff;
+  background: #f8fafc;
 }
 
 .jdText {
@@ -254,7 +247,7 @@
 .tipsList li svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: var(--jb-brand);
+  color: var(--jb-portal-accent-indigo);
 }
 
 .resumeLink {
@@ -262,10 +255,10 @@
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  border-radius: var(--jb-radius-sm);
-  border: 1px solid var(--jb-brand-border);
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--jb-brand);
+  border-radius: 10px;
+  border: 1px solid #e0e7ff;
+  background: #ffffff;
+  color: var(--jb-portal-accent-indigo);
   font-size: 14px;
   font-weight: 700;
   font-family: var(--jb-font-sans);
@@ -275,9 +268,9 @@
 }
 
 .resumeLink:hover {
-  color: var(--jb-brand-hover);
-  background: var(--jb-brand-soft);
-  border-color: var(--jb-brand);
+  color: var(--jb-portal-accent-purple);
+  background: #eef2ff;
+  border-color: #c7d2fe;
 }
 
 .resumeLink:disabled {
@@ -340,14 +333,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--jb-brand);
+  color: var(--jb-portal-accent-indigo);
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
 }
 
 .jobLink:hover {
-  color: var(--jb-brand-hover);
+  color: var(--jb-portal-accent-purple);
   text-decoration: underline;
 }
 

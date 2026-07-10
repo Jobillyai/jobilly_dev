@@ -7,15 +7,15 @@
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.2;
-  color: var(--jb-ink);
+  color: var(--jb-admin-ink);
   margin-bottom: 8px;
 }
 
 .titleEm {
-  font-family: var(--jb-font-display);
-  font-style: italic;
-  font-weight: 400;
-  color: var(--jb-brand);
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--jb-admin-ink);
 }
 
 .subtitle {
@@ -38,17 +38,17 @@
 }
 
 .label {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--jb-ink-muted);
+  color: var(--jb-admin-accent);
 }
 
 .value {
   font-size: 15px;
   font-weight: 600;
-  color: var(--jb-ink);
+  color: var(--jb-admin-ink);
 }
 
 .valueMuted {
@@ -61,10 +61,10 @@
   margin-top: 28px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--jb-brand);
+  color: var(--jb-admin-accent);
   text-decoration: none;
 }
 
 .backLink:hover {
-  text-decoration: underline;
+  color: var(--jb-admin-accent-bright);
 }

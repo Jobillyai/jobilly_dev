@@ -1,12 +1,15 @@
-.header {
-  margin-bottom: 28px;
+.main {
   text-align: left;
+}
+
+.header {
+  margin-bottom: 0;
 }
 
 .subtitle {
   font-size: 15px;
   line-height: 1.6;
-  color: var(--jb-ink-muted);
+  color: var(--jb-ink-secondary);
   max-width: 720px;
   margin: 0;
 }
@@ -15,58 +18,57 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--jb-brand);
+  color: var(--jb-portal-accent-indigo);
   text-decoration: none;
 }
 
 .backLink:hover {
-  color: var(--jb-brand-hover);
+  color: var(--jb-portal-accent-purple);
 }
 
 .nextSessionCard {
-  margin-bottom: 28px;
-  padding: 0 0 24px;
-  border: none;
-  border-bottom: 1px solid var(--jb-border);
-  border-radius: 0;
-  background: transparent;
+  margin-bottom: 24px;
+  padding: 24px 28px;
+  border-radius: 20px;
+  background: var(--jb-portal-gradient);
+  box-shadow: 0 16px 40px rgba(79, 70, 229, 0.28);
+  color: #ffffff;
 }
 
 .nextSessionLabel {
   margin: 0 0 6px;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--jb-brand);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .nextSessionTime {
-  margin: 0 0 14px;
-  font-size: 16px;
+  margin: 0 0 16px;
+  font-size: 18px;
   font-weight: 700;
-  color: var(--jb-ink);
+  letter-spacing: -0.02em;
 }
 
 .meetLinkBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 16px;
-  border-radius: var(--jb-radius-sm);
-  background: linear-gradient(135deg, var(--jb-brand-bright) 0%, var(--jb-brand) 100%);
-  color: #ffffff;
+  padding: 11px 18px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--jb-portal-accent-indigo);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
-  transition: background 0.2s, transform 0.15s;
+  transition: transform 0.15s;
 }
 
 .meetLinkBtn:hover {
-  background: linear-gradient(135deg, var(--jb-brand) 0%, var(--jb-brand-hover) 100%);
   transform: translateY(-1px);
 }
 
@@ -78,10 +80,10 @@
 .ctaLink {
   font-size: 14px;
   font-weight: 700;
-  color: var(--jb-brand);
+  color: var(--jb-portal-accent-indigo);
   text-decoration: none;
 }
 
 .ctaLink:hover {
-  text-decoration: underline;
+  color: var(--jb-portal-accent-purple);
 }

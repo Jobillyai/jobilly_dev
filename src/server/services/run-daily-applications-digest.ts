@@ -232,22 +232,24 @@ export async function runDailyApplicationsDigest(
       continue;
     }
 
-    if (result.error.includes("already emailed")) {
-      candidatesSkipped += 1;
-      continue;
-    }
+    if ("error" in result) {
+      if (result.error.includes("already emailed")) {
+        candidatesSkipped += 1;
+        continue;
+      }
 
-    if (result.error.includes("RESEND_API_KEY")) {
-      return {
-        digestDate,
-        timezone,
-        candidatesEmailed: 0,
-        candidatesSkipped: candidateIds.length,
-        errors: [result.error],
-      };
-    }
+      if (result.error.includes("RESEND_API_KEY")) {
+        return {
+          digestDate,
+          timezone,
+          candidatesEmailed: 0,
+          candidatesSkipped: candidateIds.length,
+          errors: [result.error],
+        };
+      }
 
-    errors.push(result.error);
+      errors.push(result.error);
+    }
   }
 
   return {

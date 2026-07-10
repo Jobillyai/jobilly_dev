@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/scrape-jobs",
-      "schedule": "0 */3 * * *"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/cron/daily-applications-digest",

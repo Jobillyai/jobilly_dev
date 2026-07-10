@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/clean-dev.mjs && next dev",
     "dev:clean": "node scripts/clean-dev.mjs && next dev",
-    "build": "next build",
+    "build": "node scripts/ensure-no-dev.mjs && node scripts/prepare-build.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -16,6 +16,7 @@
     "db:reset": "supabase db reset"
   },
   "dependencies": {
+    "@lottiefiles/dotlottie-react": "^0.19.9",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "@tanstack/react-query": "^4.36.1",

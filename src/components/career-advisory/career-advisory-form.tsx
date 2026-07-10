@@ -16,6 +16,7 @@ import { splitFullName } from "@/lib/format-person-name";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { SessionBookingPicker } from "@/components/career-advisory/session-booking-picker";
 import authStyles from "@/components/auth/auth-page.module.css";
+import dashboardStyles from "@/app/dashboard/dashboard.module.css";
 import styles from "./career-advisory-form.module.css";
 
 type CareerAdvisoryFormProps = {
@@ -162,15 +163,23 @@ export function CareerAdvisoryForm({
         ← Back to dashboard
       </Link>
 
-      <div className={authStyles.header}>
-        <h1 className={authStyles.title}>
-          Career <em className={authStyles.titleEm}>Advisory</em>
-        </h1>
-        <p className={authStyles.subtitle}>
-          Submit your background details and book a session. You can update your
-          submission anytime — your latest entry is shown below.
+      <header className={dashboardStyles.topBar}>
+        <div>
+          <p className={dashboardStyles.eyebrow}>Student portal</p>
+          <h1 className={dashboardStyles.title}>Career advisory</h1>
+          <p className={dashboardStyles.subtitle}>
+            Submit your background details and book a session. You can update your
+            submission anytime — your latest entry is shown below.
+          </p>
+        </div>
+        <p className={dashboardStyles.dateLabel}>
+          {new Intl.DateTimeFormat("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          }).format(new Date())}
         </p>
-      </div>
+      </header>
 
       {successMessage ? (
         <p role="status" className={authStyles.successAlert}>
@@ -186,7 +195,7 @@ export function CareerAdvisoryForm({
 
       {previousSubmission ? <PreviousSubmissionPanel intake={previousSubmission} /> : null}
 
-      <div className={styles.formSection}>
+      <div className={`${styles.formSection} ${styles.formPanel}`}>
         <h2 className={styles.formSectionTitle}>
           {previousSubmission ? "Update your details" : "Submit your details"}
         </h2>

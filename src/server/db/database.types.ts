@@ -87,6 +87,7 @@ export type Database = {
           analyzed_resume_text?: string | null;
           last_applications_digest_date?: string | null;
           welcome_email_sent_at?: string | null;
+          updated_at?: string;
         };
         Update: Partial<
           Database["public"]["Tables"]["candidate_profiles"]["Insert"]

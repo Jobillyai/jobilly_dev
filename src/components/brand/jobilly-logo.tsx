@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useId } from "react";
 import { JobillyMark } from "./jobilly-mark";
 import styles from "./jobilly-logo.module.css";
 
 type JobillyLogoProps = {
-  href?: string;
+  href?: Route;
   showWordmark?: boolean;
   markSize?: number;
   subtitle?: string;
@@ -15,7 +16,7 @@ type JobillyLogoProps = {
 };
 
 export function JobillyLogo({
-  href = "/",
+  href = "/" as Route,
   showWordmark = true,
   markSize = 32,
   subtitle,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminDashboardCharts } from "@/components/admin/admin-dashboard-charts";
 import { AdminMeetingTasks } from "@/components/admin/admin-meeting-tasks";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminQuickActions } from "@/components/admin/admin-quick-actions";
 import { AdminRecentActivity } from "@/components/admin/admin-recent-activity";
 import { ManagerTeamOverview } from "@/components/admin/manager-team-overview";
@@ -59,44 +60,62 @@ export default async function AdminDashboardPage() {
   ];
 
   const statCards = isManager ? managerStatCards : mentorStatCards;
+  const heroStats = statCards.slice(0, 3);
+  const moreStats = statCards.slice(3);
 
   return (
     <div className={styles.adminPage}>
-      <main className={styles.main}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            {isManager ? (
-              <>
-                Manager <em className={styles.titleEm}>dashboard</em>
-              </>
-            ) : (
-              <>
-                Admin <em className={styles.titleEm}>dashboard</em>
-              </>
-            )}
-          </h1>
-          <p className={styles.subtitle}>
-            Welcome back{admin.name ? `, ${formatDisplayName(admin.name)}` : ""}.
-            {admin.memberId ? (
-              <>
-                {" "}
-                Your member ID is <MemberIdBadge memberId={admin.memberId} size="sm" />.
-              </>
-            ) : null}{" "}
-            {isManager
-              ? "Full access — monitor mentors, candidates, and team activity."
-              : "Search jobs for your assigned candidates (once every 3 hours per role), shortlist roles, and submit applications."}
-          </p>
-        </div>
+      <main className={`${styles.main} ${styles.dashboardMain}`}>
+        <AdminPageHeader
+          eyebrow={isManager ? "Manager portal" : "Admin portal"}
+          title={isManager ? "Operations dashboard" : "Mentor dashboard"}
+          subtitle={
+            <>
+              Welcome back{admin.name ? `, ${formatDisplayName(admin.name)}` : ""}.
+              {admin.memberId ? (
+                <>
+                  {" "}
+                  Member ID <MemberIdBadge memberId={admin.memberId} size="sm" />.
+                </>
+              ) : null}
+            </>
+          }
+        />
 
-        <div className={styles.statsGrid}>
-          {statCards.map((card) => (
-            <div key={card.label} className={styles.statCard}>
-              <div className={styles.statLabel}>{card.label}</div>
-              <div className={styles.statValue}>{card.value}</div>
-            </div>
-          ))}
-        </div>
+        <section className={styles.heroCard}>
+          <div className={styles.heroCardContent}>
+            <h2 className={styles.heroCardTitle}>
+              {isManager ? "Team overview" : "Your workspace"}
+            </h2>
+            <p className={styles.heroCardCopy}>
+              {isManager
+                ? "Monitor mentors, candidate signups, advisory submissions, and application progress across the team."
+                : "Search roles, shortlist jobs, submit applications, and keep advisory sessions on track."}
+            </p>
+            <Link href="/admin/tasks" className={styles.heroCardCta}>
+              View tasks
+            </Link>
+          </div>
+          <div className={styles.heroMiniStats}>
+            {heroStats.map((card) => (
+              <div key={card.label} className={styles.heroMiniStat}>
+                <span className={styles.heroMiniValue}>{card.value}</span>
+                <span className={styles.heroMiniLabel}>{card.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {moreStats.length > 0 ? (
+          <div className={styles.statsGrid}>
+            {moreStats.map((card) => (
+              <article key={card.label} className={styles.metricCard}>
+                <p className={styles.metricValue}>{card.value}</p>
+                <p className={styles.metricLabel}>{card.label}</p>
+              </article>
+            ))}
+          </div>
+        ) : null}
 
         {isManager && mentorActivity ? (
           <ManagerTeamOverview

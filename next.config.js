@@ -9,7 +9,6 @@ const nextConfig = {
   },
   webpack: (config, { dev }) => {
     // OneDrive sync corrupts webpack chunks (undefined factory / CSS 404).
-    // Disable persistent cache in local dev for stable HMR.
     if (dev && isOneDriveProject) {
       config.cache = false;
     }
@@ -23,7 +22,6 @@ const nextConfig = {
       },
     ],
   },
-  // Security headers — defence-in-depth, layered with Cloudflare WAF at the edge.
   async headers() {
     return [
       {

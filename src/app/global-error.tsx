@@ -15,8 +15,8 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           display: "grid",
           placeItems: "center",
           fontFamily: "system-ui, sans-serif",
-          background: "#f8f7ff",
-          color: "#1e1b4b",
+          background: "#f6f6f4",
+          color: "#111111",
         }}
       >
         <main style={{ maxWidth: "480px", padding: "24px", textAlign: "center" }}>
@@ -33,7 +33,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               border: "none",
               borderRadius: "12px",
               padding: "12px 20px",
-              background: "#7c3aed",
+              background: "#111111",
               color: "#ffffff",
               fontWeight: 700,
               cursor: "pointer",

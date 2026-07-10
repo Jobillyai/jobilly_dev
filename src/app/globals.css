@@ -3,35 +3,70 @@
 @tailwind utilities;
 
 :root {
-  /* Jobilly — ChronoTask-inspired SaaS palette */
+  /* Jobilly — Sociality.io-inspired warm neutral palette */
   --jb-font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
   --jb-font-display: "Instrument Serif", Georgia, serif;
 
-  --jb-ink: #1e1b4b;
-  --jb-ink-secondary: #475569;
-  --jb-ink-muted: #64748b;
-  --jb-ink-subtle: #94a3b8;
-  --jb-ink-on-dark: #f8fafc;
+  --jb-ink: #111111;
+  --jb-ink-secondary: #3d3d3d;
+  --jb-ink-muted: #6b6b6b;
+  --jb-ink-subtle: #9a9a9a;
+  --jb-ink-on-dark: #fafafa;
 
-  --jb-brand: #7c3aed;
-  --jb-brand-hover: #6d28d9;
-  --jb-brand-bright: #8b5cf6;
-  --jb-brand-soft: #f5f3ff;
-  --jb-brand-border: #ddd6fe;
-  --jb-brand-glow: rgba(124, 58, 237, 0.28);
+  --jb-brand: #6d28d9;
+  --jb-brand-hover: #5b21b6;
+  --jb-brand-bright: #7c3aed;
+  --jb-brand-soft: #f6f6f4;
+  --jb-brand-border: #e8e8e6;
+  --jb-brand-glow: rgba(109, 40, 217, 0.12);
 
-  --jb-accent: #6366f1;
-  --jb-accent-soft: #eef2ff;
+  --jb-portal-bg: #ffffff;
+  --jb-portal-canvas: #f0f3f9;
+  --jb-portal-card: #ffffff;
+  --jb-portal-sidebar: #ffffff;
+  --jb-portal-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #a78bfa 100%);
+  --jb-portal-gradient-soft: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 55%, #faf5ff 100%);
+  --jb-portal-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  --jb-portal-shadow-hover: 0 12px 32px rgba(15, 23, 42, 0.1);
+  --jb-portal-accent-blue: #3b82f6;
+  --jb-portal-accent-purple: #8b5cf6;
+  --jb-portal-accent-indigo: #6366f1;
+  --jb-portal-accent-emerald: #10b981;
+  --jb-portal-accent-amber: #f59e0b;
+  --jb-portal-accent-rose: #f43f5e;
+  --jb-portal-icon-blue: #eff6ff;
+  --jb-portal-icon-purple: #f5f3ff;
+  --jb-portal-icon-emerald: #ecfdf5;
+  --jb-portal-icon-amber: #fffbeb;
 
-  --jb-dark: #1e1b4b;
-  --jb-dark-elevated: #312e81;
-  --jb-dark-border: rgba(255, 255, 255, 0.1);
+  /* Admin portal — clean futuristic */
+  --jb-admin-canvas: #e8ebf2;
+  --jb-admin-sidebar-bg: #0c1018;
+  --jb-admin-sidebar-text: #8b95a8;
+  --jb-admin-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --jb-admin-accent: #06b6d4;
+  --jb-admin-accent-bright: #22d3ee;
+  --jb-admin-accent-soft: rgba(6, 182, 212, 0.14);
+  --jb-admin-ink: #0f172a;
+  --jb-admin-card: rgba(255, 255, 255, 0.88);
+  --jb-admin-card-border: rgba(15, 23, 42, 0.08);
+  --jb-admin-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 16px 40px rgba(15, 23, 42, 0.08);
+  --jb-admin-shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.95) inset, 0 20px 48px rgba(15, 23, 42, 0.12);
+  --jb-admin-hero: linear-gradient(145deg, #0c1018 0%, #151d2e 48%, #0f172a 100%);
+
+  --jb-accent: #111111;
+  --jb-accent-soft: #f6f6f4;
+
+  --jb-dark: #111111;
+  --jb-dark-elevated: #2a2a2a;
+  --jb-dark-border: rgba(255, 255, 255, 0.12);
 
   --jb-surface: #ffffff;
-  --jb-surface-subtle: #f8f7ff;
+  --jb-surface-subtle: #f6f6f4;
+  --jb-surface-muted: #ececea;
   --jb-surface-raised: #ffffff;
-  --jb-border: #e2e8f0;
-  --jb-border-strong: #cbd5e1;
+  --jb-border: #e8e8e6;
+  --jb-border-strong: #d8d8d6;
 
   --jb-success: #059669;
   --jb-success-soft: #ecfdf5;
@@ -40,22 +75,22 @@
   --jb-danger: #dc2626;
   --jb-danger-soft: #fef2f2;
 
-  --jb-radius-sm: 12px;
-  --jb-radius-md: 16px;
-  --jb-radius-lg: 24px;
-  --jb-radius-xl: 32px;
+  --jb-radius-sm: 10px;
+  --jb-radius-md: 14px;
+  --jb-radius-lg: 20px;
+  --jb-radius-xl: 28px;
 
-  --jb-shadow-sm: 0 2px 8px rgba(99, 102, 241, 0.06);
-  --jb-shadow-md: 0 12px 32px rgba(99, 102, 241, 0.1);
-  --jb-shadow-lg: 0 24px 64px rgba(99, 102, 241, 0.14);
-  --jb-shadow-brand: 0 12px 40px var(--jb-brand-glow);
-  --jb-focus-ring: rgba(124, 58, 237, 0.12);
+  --jb-shadow-sm: 0 1px 2px rgba(17, 17, 17, 0.04);
+  --jb-shadow-md: 0 8px 24px rgba(17, 17, 17, 0.06);
+  --jb-shadow-lg: 0 20px 48px rgba(17, 17, 17, 0.08);
+  --jb-shadow-brand: 0 8px 24px var(--jb-brand-glow);
+  --jb-focus-ring: rgba(109, 40, 217, 0.14);
 
   --blue-900: var(--jb-ink);
   --blue-500: var(--jb-brand);
   --blue-50: var(--jb-brand-soft);
   --white: var(--jb-surface);
-  --gray-100: #f1f5f9;
+  --gray-100: #f6f6f4;
   --gray-200: var(--jb-border);
   --gray-300: #d1d5db;
   --accent-dark: var(--jb-brand-hover);
@@ -63,14 +98,14 @@
   --text-muted: var(--jb-ink-muted);
   --text-secondary: var(--jb-ink-secondary);
 
-  --background: 250 100% 99%;
-  --foreground: 244 47% 20%;
-  --primary: 262 83% 58%;
+  --background: 60 6% 97%;
+  --foreground: 0 0% 7%;
+  --primary: 263 70% 50%;
   --primary-foreground: 0 0% 100%;
-  --muted: 250 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  --border: 214 32% 91%;
-  --radius: 1rem;
+  --muted: 60 6% 96%;
+  --muted-foreground: 0 0% 42%;
+  --border: 60 5% 90%;
+  --radius: 0.875rem;
 }
 
 @layer base {
@@ -83,6 +118,6 @@
     @apply bg-background text-foreground;
     font-family: var(--jb-font-sans);
     color: var(--jb-ink);
-    background: var(--jb-surface-subtle);
+    background: var(--jb-surface);
   }
 }

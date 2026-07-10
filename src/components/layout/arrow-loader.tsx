@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
-import { motion } from "framer-motion";
+import { motion, type Easing } from "framer-motion";
 import styles from "./arrow-loader.module.css";
 
 const TRAIL_COUNT = 8;
@@ -25,7 +25,7 @@ function staggerTimes(lag: number) {
   );
 }
 
-const followEase = ["easeOut", "linear", "easeInOut", "easeOut", "easeIn"] as const;
+const followEase: Easing[] = ["easeOut", "linear", "easeInOut", "easeOut", "easeIn"];
 
 /** Full cycle: nowhere → fade in at front → travel right → fade out → invisibly return to front */
 const arrowCycle = {
@@ -38,7 +38,7 @@ const arrowTransition = {
   duration: LOOP_DURATION,
   repeat: Infinity,
   times: [0, 0.14, 0.72, 0.86, 1],
-  ease: ["easeOut", "easeInOut", "easeIn", "linear"] as const,
+  ease: ["easeOut", "easeInOut", "easeIn", "linear"] as Easing[],
 };
 
 function sonicMotion(id: number) {

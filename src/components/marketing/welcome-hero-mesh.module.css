@@ -1,0 +1,93 @@
+.meshWrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  color: #7a8299;
+}
+
+.mesh {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.meshLine {
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.meshRevealBlTr {
+  opacity: 0;
+  transform: translate3d(-56px, 56px, 0);
+  animation: meshRevealBlTr 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.meshRevealTlBr {
+  opacity: 0;
+  transform: translate3d(-56px, -56px, 0);
+  animation: meshRevealTlBr 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.meshWrapStatic {
+  opacity: 0.78;
+}
+
+.meshWrapFar {
+  transform-origin: bottom left;
+}
+
+.meshWrapStrip {
+  transform-origin: bottom left;
+}
+
+.meshRevealBlTr.meshWrapFar,
+.meshRevealBlTr.meshWrapStrip {
+  transform: translate3d(-56px, 56px, 0);
+}
+
+.meshWrapStatic.meshWrapFar,
+.meshWrapStatic.meshWrapStrip {
+  transform: none;
+}
+
+@keyframes meshRevealBlTr {
+  from {
+    opacity: 0;
+    transform: translate3d(-56px, 56px, 0);
+  }
+
+  to {
+    opacity: 0.78;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes meshRevealTlBr {
+  from {
+    opacity: 0;
+    transform: translate3d(-56px, -56px, 0);
+  }
+
+  to {
+    opacity: 0.78;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (max-width: 960px) {
+  .meshWrap {
+    opacity: 0.62;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meshRevealBlTr,
+  .meshRevealTlBr {
+    opacity: 0.78;
+    transform: none;
+    animation: none;
+  }
+}

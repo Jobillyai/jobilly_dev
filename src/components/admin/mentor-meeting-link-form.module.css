@@ -57,11 +57,13 @@
   padding: 10px 16px;
   border: none;
   border-radius: 10px;
-  background: var(--blue-500, #2164f3);
-  color: #fff;
+  background: var(--jb-admin-accent);
+  color: #0c1018;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminMeetingTasks } from "@/components/admin/admin-meeting-tasks";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { getAdminUser, staffIsManager, toStaffContext } from "@/lib/auth/admin";
 import { getAdminMeetingTasks } from "@/server/services/admin-dashboard";
 import { getDefaultGoogleMeetUrl } from "@/server/services/send-mentor-meeting-link";
@@ -21,15 +22,11 @@ export default async function AdminTasksPage() {
   return (
     <div className={styles.adminPage}>
       <main className={styles.main}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            Admin <em className={styles.titleEm}>tasks</em>
-          </h1>
-          <p className={styles.subtitle}>
-            Career advisory meetings booked by candidates. Mentors can send a Google Meet
-            link from here or from the candidate profile.
-          </p>
-        </div>
+        <AdminPageHeader
+          eyebrow="Workflow"
+          title="Tasks"
+          subtitle="Career advisory meetings booked by candidates. Mentors can send a Google Meet link from here or from the candidate profile."
+        />
 
         <section className={styles.section}>
           <div className={styles.sectionHeaderRow}>

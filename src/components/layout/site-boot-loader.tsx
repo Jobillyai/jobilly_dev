@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { JobillyLogoLoader } from "./jobilly-logo-loader";
+import { LottieLoader } from "./lottie-loader";
 import styles from "./site-boot-loader.module.css";
 
 export function SiteBootLoader() {
@@ -33,7 +33,7 @@ export function SiteBootLoader() {
       aria-live="polite"
       aria-busy={!fadeOut}
     >
-      <JobillyLogoLoader size={512} />
+      <LottieLoader size={220} />
     </div>
   );
 }

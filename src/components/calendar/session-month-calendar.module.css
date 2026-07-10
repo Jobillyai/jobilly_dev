@@ -1,17 +1,17 @@
 .sessionCalendarPanel {
-  --blue-900: #0a1628;
-  --blue-500: var(--jb-brand);
-  --blue-50: #f0f6ff;
-  --white: #ffffff;
-  --gray-200: #e5e7eb;
+  --blue-900: var(--jb-ink);
+  --blue-500: var(--jb-portal-accent-indigo);
+  --blue-50: var(--jb-portal-canvas);
+  --white: var(--jb-portal-card);
+  --gray-200: var(--jb-border);
   --gray-300: #d1d5db;
-  --text-muted: #6b7280;
+  --text-muted: var(--jb-ink-muted);
 
-  background: var(--white);
-  border: 1.5px solid var(--gray-200);
+  background: var(--jb-portal-card);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(10, 22, 40, 0.04);
+  box-shadow: var(--jb-portal-shadow);
 }
 
 .calendarToolbar {

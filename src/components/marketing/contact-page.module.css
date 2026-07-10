@@ -4,9 +4,7 @@
   min-height: calc(100vh - 72px);
   padding: 48px 24px 80px;
   font-family: var(--jb-font-sans);
-  background:
-    radial-gradient(ellipse 85% 70% at 20% 0%, rgba(167, 139, 250, 0.18), transparent 55%),
-    linear-gradient(180deg, var(--jb-brand-soft) 0%, var(--jb-surface-subtle) 100%);
+  background: var(--jb-surface-subtle);
   color: var(--jb-ink);
   overflow: hidden;
 }
@@ -35,10 +33,10 @@
 }
 
 .titleEm {
-  font-family: var(--jb-font-display);
-  font-style: italic;
-  font-weight: 400;
-  color: var(--jb-brand);
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--jb-ink);
 }
 
 .subtitle {
@@ -49,11 +47,11 @@
 }
 
 .form {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1.5px solid var(--jb-border);
+  background: var(--jb-surface);
+  border: 1px solid var(--jb-border);
   border-radius: var(--jb-radius-xl);
   padding: 28px;
-  box-shadow: var(--jb-shadow-lg);
+  box-shadow: var(--jb-shadow-sm);
 }
 
 .textarea {

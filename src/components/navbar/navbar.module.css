@@ -9,17 +9,15 @@
   justify-content: space-between;
   padding: 0 32px;
   height: 72px;
-  background: rgba(248, 247, 255, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  background: #ffffff;
+  border-bottom: 1px solid var(--jb-border);
   transition: box-shadow 0.2s, background 0.2s;
   font-family: var(--jb-font-sans);
 }
 
 .navScrolled {
   box-shadow: var(--jb-shadow-md);
-  background: rgba(255, 255, 255, 0.92);
+  background: #ffffff;
 }
 
 .navLogo {
@@ -93,7 +91,7 @@
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.01em;
-  border-radius: 12px;
+  border-radius: 999px;
   padding: 11px 20px;
   cursor: pointer;
   text-decoration: none;
@@ -125,15 +123,16 @@
 
 .navBtnPrimary {
   color: #ffffff;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: var(--jb-ink);
   border: 1px solid transparent;
   font-weight: 700;
-  box-shadow: var(--jb-shadow-brand);
+  box-shadow: var(--jb-shadow-sm);
 }
 
 .navBtnPrimary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 36px rgba(124, 58, 237, 0.35);
+  background: var(--jb-dark-elevated);
+  box-shadow: var(--jb-shadow-md);
 }
 
 .navBtnGhost:active,

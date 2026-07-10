@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import {
   getAdminUser,
   staffCanAccessJobApplyPortal,
@@ -58,15 +59,11 @@ export default async function AdminJobsPage() {
   return (
     <div className={styles.adminPage}>
       <main className={styles.main}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            Apply for <em className={styles.titleEm}>jobs</em>
-          </h1>
-          <p className={styles.subtitle}>
-            Search Indeed, LinkedIn, Glassdoor, and ZipRecruiter for your assigned candidates from each job sheet.
-            Each role can be searched once every 3 hours.
-          </p>
-        </div>
+        <AdminPageHeader
+          eyebrow="Applications"
+          title="Apply for jobs"
+          subtitle="Search Indeed, LinkedIn, Glassdoor, and ZipRecruiter for your assigned candidates from each job sheet. Each role can be searched once every 3 hours."
+        />
 
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>

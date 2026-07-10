@@ -705,7 +705,15 @@ export type CandidateResumeAnalysisResult = {
   error?: string;
 };
 
-async function authorizeCandidateAccess(candidateId: string) {
+async function authorizeCandidateAccess(
+  candidateId: string,
+): Promise<
+  | { error: string }
+  | {
+      admin: NonNullable<Awaited<ReturnType<typeof getAdminUser>>>;
+      candidate: NonNullable<Awaited<ReturnType<typeof getAdminCandidateById>>>;
+    }
+> {
   const admin = await getAdminUser();
   if (!admin) {
     return { error: "Unauthorized" as const };
@@ -714,7 +722,7 @@ async function authorizeCandidateAccess(candidateId: string) {
   const staff = toStaffContext(admin);
   const portalError = assertJobApplyPortalAccess(staff);
   if (portalError) {
-    return { error: portalError as const };
+    return { error: portalError };
   }
 
   const candidate = await getAdminCandidateById(candidateId, staff);

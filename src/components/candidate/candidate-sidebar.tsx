@@ -64,7 +64,6 @@ export function CandidateSidebar({ unreadApplications = 0 }: CandidateSidebarPro
       <JobillyLogo
         href="/dashboard"
         markSize={40}
-        onDark
         className={styles.brand}
       />
 

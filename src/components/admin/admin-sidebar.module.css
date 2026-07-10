@@ -1,22 +1,46 @@
 .sidebar {
-  position: relative;
-  width: 272px;
+  width: 268px;
   flex-shrink: 0;
   min-height: 100%;
-  padding: 20px 14px;
+  padding: 28px 16px;
   display: flex;
   flex-direction: column;
   font-family: var(--jb-font-sans);
-  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
-  border-right: 1px solid var(--jb-dark-border);
+  background: var(--jb-admin-sidebar-bg);
+  border-right: 1px solid var(--jb-admin-sidebar-border, rgba(255, 255, 255, 0.06));
+  position: relative;
+}
+
+.sidebar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(6, 182, 212, 0.35),
+    transparent
+  );
+  pointer-events: none;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  padding: 4px 10px 24px;
+  padding: 0 12px 32px;
   margin-bottom: 8px;
   text-decoration: none;
+}
+
+.brand :global([class*="subtitle"]) {
+  color: var(--jb-admin-sidebar-text) !important;
+}
+
+.brand :global([class*="wordmarkOnDark"]) {
+  color: #f8fafc;
 }
 
 .nav {
@@ -32,29 +56,30 @@
   gap: 12px;
   width: 100%;
   padding: 11px 14px;
-  border-radius: var(--jb-radius-sm);
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
-  color: rgba(226, 232, 240, 0.85);
+  color: var(--jb-admin-sidebar-text);
   text-decoration: none;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   font-family: inherit;
   text-align: left;
 }
 
 .navLink:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
+  background: var(--jb-admin-sidebar-hover);
+  color: #e2e8f0;
 }
 
 .navLinkActive {
-  background: rgba(124, 58, 237, 0.22);
-  color: #ddd6fe;
+  background: rgba(6, 182, 212, 0.1);
+  color: #f8fafc;
   font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.25);
+  border-color: rgba(6, 182, 212, 0.28);
+  box-shadow: inset 3px 0 0 var(--jb-admin-accent);
 }
 
 .navIcon {
@@ -72,7 +97,7 @@
 @media (max-width: 900px) {
   .sidebar {
     width: 76px;
-    padding: 16px 10px;
+    padding: 20px 10px;
   }
 
   .brand :global([class*="wordmarkBlock"]) {
@@ -85,11 +110,16 @@
 
   .brand {
     justify-content: center;
-    padding: 4px 0 16px;
+    padding: 0 0 20px;
   }
 
   .navLink {
     justify-content: center;
-    padding: 11px;
+    padding: 10px;
+  }
+
+  .navLinkActive {
+    box-shadow: none;
+    border-color: rgba(6, 182, 212, 0.35);
   }
 }

@@ -51,7 +51,7 @@ export function HeroPreview() {
               </span>
               <div className={styles.listText}>
                 <p className={styles.listTitle}>Software Engineer</p>
-                <p className={styles.listMeta}>Applied on your behalf · Meta</p>
+                <p className={styles.listMeta}>Applied on your behalf · Amazon</p>
               </div>
             </li>
             <li className={styles.listItem}>
@@ -72,7 +72,7 @@ export function HeroPreview() {
           </div>
           <div>
             <p className={styles.floatTitle}>Mock interview ready</p>
-            <p className={styles.floatMeta}>Amazon persona · Behavioral</p>
+            <p className={styles.floatMeta}>Frontend Developer · Airbnb</p>
           </div>
         </div>
       </div>

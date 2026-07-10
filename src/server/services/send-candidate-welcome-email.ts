@@ -148,7 +148,7 @@ export async function sendCandidateWelcomeEmail(input: {
   const sentAt = new Date().toISOString();
   const { error: updateError } = await admin
     .from("candidate_profiles")
-    .update({ welcome_email_sent_at: sentAt, updated_at: sentAt })
+    .update({ welcome_email_sent_at: sentAt })
     .eq("user_id", input.userId);
 
   if (updateError) {

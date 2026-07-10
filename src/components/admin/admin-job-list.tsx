@@ -32,17 +32,19 @@ function formatDetailDate(value: string): string {
 
 function sourceBadgeClass(source: string, jobUrl: string): string {
   const resolved = resolveJobSource(source, jobUrl);
-  if (resolved === "glassdoor") return styles.sourceGlassdoor;
-  if (resolved === "ziprecruiter") return styles.sourceZiprecruiter;
-  if (resolved === "linkedin") return styles.sourceLinkedin;
-  if (resolved === "indeed") return styles.sourceIndeed;
-  return styles.sourceOther;
+  const fallback = styles.sourceOther ?? "";
+  if (resolved === "glassdoor") return styles.sourceGlassdoor ?? fallback;
+  if (resolved === "ziprecruiter") return styles.sourceZiprecruiter ?? fallback;
+  if (resolved === "linkedin") return styles.sourceLinkedin ?? fallback;
+  if (resolved === "indeed") return styles.sourceIndeed ?? fallback;
+  return fallback;
 }
 
 function matchBadgeClass(score: number): string {
-  if (score >= 70) return styles.matchHigh;
-  if (score >= 45) return styles.matchMedium;
-  return styles.matchLow;
+  const fallback = styles.matchLow ?? "";
+  if (score >= 70) return styles.matchHigh ?? fallback;
+  if (score >= 45) return styles.matchMedium ?? fallback;
+  return fallback;
 }
 
 type AdminJobListProps = {

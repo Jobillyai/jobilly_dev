@@ -1,0 +1,69 @@
+.revealFade,
+.revealFromLeft,
+.revealFromRight {
+  opacity: 0;
+  backface-visibility: hidden;
+}
+
+.revealFade:global(.revealed) {
+  animation: fadeIn 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.revealFromLeft:global(.revealed) {
+  animation: slideFromLeft 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.revealFromRight:global(.revealed) {
+  animation: slideFromRight 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideFromLeft {
+  from {
+    opacity: 0;
+    transform: translate3d(-36px, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideFromRight {
+  from {
+    opacity: 0;
+    transform: translate3d(36px, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revealFade,
+  .revealFromLeft,
+  .revealFromRight {
+    opacity: 1;
+    animation: none;
+  }
+
+  .revealFade:global(.revealed),
+  .revealFromLeft:global(.revealed),
+  .revealFromRight:global(.revealed) {
+    animation: none;
+  }
+}

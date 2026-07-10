@@ -1,7 +1,7 @@
 .adminShell {
   display: flex;
   min-height: 100vh;
-  background: var(--jb-surface-subtle);
+  background: var(--jb-admin-canvas);
 }
 
 .adminBody {

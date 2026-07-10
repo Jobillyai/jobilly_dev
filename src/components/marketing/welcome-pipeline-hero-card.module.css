@@ -1,0 +1,407 @@
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.card:hover {
+  transform: translate3d(0, -8px, 0) scale(1.012);
+}
+
+.glow {
+  position: absolute;
+  inset: -16% -8% auto;
+  height: 65%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(99, 102, 241, 0.22) 0%,
+    rgba(167, 139, 250, 0.1) 45%,
+    transparent 72%
+  );
+  pointer-events: none;
+  filter: blur(12px);
+  z-index: 0;
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card:hover .glow {
+  opacity: 1.15;
+}
+
+.cardInner {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  border-radius: var(--jb-radius-lg);
+  border: 1px solid var(--jb-border);
+  background: linear-gradient(165deg, #ffffff 0%, #f8f9ff 48%, #f3f0ff 100%);
+  box-shadow: var(--jb-shadow-lg);
+  overflow: hidden;
+  transition: box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card:hover .cardInner {
+  box-shadow:
+    0 24px 48px rgba(99, 102, 241, 0.14),
+    0 12px 24px rgba(15, 17, 21, 0.1);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 28px 32px;
+  border-bottom: 1px solid var(--jb-border);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--jb-ink);
+}
+
+.livePill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  white-space: nowrap;
+}
+
+.cardSection {
+  padding: 24px 32px;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.08);
+}
+
+.cardSection:first-of-type {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.cardSectionLast {
+  border-bottom: none;
+  margin-top: auto;
+}
+
+.orbitWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: min(220px, 100%);
+  aspect-ratio: 1;
+  height: auto;
+  margin: 0 auto;
+}
+
+.orbitRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(99, 102, 241, 0.28);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 68%);
+  box-shadow: 0 0 40px rgba(99, 102, 241, 0.12);
+}
+
+.orbitHub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--jb-ink);
+  color: #fff;
+  box-shadow: 0 12px 32px rgba(15, 17, 21, 0.22);
+  z-index: 2;
+}
+
+.orbitHubStep {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.orbitHubIcon {
+  color: #a5b4fc;
+}
+
+.orbitHubLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.orbitNode {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 68px;
+  opacity: 0.55;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.orbitNodeActive {
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.orbitNode_0 {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.orbitNode_1 {
+  top: 50%;
+  right: -6px;
+  transform: translateY(-50%);
+}
+
+.orbitNode_2 {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.orbitNode_3 {
+  top: 50%;
+  left: -6px;
+  transform: translateY(-50%);
+}
+
+.orbitNodeActive.orbitNode_0,
+.orbitNodeActive.orbitNode_2 {
+  transform: translateX(-50%) scale(1.04);
+}
+
+.orbitNodeActive.orbitNode_1,
+.orbitNodeActive.orbitNode_3 {
+  transform: translateY(-50%) scale(1.04);
+}
+
+.orbitNodeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--jb-border);
+  color: var(--jb-ink-secondary);
+  box-shadow: var(--jb-shadow-sm);
+}
+
+.orbitNodeActive .orbitNodeIcon {
+  border-color: var(--jb-brand-border);
+  background: var(--jb-brand-soft);
+  color: var(--jb-brand);
+}
+
+.orbitNodeLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--jb-ink-secondary);
+  text-align: center;
+}
+
+.orbitPulse {
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  border-top: 2px solid var(--jb-brand);
+  opacity: 0.75;
+  aspect-ratio: 1;
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.track {
+  width: 100%;
+}
+
+.trackLine {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--jb-surface-subtle);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.trackFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--jb-brand) 0%, #a78bfa 100%);
+  transition-property: width;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: width;
+}
+
+.trackNodes {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trackDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--jb-border-strong);
+  transition: background 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
+}
+
+.trackDotDone {
+  background: var(--jb-brand);
+}
+
+.trackDotActive {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 4px var(--jb-brand-soft);
+}
+
+.stageEyebrow {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jb-ink-muted);
+}
+
+.stageRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: var(--jb-radius-md);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--jb-border);
+  box-shadow: var(--jb-shadow-sm);
+}
+
+.stageText {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--jb-ink-secondary);
+  flex: 1;
+}
+
+.stageMetric {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--jb-brand-soft);
+  color: var(--jb-brand);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.companyLabel {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jb-ink-muted);
+}
+
+.companyList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.companyChip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jb-ink-secondary);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--jb-border);
+  box-shadow: var(--jb-shadow-sm);
+}
+
+@media (max-width: 960px) {
+  .card {
+    height: auto;
+  }
+
+  .cardInner {
+    min-height: 0;
+  }
+
+  .cardSection:first-of-type {
+    flex: 0 0 auto;
+  }
+
+  .orbitWrap {
+    width: min(240px, 100%);
+    aspect-ratio: 1;
+    height: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbitPulse,
+  .trackFill,
+  .orbitNode {
+    transition: none;
+  }
+
+  .card,
+  .cardInner,
+  .glow {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .card:hover .cardInner {
+    box-shadow: var(--jb-shadow-lg);
+  }
+
+  .card:hover .glow {
+    opacity: 1;
+  }
+}

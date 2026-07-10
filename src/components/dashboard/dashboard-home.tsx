@@ -1,7 +1,45 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  Briefcase,
+  Calendar,
+  Compass,
+  Sparkles,
+  UserCircle,
+} from "lucide-react";
 import { formatDisplayName } from "@/lib/format-display-name";
 import styles from "./dashboard-home.module.css";
+
+const workspaceLinks = [
+  {
+    href: "/dashboard/applications" as const,
+    label: "Applications",
+    description: "Applied roles, tailored resumes, and prep tips.",
+    icon: Briefcase,
+    tone: "blue" as const,
+  },
+  {
+    href: "/dashboard/career-advisory" as const,
+    label: "Career advisory",
+    description: "Book a free session and share your goals.",
+    icon: Compass,
+    tone: "purple" as const,
+  },
+  {
+    href: "/dashboard/calendar" as const,
+    label: "Calendar",
+    description: "Upcoming advisory sessions.",
+    icon: Calendar,
+    tone: "emerald" as const,
+  },
+  {
+    href: "/dashboard/profile" as const,
+    label: "Profile",
+    description: "Resume, education, and preferences.",
+    icon: UserCircle,
+    tone: "amber" as const,
+  },
+] as const;
 
 type DashboardHomeProps = {
   userName?: string;
@@ -11,15 +49,42 @@ type DashboardHomeProps = {
   nextSessionLabel: string;
 };
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) {
-    return "Good morning";
-  }
-  if (hour < 17) {
-    return "Good afternoon";
-  }
-  return "Good evening";
+function ProgressRing({ count }: { count: number }) {
+  const pct = Math.min(100, count * 10);
+  const radius = 52;
+  const stroke = 10;
+  const circumference = 2 * Math.PI * radius;
+  const dash = (pct / 100) * circumference;
+
+  return (
+    <div className={styles.progressRing} aria-hidden>
+      <svg width="128" height="128" viewBox="0 0 128 128">
+        <circle
+          cx="64"
+          cy="64"
+          r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.22)"
+          strokeWidth={stroke}
+        />
+        <circle
+          cx="64"
+          cy="64"
+          r={radius}
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${dash} ${circumference - dash}`}
+          transform="rotate(-90 64 64)"
+        />
+      </svg>
+      <div className={styles.progressCenter}>
+        <span className={styles.progressValue}>{count}</span>
+        <span className={styles.progressLabel}>roles</span>
+      </div>
+    </div>
+  );
 }
 
 export function DashboardHome({
@@ -29,44 +94,116 @@ export function DashboardHome({
   latestApplicationLabel,
   nextSessionLabel,
 }: DashboardHomeProps) {
-  const greeting = getGreeting();
-  const displayName = userName ? formatDisplayName(userName) : null;
+  const displayName = userName ? formatDisplayName(userName) : "there";
 
   return (
     <div className={styles.home}>
-      <header className={styles.header}>
-        <p className={styles.greeting}>{greeting}</p>
-        <h1 className={styles.title}>
-          {displayName ? `Welcome back, ${displayName}` : "Welcome back"}
-        </h1>
-        <p className={styles.subtitle}>
-          Track applications and stay on top of advisory sessions.
+      <header className={styles.topBar}>
+        <div>
+          <p className={styles.eyebrow}>Student portal</p>
+          <h1 className={styles.title}>Hello, {displayName}</h1>
+        </div>
+        <p className={styles.dateLabel}>
+          {new Intl.DateTimeFormat("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          }).format(new Date())}
         </p>
       </header>
 
-      {unreadApplicationCount > 0 && latestApplicationLabel ? (
-        <Link href="/dashboard/applications" className={styles.updateBanner}>
-          <span className={styles.updateBannerLabel}>New application update</span>
-          <span className={styles.updateBannerText}>{latestApplicationLabel}</span>
-          <span className={styles.updateBannerAction}>
-            View details <ArrowRight size={14} aria-hidden />
+      <section className={styles.heroCard}>
+        <div className={styles.heroContent}>
+          <span className={styles.heroBadge}>
+            <Sparkles size={14} aria-hidden />
+            Career workspace
           </span>
-        </Link>
+          <h2 className={styles.heroTitle}>Your application hub</h2>
+          <p className={styles.heroCopy}>
+            Track every role our team applies to on your behalf, plus advisory
+            sessions and profile updates — all in one place.
+          </p>
+          {unreadApplicationCount > 0 && latestApplicationLabel ? (
+            <Link href="/dashboard/applications" className={styles.heroCta}>
+              View new update
+              <ArrowRight size={16} aria-hidden />
+            </Link>
+          ) : (
+            <Link href="/dashboard/career-advisory" className={styles.heroCta}>
+              Book advisory
+              <ArrowRight size={16} aria-hidden />
+            </Link>
+          )}
+        </div>
+        <ProgressRing count={applicationCount} />
+      </section>
+
+      <div className={styles.statsGrid}>
+        <article className={styles.statCard}>
+          <span className={`${styles.statIcon} ${styles.statIconBlue}`} aria-hidden>
+            <Briefcase size={20} />
+          </span>
+          <div>
+            <p className={styles.statValue}>{applicationCount}</p>
+            <p className={styles.statLabel}>Applications</p>
+          </div>
+        </article>
+        <article className={styles.statCard}>
+          <span className={`${styles.statIcon} ${styles.statIconPurple}`} aria-hidden>
+            <Calendar size={20} />
+          </span>
+          <div>
+            <p className={`${styles.statValue} ${styles.statValueSm}`}>{nextSessionLabel}</p>
+            <p className={styles.statLabel}>Next session</p>
+          </div>
+        </article>
+        <article className={styles.statCard}>
+          <span className={`${styles.statIcon} ${styles.statIconEmerald}`} aria-hidden>
+            <Sparkles size={20} />
+          </span>
+          <div>
+            <p className={styles.statValue}>{unreadApplicationCount}</p>
+            <p className={styles.statLabel}>New updates</p>
+          </div>
+        </article>
+      </div>
+
+      {unreadApplicationCount > 0 && latestApplicationLabel ? (
+        <div className={styles.alertBanner}>
+          <p>
+            New update on <strong>{latestApplicationLabel}</strong> — open Applications
+            for the job description, tailored resume, and prep tips.
+          </p>
+          <Link href="/dashboard/applications" className={styles.alertLink}>
+            Open
+            <ArrowRight size={14} aria-hidden />
+          </Link>
+        </div>
       ) : null}
 
-      <section className={styles.stats} aria-label="Overview">
-        <article className={styles.statCard}>
-          <p className={styles.statLabel}>Applications</p>
-          <p className={styles.statValue}>{applicationCount}</p>
-          <p className={styles.statHint}>Roles applied on your behalf</p>
-        </article>
-        <article className={styles.statCard}>
-          <p className={styles.statLabel}>Next session</p>
-          <p className={`${styles.statValue} ${styles.statValueText}`}>
-            {nextSessionLabel}
-          </p>
-          <p className={styles.statHint}>Career advisory calendar</p>
-        </article>
+      <section className={styles.workspaceSection}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Quick access</h2>
+          <span className={styles.sectionMeta}>{workspaceLinks.length} areas</span>
+        </div>
+        <div className={styles.cardGrid}>
+          {workspaceLinks.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.href} href={item.href} className={styles.workspaceCard}>
+                <span className={`${styles.cardIcon} ${styles[`cardIcon_${item.tone}`]}`}>
+                  <Icon size={22} strokeWidth={2} />
+                </span>
+                <h3 className={styles.cardTitle}>{item.label}</h3>
+                <p className={styles.cardDesc}>{item.description}</p>
+                <span className={styles.cardLink}>
+                  Open
+                  <ArrowRight size={14} aria-hidden />
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </section>
     </div>
   );

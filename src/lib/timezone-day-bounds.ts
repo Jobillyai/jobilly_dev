@@ -10,6 +10,9 @@ export function getLocalDateString(timeZone: string, date = new Date()): string 
 
 function parseLocalDate(localDate: string): { year: number; month: number; day: number } {
   const [year, month, day] = localDate.split("-").map(Number);
+  if (year === undefined || month === undefined || day === undefined) {
+    throw new Error(`Invalid local date: ${localDate}`);
+  }
   return { year, month, day };
 }
 

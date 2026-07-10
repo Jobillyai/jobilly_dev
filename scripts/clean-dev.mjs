@@ -1,12 +1,6 @@
 import fs from "fs";
-import path from "path";
-import os from "os";
 import { setTimeout as sleep } from "timers/promises";
-
-const projectRoot = process.cwd();
-const nextDir = path.join(projectRoot, ".next");
-const tempNext = path.join(os.tmpdir(), "jobilly-next-dev");
-const tempWebpack = path.join(os.tmpdir(), "jobilly-webpack-cache");
+import { getProjectDistDir } from "./next-dist-path.mjs";
 
 async function removePath(target, attempts = 5) {
   if (!fs.existsSync(target)) {
@@ -27,18 +21,5 @@ async function removePath(target, attempts = 5) {
   }
 }
 
-if (fs.existsSync(nextDir)) {
-  try {
-    if (fs.lstatSync(nextDir).isSymbolicLink()) {
-      await removePath(nextDir);
-    }
-  } catch {
-    // ignore
-  }
-}
-
-await removePath(nextDir);
-await removePath(tempNext);
-await removePath(tempWebpack);
-
+await removePath(getProjectDistDir());
 console.log("Next.js dev cache cleared.");

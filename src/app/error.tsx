@@ -30,7 +30,7 @@ export default function Error({ error, reset }: ErrorPageProps) {
           border: "none",
           borderRadius: "12px",
           padding: "12px 20px",
-          background: "var(--jb-brand, #7c3aed)",
+          background: "var(--jb-ink, #0f172a)",
           color: "#ffffff",
           fontWeight: 700,
           cursor: "pointer",

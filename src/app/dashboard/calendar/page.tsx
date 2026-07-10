@@ -38,14 +38,22 @@ export default async function CandidateCalendarPage() {
   return (
     <div className={styles.page}>
       <main className={`${styles.main} ${pageStyles.main}`}>
-        <div className={pageStyles.header}>
-          <h1 className={styles.title}>
-            My <em className={styles.titleEm}>Calendar</em>
-          </h1>
-          <p className={pageStyles.subtitle}>
-            View your career advisory sessions and join Google Meet from your calendar.
+        <header className={styles.topBar}>
+          <div>
+            <p className={styles.eyebrow}>Student portal</p>
+            <h1 className={styles.title}>My calendar</h1>
+            <p className={pageStyles.subtitle}>
+              View your career advisory sessions and join Google Meet from your calendar.
+            </p>
+          </div>
+          <p className={styles.dateLabel}>
+            {new Intl.DateTimeFormat("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            }).format(new Date())}
           </p>
-        </div>
+        </header>
 
         {intake?.sessionScheduledAt && (
           <div className={pageStyles.nextSessionCard}>

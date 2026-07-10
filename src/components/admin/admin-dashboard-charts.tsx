@@ -44,7 +44,7 @@ function PieChart({ segments, size = 168 }: PieChartProps) {
         cy={center}
         r={radius}
         fill="none"
-        stroke="#f3f4f6"
+        stroke="#ececea"
         strokeWidth={stroke}
       />
       {segments.map((segment) => {
@@ -151,7 +151,7 @@ export function AdminDashboardCharts({
           description="Free vs premium candidate accounts"
           segments={[
             { label: "Free candidates", value: freeCandidates, color: "#4a9fff" },
-            { label: "Premium candidates", value: premiumCandidates, color: "#7c3aed" },
+            { label: "Premium candidates", value: premiumCandidates, color: "#0f172a" },
           ]}
         />
         <ChartCard
@@ -174,7 +174,7 @@ export function AdminDashboardCharts({
           title="Meet invite status"
           description="Google Meet invites for advisory intakes"
           segments={[
-            { label: "Invite sent", value: invitesSent, color: "#7c3aed" },
+            { label: "Invite sent", value: invitesSent, color: "#334155" },
             { label: "Invite pending", value: pendingInvites, color: "#f59e0b" },
           ]}
         />
@@ -182,7 +182,7 @@ export function AdminDashboardCharts({
           title="Jobs pipeline"
           description="Jobs selected for admin apply workflow"
           segments={[
-            { label: "Marked to apply", value: selectedJobs, color: "#8b5cf6" },
+            { label: "Marked to apply", value: selectedJobs, color: "#475569" },
             { label: "Not selected yet", value: unselectedJobs, color: "#93c5fd" },
           ]}
         />

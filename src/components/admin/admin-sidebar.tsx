@@ -88,8 +88,8 @@ export function AdminSidebar({ showJobApplyNav = true }: AdminSidebarProps) {
       <JobillyLogo
         href="/admin"
         markSize={40}
-        onDark
         subtitle="Admin portal"
+        onDark
         className={styles.brand}
       />
 

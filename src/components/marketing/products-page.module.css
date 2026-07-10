@@ -1,6 +1,6 @@
 .page {
   font-family: var(--jb-font-sans);
-  background: var(--jb-surface-subtle);
+  background: var(--jb-portal-bg);
   color: var(--jb-ink);
   min-height: 100vh;
 }
@@ -9,9 +9,7 @@
 .hero {
   position: relative;
   padding: 96px 24px 56px;
-  background:
-    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(167, 139, 250, 0.2), transparent 55%),
-    linear-gradient(180deg, var(--jb-brand-soft) 0%, var(--jb-surface) 100%);
+  background: transparent;
   border-bottom: 1px solid var(--jb-border);
   overflow: hidden;
   text-align: center;
@@ -542,7 +540,7 @@
 }
 
 .journeyPractice {
-  border-top-color: #7c3aed;
+  border-top-color: #475569;
 }
 
 .journeyApply {
@@ -712,7 +710,7 @@
 }
 
 .serviceCardFeatured {
-  background: linear-gradient(145deg, var(--jb-surface) 0%, var(--jb-brand-soft) 100%);
+  background: var(--jb-surface);
 }
 
 .serviceCardSoon {

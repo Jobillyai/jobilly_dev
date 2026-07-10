@@ -43,8 +43,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, var(--jb-brand-soft, #f5f3ff) 0%, #ffffff 100%);
-  border-bottom: 1px solid var(--jb-brand-border, #ddd6fe);
+  background: var(--jb-surface-subtle);
+  border-bottom: 1px solid var(--jb-border);
 }
 
 .headerIdentity {
@@ -120,7 +120,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--jb-surface-subtle, #f8fbff);
+  background: var(--jb-surface-subtle, #f6f6f4);
 }
 
 .messageAssistant,
@@ -170,7 +170,7 @@
 }
 
 .messageUser .messageText {
-  background: var(--jb-brand, #7c3aed);
+  background: var(--jb-ink, #0f172a);
   color: #ffffff;
   border-top-right-radius: 4px;
 }
@@ -196,7 +196,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--jb-brand, #7c3aed);
+  background: var(--jb-ink-muted, #64748b);
   opacity: 0.45;
   animation: typingPulse 1.2s infinite ease-in-out;
 }
@@ -244,7 +244,7 @@
   font-size: 14px;
   line-height: 1.45;
   color: var(--jb-ink, #0a1628);
-  background: var(--jb-surface-subtle, #f8fbff);
+  background: var(--jb-surface-subtle, #f6f6f4);
 }
 
 .input:focus {
@@ -261,7 +261,7 @@
   height: 42px;
   border: none;
   border-radius: 12px;
-  background: var(--jb-brand, #7c3aed);
+  background: var(--jb-ink, #0f172a);
   color: #ffffff;
   cursor: pointer;
   flex-shrink: 0;
@@ -273,7 +273,7 @@
 }
 
 .sendBtn:not(:disabled):hover {
-  background: var(--jb-brand-hover, #1565d8);
+  background: var(--jb-dark-elevated, #1e293b);
 }
 
 .launcher {
@@ -283,18 +283,10 @@
   width: 56px;
   height: 56px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--jb-border);
   border-radius: 50%;
-  background: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.96) 0%,
-    rgba(245, 243, 255, 0.88) 100%
-  );
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  box-shadow:
-    0 12px 28px rgba(124, 58, 237, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  background: #ffffff;
+  box-shadow: var(--jb-shadow-md);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -305,9 +297,7 @@
 
 .launcher:hover {
   transform: translateY(-2px) scale(1.04);
-  box-shadow:
-    0 16px 32px rgba(124, 58, 237, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  box-shadow: var(--jb-shadow-lg);
 }
 
 .launcherOpen {
@@ -316,9 +306,9 @@
   padding: 0;
   border-radius: 50%;
   border: none;
-  background: var(--jb-brand, #7c3aed);
+  background: var(--jb-ink, #0f172a);
   color: #ffffff;
-  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.35);
+  box-shadow: var(--jb-shadow-md);
 }
 
 .launcherOpen:hover {
@@ -338,7 +328,7 @@
   padding: 6px 10px;
   border: 1px solid var(--jb-brand-border, #dbeafe);
   border-radius: 999px;
-  background: var(--jb-surface-subtle, #f8fbff);
+  background: var(--jb-surface-subtle, #f6f6f4);
   color: var(--jb-brand, #1877f2);
   font-family: inherit;
   font-size: 12px;
@@ -347,7 +337,7 @@
 }
 
 .promptBtn:hover:not(:disabled) {
-  background: var(--jb-brand-soft, #f0f6ff);
+  background: var(--jb-brand-soft, #f6f6f4);
 }
 
 .promptBtn:disabled {

@@ -1,15 +1,24 @@
 "use client";
 
 import { useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import styles from "./welcome-page.module.css";
+import revealStyles from "./welcome-reveal.module.css";
 import { CompaniesMarquee } from "./companies-marquee";
-import { HeroPreview } from "./hero-preview";
+import { WelcomeHeroCarousel } from "./welcome-hero-carousel";
+import { WelcomeHeroMesh, WelcomeWaveMesh } from "./welcome-hero-mesh";
+import { WelcomePipelineSection } from "./welcome-pipeline-section";
 import { WelcomeServicesSection } from "./welcome-services-section";
 import { JobenChatWidget } from "./joben-chat-widget";
 import { useScrollReveal } from "./use-scroll-reveal";
+
+const platformStats = [
+  { value: "4", label: "career phases" },
+  { value: "Free", label: "advisory sessions" },
+  { value: "AI", label: "interview practice" },
+  { value: "Team", label: "managed apply" },
+] as const;
 
 export function WelcomePage() {
   const revealRef = useScrollReveal<HTMLDivElement>();
@@ -29,25 +38,22 @@ export function WelcomePage() {
   return (
     <div className={styles.page} ref={revealRef}>
       <section className={styles.hero}>
-        <div className={styles.heroBgOrb1} aria-hidden />
-        <div className={styles.heroBgOrb2} aria-hidden />
-
-        <div className={styles.heroInner}>
-          <div className={styles.heroCopy}>
-            <div className={styles.heroEyebrow}>
-              <Star size={14} aria-hidden />
-              AI-powered career platform
-            </div>
-
-            <h1 className={styles.h1}>
-              Land your first job
-              <br />
-              <em className={styles.h1Em}>without the chaos</em>
+        <WelcomeHeroMesh />
+        <div className={styles.heroGrid}>
+          <div className={styles.heroInner}>
+            <p className={styles.heroEyebrow}>Graduate career portal</p>
+            <h1
+              className={`${styles.h1} ${revealStyles.revealFromLeft}`}
+              data-reveal
+              data-reveal-visible-class="revealed"
+            >
+              Be ready to apply to every role that fits you.{" "}
+              <span className={styles.brandWord}>Hands on.</span>
             </h1>
 
             <p className={styles.heroSub}>
-              Jobilly gives graduates one clean workspace — career advisory, interview prep,
-              and a team that applies to roles on your behalf.
+              Free career advisory, interview prep, and managed applications — discover,
+              prepare, apply, and track everything from one calm workspace.
             </p>
 
             <div className={styles.heroActions}>
@@ -55,94 +61,106 @@ export function WelcomePage() {
                 Get started free
                 <ArrowRight size={16} aria-hidden />
               </Link>
-              <Link href="/products" className={styles.btnSecondary}>
-                View plans
+              <Link href="#pipeline" className={styles.btnSecondary}>
+                See how it works
               </Link>
             </div>
 
-            <div className={styles.heroMetrics}>
-              <div className={styles.metric}>
-                <strong>Free</strong>
-                <span>Career advisory</span>
-              </div>
-              <div className={styles.metricDivider} aria-hidden />
-              <div className={styles.metric}>
-                <strong>AI</strong>
-                <span>Mock interviews</span>
-              </div>
-              <div className={styles.metricDivider} aria-hidden />
-              <div className={styles.metric}>
-                <strong>Team</strong>
-                <span>Managed apply</span>
-              </div>
-            </div>
+            <p className={styles.heroNote}>Free advisory sessions — no card required.</p>
           </div>
 
-          <div className={styles.heroVisual}>
-            <HeroPreview />
+          <div className={styles.heroPreview}>
+            <WelcomeHeroCarousel />
+          </div>
+        </div>
+
+        <div className={styles.statsBand}>
+          {platformStats.map((stat) => (
+            <div key={stat.label} className={styles.statItem}>
+              <span className={styles.statValue}>{stat.value}</span>
+              <span className={styles.statLabel}>{stat.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <WelcomePipelineSection />
+
+      <section className={styles.editorialSection}>
+        <WelcomeWaveMesh direction="tl-br" lineCount={52} />
+        <div className={styles.sectionContent}>
+          <div className={styles.editorialInner}>
+            <h2
+              className={`${styles.editorialTitle} ${revealStyles.revealFromRight}`}
+              data-reveal
+              data-reveal-visible-class="revealed"
+            >
+              Hey there,
+            </h2>
+            <div className={styles.editorialCopy}>
+              <p>
+                This is not a typical job board. Jobilly is built for people at the start
+                of their career — when every application matters and good guidance is hard
+                to find. We combine free career advisory with tools that grow with you:
+                profile and resume hub, session calendar, practice, and managed
+                applications when you want hands-on help.
+              </p>
+              <p>
+                As a team, we believe in clear paths over chaos. No spray-and-pray
+                applying. No generic advice copied from a blog post. Just discover →
+                prepare → practice → apply, with humans in the loop when it counts.
+              </p>
+              <p>
+                We keep everything in one portal so you are not juggling tabs,
+                spreadsheets, and scattered PDFs. And when you are ready for managed
+                apply, our team searches roles, tailors resumes, and tracks every
+                application — you stay in control from your dashboard.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      <div className={styles.companiesStrip}>
-        <p className={styles.companiesLabel}>Built for candidates targeting teams like</p>
-        <CompaniesMarquee />
-      </div>
-
       <WelcomeServicesSection />
 
-      <div id="community" className={styles.instSection}>
-        <div className={styles.instInner}>
-          <div className={styles.revealLeft} data-reveal data-reveal-visible-class={styles.revealLeftVisible}>
-            <div className={styles.instVisual}>
-              <Image
-                src="/marketing/welcome-institutions.png"
-                alt="Universities and companies partnering on career outcomes"
-                width={560}
-                height={560}
-                className={styles.instVisualImg}
-              />
-            </div>
-            <div className={`${styles.label} ${styles.instLabel}`}>
-              <div className={styles.labelDot} /> For universities &amp; companies
-            </div>
-            <div className={styles.instTitle}>
-              Jobilly for <em className={styles.instTitleEm}>Institutions</em>
-            </div>
-            <p className={styles.instSub}>
-              Partner with us to give your students or employees Growth School, Career Advisory,
-              and Mock Interviews — co-branded under one subscription.
+      <div className={styles.companiesStrip}>
+        <WelcomeWaveMesh direction="bl-tr" lineCount={52} extent="strip" />
+        <div className={styles.companiesStripInner}>
+          <p className={styles.companiesLabel}>
+            Built for candidates targeting teams like
+          </p>
+          <CompaniesMarquee />
+        </div>
+      </div>
+
+      <section className={styles.ctaSection}>
+        <div className={styles.sectionContent}>
+          <div className={styles.ctaInner}>
+            <h2
+              className={`${styles.ctaTitle} ${revealStyles.revealFromLeft}`}
+              data-reveal
+              data-reveal-visible-class="revealed"
+            >
+              Can&apos;t find what
+              <br />
+              you are looking for?
+            </h2>
+            <p className={styles.ctaSub}>
+              We partner with universities and employers too. Tell us what you need —
+              for yourself or your cohort — and we will point you in the right direction.
             </p>
-            <Link href="/contact" className={styles.btnPrimary}>
-              Get in touch
-              <ArrowRight size={16} aria-hidden />
-            </Link>
-          </div>
-          <div className={styles.instCards} data-reveal data-reveal-visible-class={styles.revealRightVisible}>
-            <div className={`${styles.instCardItem} ${styles.revealRight}`}>
-              <div className={styles.instCardIcon}>01</div>
-              <div className={styles.instCardText}>
-                <h4>Your brand, our platform</h4>
-                <p>Co-branded experience with your institution&apos;s logo and colours.</p>
-              </div>
-            </div>
-            <div className={`${styles.instCardItem} ${styles.revealRight}`}>
-              <div className={styles.instCardIcon}>02</div>
-              <div className={styles.instCardText}>
-                <h4>Progress dashboards</h4>
-                <p>Admins track student progress across every feature.</p>
-              </div>
-            </div>
-            <div className={`${styles.instCardItem} ${styles.revealRight}`}>
-              <div className={styles.instCardIcon}>03</div>
-              <div className={styles.instCardText}>
-                <h4>One subscription</h4>
-                <p>Single institution billing covers your entire cohort.</p>
-              </div>
+            <div className={styles.ctaActions}>
+              <Link href="/contact" className={styles.btnPrimary}>
+                Get in touch
+                <ArrowRight size={16} aria-hidden />
+              </Link>
+              <Link href="/products" className={styles.btnSecondary}>
+                View plans
+              </Link>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <JobenChatWidget />
     </div>

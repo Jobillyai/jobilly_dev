@@ -10,15 +10,12 @@ import { formatExperienceYears } from "@/lib/format-experience-years";
 import { formatCandidateGender } from "@/lib/candidate-profile-options";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
-import { MentorMeetingLinkForm } from "@/components/admin/mentor-meeting-link-form";
 import styles from "./candidates-list.module.css";
 
 type CandidatesListProps = {
   candidates: AdminCandidate[];
   mentors: MentorOption[];
   isManager: boolean;
-  isMentor: boolean;
-  defaultMeetUrl?: string | null;
 };
 
 function formatDate(value: string | null): string {
@@ -47,8 +44,6 @@ type CandidateRowProps = {
   expanded: boolean;
   onToggle: () => void;
   isManager: boolean;
-  isMentor: boolean;
-  defaultMeetUrl?: string | null;
   mentors: MentorOption[];
   assignedMentorId: string | null;
   onAssigned: (candidateId: string, mentorId: string) => void;
@@ -59,8 +54,6 @@ function CandidateRow({
   expanded,
   onToggle,
   isManager,
-  isMentor,
-  defaultMeetUrl,
   mentors,
   assignedMentorId,
   onAssigned,
@@ -332,34 +325,6 @@ function CandidateRow({
                     <dd>{formatDate(submission.sessionScheduledAt)}</dd>
                   </>
                 ) : null}
-                {submission.googleMeetLink ? (
-                  <>
-                    <dt>Google Meet</dt>
-                    <dd className={styles.detailWide}>
-                      <a
-                        href={submission.googleMeetLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.meetLinkBtn}
-                      >
-                        Join meeting
-                      </a>
-                      <a
-                        href={submission.googleMeetLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.detailLink}
-                      >
-                        {submission.googleMeetLink}
-                      </a>
-                    </dd>
-                  </>
-                ) : submission.inviteSentAt ? (
-                  <>
-                    <dt>Google Meet</dt>
-                    <dd>Invite sent — link not stored</dd>
-                  </>
-                ) : null}
               </dl>
             </section>
           ) : (
@@ -368,19 +333,6 @@ function CandidateRow({
             </p>
           )}
 
-          {isMentor ? (
-            <section className={styles.section}>
-              <h4 className={styles.sectionTitle}>Meeting link</h4>
-              <MentorMeetingLinkForm
-                candidateId={candidate.id}
-                candidateEmail={candidate.email}
-                existingMeetLink={submission?.googleMeetLink}
-                sessionScheduledAt={submission?.sessionScheduledAt}
-                inviteSentAt={submission?.inviteSentAt}
-                defaultMeetUrl={defaultMeetUrl}
-              />
-            </section>
-          ) : null}
         </div>
       ) : null}
     </article>
@@ -391,8 +343,6 @@ export function CandidatesList({
   candidates,
   mentors,
   isManager,
-  isMentor,
-  defaultMeetUrl,
 }: CandidatesListProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [assignedByCandidate, setAssignedByCandidate] = useState<Record<string, string>>(() =>
@@ -444,8 +394,6 @@ export function CandidatesList({
           expanded={expandedIds.has(candidate.id)}
           onToggle={() => toggleExpanded(candidate.id)}
           isManager={isManager}
-          isMentor={isMentor}
-          defaultMeetUrl={defaultMeetUrl}
           mentors={mentors}
           assignedMentorId={assignedByCandidate[candidate.id] ?? null}
           onAssigned={(candidateId, mentorId) => {

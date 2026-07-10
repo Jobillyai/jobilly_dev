@@ -8,6 +8,7 @@ type StaffProfileCardProps = {
   roleLabel: string;
   backHref?: "/admin";
   backLabel?: string;
+  showHeader?: boolean;
 };
 
 export function StaffProfileCard({
@@ -15,15 +16,20 @@ export function StaffProfileCard({
   roleLabel,
   backHref = "/admin",
   backLabel = "Back to dashboard",
+  showHeader = true,
 }: StaffProfileCardProps) {
   return (
     <div className={styles.card}>
-      <h1 className={styles.title}>
-        Staff <em className={styles.titleEm}>profile</em>
-      </h1>
-      <p className={styles.subtitle}>
-        Your {roleLabel.toLowerCase()} employee ID for the admin portal.
-      </p>
+      {showHeader ? (
+        <>
+          <h1 className={styles.title}>
+            Staff <em className={styles.titleEm}>profile</em>
+          </h1>
+          <p className={styles.subtitle}>
+            Your {roleLabel.toLowerCase()} employee ID for the admin portal.
+          </p>
+        </>
+      ) : null}
 
       <dl className={styles.fieldList}>
         <div className={styles.field}>

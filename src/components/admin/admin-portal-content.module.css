@@ -1,0 +1,14 @@
+.content {
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+  background: var(--jb-admin-canvas);
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.contentInner {
+  min-height: 100%;
+}

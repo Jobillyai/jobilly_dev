@@ -19,15 +19,23 @@ export default async function CandidateApplicationsPage() {
   return (
     <div className={styles.page}>
       <main className={`${styles.main} ${pageStyles.main}`}>
-        <div className={pageStyles.header}>
-          <h1 className={styles.title}>
-            My <em className={styles.titleEm}>Applications</em>
-          </h1>
-          <p className={pageStyles.subtitle}>
-            When our team applies to a role on your behalf, you&apos;ll see the full job
-            description, tailored resume, and preparation tips here.
+        <header className={styles.topBar}>
+          <div>
+            <p className={styles.eyebrow}>Student portal</p>
+            <h1 className={styles.title}>My applications</h1>
+            <p className={pageStyles.subtitle}>
+              When our team applies to a role on your behalf, you&apos;ll see the full job
+              description, tailored resume, and preparation tips here.
+            </p>
+          </div>
+          <p className={styles.dateLabel}>
+            {new Intl.DateTimeFormat("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            }).format(new Date())}
           </p>
-        </div>
+        </header>
 
         {applications.length === 0 ? (
           <div className={pageStyles.emptyCard}>
