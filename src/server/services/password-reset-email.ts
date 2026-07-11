@@ -91,19 +91,28 @@ export function buildPasswordResetEmailHtml(input: {
 
 async function createRecoveryLink(email: string): Promise<string | null> {
   const admin = createAdminClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
     email,
     options: {
-      redirectTo: `${appUrl}/auth/callback`,
+      redirectTo: `${appUrl}/auth/callback?type=recovery`,
     },
   });
 
   if (error) {
     console.error("generateLink error:", error);
     return null;
+  }
+
+  const tokenHash = data.properties?.hashed_token;
+  if (tokenHash) {
+    const params = new URLSearchParams({
+      token_hash: tokenHash,
+      type: "recovery",
+    });
+    return `${appUrl}/auth/callback?${params.toString()}`;
   }
 
   return data.properties?.action_link ?? null;

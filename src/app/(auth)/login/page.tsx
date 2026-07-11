@@ -19,11 +19,13 @@ export default function LoginPage() {
   const confirmationError =
     searchParams.get("error") === "confirmation_failed"
       ? "Email confirmation failed. Open the link in the same browser you signed up with, or sign up again."
-      : searchParams.get("error") === "auth_callback_failed"
-        ? "Google sign-in could not be completed. Use the same browser and try again."
-        : searchParams.get("error") === "google_auth_failed"
-          ? "Could not start Google sign-in. Try again."
-          : undefined;
+      : searchParams.get("error") === "reset_link_failed"
+        ? "This password reset link is invalid or has expired. Request a new one from the forgot password page."
+        : searchParams.get("error") === "auth_callback_failed"
+          ? "Google sign-in could not be completed. Use the same browser and try again."
+          : searchParams.get("error") === "google_auth_failed"
+            ? "Could not start Google sign-in. Try again."
+            : undefined;
   const signupSuccess = searchParams.get("signup") === "success";
   const resetSuccess = searchParams.get("reset") === "success";
   const [state, setState] = useState<LoginState>(initialState);

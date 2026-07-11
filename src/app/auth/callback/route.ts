@@ -58,6 +58,13 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
+  const authErrorParam = searchParams.get("error_description") ?? searchParams.get("error");
+
+  if (authErrorParam) {
+    console.error("Auth callback provider error:", authErrorParam);
+    return NextResponse.redirect(`${origin}/login?error=reset_link_failed`);
+  }
+
   const isPasswordReset =
     request.cookies.get(RESET_FLOW_COOKIE)?.value === "1" ||
     type === "recovery";
@@ -99,10 +106,12 @@ export async function GET(request: NextRequest) {
     }
 
     console.error("Auth callback exchangeCodeForSession error:", error.message);
-    const authError = error.message.toLowerCase().includes("code verifier")
-      ? "auth_callback_failed"
-      : "confirmation_failed";
-    return NextResponse.redirect(`${origin}/login?error=${authError}`);
+    const loginError = isPasswordReset
+      ? "reset_link_failed"
+      : error.message.toLowerCase().includes("code verifier")
+        ? "auth_callback_failed"
+        : "confirmation_failed";
+    return NextResponse.redirect(`${origin}/login?error=${loginError}`);
   } else if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
       type,
@@ -116,7 +125,11 @@ export async function GET(request: NextRequest) {
     }
 
     console.error("Auth callback verifyOtp error:", error.message);
+    const loginError = type === "recovery" ? "reset_link_failed" : "confirmation_failed";
+    return NextResponse.redirect(`${origin}/login?error=${loginError}`);
   }
 
-  return NextResponse.redirect(`${origin}/login?error=confirmation_failed`);
+  return NextResponse.redirect(
+    `${origin}/login?error=${isPasswordReset ? "reset_link_failed" : "confirmation_failed"}`,
+  );
 }
