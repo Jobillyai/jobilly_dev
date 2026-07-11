@@ -35,25 +35,19 @@ export async function ensurePublicUserRecord(
     .eq("id", user.id)
     .maybeSingle();
 
-  if (existing) {
-    return {};
-  }
+  if (!existing) {
+    const { error } = await admin.from("users").insert({
+      id: user.id,
+      email: user.email ?? "",
+      name,
+      first_name: resolvedFirst || null,
+      last_name: resolvedLast || null,
+      role: "free_candidate",
+    });
 
-  const { error } = await admin.from("users").insert({
-    id: user.id,
-    email: user.email ?? "",
-    name,
-    first_name: resolvedFirst || null,
-    last_name: resolvedLast || null,
-    role: "free_candidate",
-  });
-
-  if (error) {
-    if (error.code === "23505") {
-      return {};
+    if (error && error.code !== "23505") {
+      return { error: error.message };
     }
-
-    return { error: error.message };
   }
 
   await registerNewCandidateSignup({

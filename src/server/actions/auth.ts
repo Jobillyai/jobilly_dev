@@ -11,7 +11,7 @@ import {
 } from "@/lib/rate-limit";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { createClient } from "@/server/db/supabase-server";
-import { registerNewCandidateSignup } from "@/server/services/register-new-candidate-signup";
+import { ensurePublicUserRecord } from "@/server/services/ensure-public-user";
 
 const signupSchema = z.object({
   firstName: z.string().min(1, "Enter your first name").max(100),
@@ -99,13 +99,8 @@ export async function signupAction(
       return { error: formatAuthError(createError.message) };
     }
 
-    if (created.user?.id) {
-      await registerNewCandidateSignup({
-        userId: created.user.id,
-        email,
-        firstName,
-        lastName,
-      });
+    if (created.user) {
+      await ensurePublicUserRecord(created.user);
     }
 
     redirect("/login?signup=success");
@@ -127,13 +122,8 @@ export async function signupAction(
     return { error: formatAuthError(error.message) };
   }
 
-  if (data.user?.id) {
-    await registerNewCandidateSignup({
-      userId: data.user.id,
-      email,
-      firstName,
-      lastName,
-    });
+  if (data.user) {
+    await ensurePublicUserRecord(data.user);
   }
 
   redirect("/login?signup=success");
@@ -177,6 +167,10 @@ export async function loginAction(
   }
 
   const userId = authData.user?.id;
+  if (authData.user) {
+    await ensurePublicUserRecord(authData.user);
+  }
+
   if (userId) {
     const { data: profile } = await supabase
       .from("users")

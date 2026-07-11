@@ -39,7 +39,11 @@ export type SendMeetInviteResult =
     };
 
 export function isCareerAdvisoryInviteEnabled(): boolean {
-  return process.env.NODE_ENV === "development";
+  if (process.env.CAREER_ADVISORY_INVITES_ENABLED === "false") {
+    return false;
+  }
+
+  return Boolean(getMeetUrl());
 }
 
 function getMeetUrl(): string | null {
