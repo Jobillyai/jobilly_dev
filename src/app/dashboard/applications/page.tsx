@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import { AppliedJobsList } from "@/components/dashboard/applied-jobs-list";
+import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import { getSessionUser } from "@/lib/auth/session";
 import { getCandidateAppliedJobs } from "@/server/services/candidate-jobs";
 import styles from "../dashboard.module.css";
@@ -28,14 +29,9 @@ export default async function CandidateApplicationsPage() {
               description, tailored resume, and preparation tips here.
             </p>
           </div>
-          <p className={styles.dateLabel}>
-            {new Intl.DateTimeFormat("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            }).format(new Date())}
-          </p>
         </header>
+
+        <PortalDateLabel />
 
         {applications.length === 0 ? (
           <div className={pageStyles.emptyCard}>

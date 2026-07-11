@@ -8,13 +8,18 @@ import {
   type CareerAdvisoryState,
 } from "@/server/actions/career-advisory";
 import type { CandidateCareerAdvisoryIntake } from "@/server/services/career-advisory-intake";
-import { formatDateTimeLocalValue } from "@/lib/career-advisory/booking-window";
+import {
+  CAREER_ADVISORY_US_TIMEZONE,
+  formatDateTimeLocalInZone,
+  formatSessionDateTimeFromIso,
+} from "@/lib/career-advisory/session-datetime";
 import { PersonNameFields } from "@/components/auth/person-name-fields";
 import { PhoneField } from "@/components/auth/phone-field";
 import { FormField } from "@/components/auth/form-field";
 import { splitFullName } from "@/lib/format-person-name";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { SessionBookingPicker } from "@/components/career-advisory/session-booking-picker";
+import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import authStyles from "@/components/auth/auth-page.module.css";
 import dashboardStyles from "@/app/dashboard/dashboard.module.css";
 import styles from "./career-advisory-form.module.css";
@@ -27,19 +32,7 @@ type CareerAdvisoryFormProps = {
 };
 
 function formatSessionLabel(value: string | null | undefined) {
-  if (!value) {
-    return null;
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(new Date(value));
+  return formatSessionDateTimeFromIso(value, "candidate");
 }
 
 function formatSubmittedAt(value: string) {
@@ -62,7 +55,7 @@ function sessionDefaultValue(value: string | null | undefined) {
     return undefined;
   }
 
-  return formatDateTimeLocalValue(date);
+  return formatDateTimeLocalInZone(date, CAREER_ADVISORY_US_TIMEZONE);
 }
 
 function PreviousSubmissionPanel({ intake }: { intake: CandidateCareerAdvisoryIntake }) {
@@ -172,14 +165,9 @@ export function CareerAdvisoryForm({
             submission anytime — your latest entry is shown below.
           </p>
         </div>
-        <p className={dashboardStyles.dateLabel}>
-          {new Intl.DateTimeFormat("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          }).format(new Date())}
-        </p>
       </header>
+
+      <PortalDateLabel />
 
       {successMessage ? (
         <p role="status" className={authStyles.successAlert}>

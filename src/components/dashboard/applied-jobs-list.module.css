@@ -13,7 +13,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 20px 22px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--jb-portal-panel-border);
   border-radius: 18px;
   background: var(--jb-portal-card);
   box-shadow: var(--jb-portal-shadow);
@@ -42,8 +42,8 @@
 }
 
 .cardNew {
-  background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
-  border-color: #e0e7ff;
+  background: var(--jb-portal-card-highlight);
+  border-color: var(--jb-portal-card-highlight-border);
 }
 
 .cardNew.cardExpanded {
@@ -139,9 +139,9 @@
   align-items: center;
   gap: 4px;
   padding: 8px 12px;
-  border: 1px solid #e0e7ff;
+  border: 1px solid var(--jb-portal-alert-border);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--jb-elevated-surface);
   color: var(--jb-portal-accent-indigo);
   font-family: var(--jb-font-sans);
   font-size: 13px;
@@ -151,8 +151,8 @@
 }
 
 .moreBtn:hover {
-  background: #eef2ff;
-  border-color: #c7d2fe;
+  background: var(--jb-brand-soft);
+  border-color: var(--jb-brand-border);
   color: var(--jb-portal-accent-purple);
 }
 
@@ -202,8 +202,8 @@
   overflow: auto;
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid #e0e7ff;
-  background: #f8fafc;
+  border: 1px solid var(--jb-portal-alert-border);
+  background: var(--jb-portal-jd-panel-bg);
 }
 
 .jdText {
@@ -231,7 +231,7 @@
   flex-direction: column;
   gap: 12px;
   border-radius: var(--jb-radius-md);
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--jb-portal-tips-bg);
   border: 1px solid var(--jb-brand-border);
 }
 
@@ -256,8 +256,8 @@
   gap: 8px;
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid #e0e7ff;
-  background: #ffffff;
+  border: 1px solid var(--jb-portal-alert-border);
+  background: var(--jb-elevated-surface);
   color: var(--jb-portal-accent-indigo);
   font-size: 14px;
   font-weight: 700;
@@ -269,8 +269,8 @@
 
 .resumeLink:hover {
   color: var(--jb-portal-accent-purple);
-  background: #eef2ff;
-  border-color: #c7d2fe;
+  background: var(--jb-brand-soft);
+  border-color: var(--jb-brand-border);
 }
 
 .resumeLink:disabled {
@@ -285,7 +285,7 @@
   padding: 8px 12px;
   border-radius: var(--jb-radius-sm);
   border: 1px solid var(--jb-brand-border);
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--jb-elevated-surface);
   color: var(--jb-brand);
   font-family: var(--jb-font-sans);
   font-size: 12px;
@@ -363,7 +363,7 @@
   padding: 10px 14px;
   border-radius: var(--jb-radius-sm);
   border: 1px dashed var(--jb-brand-border);
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--jb-elevated-surface);
   color: var(--jb-brand);
   font-size: 13px;
   font-weight: 700;

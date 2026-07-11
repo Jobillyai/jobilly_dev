@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--jb-loader-overlay);
   backdrop-filter: blur(6px);
 }
 

@@ -11,7 +11,7 @@
   padding: 24px;
   margin-bottom: 16px;
   background: var(--jb-portal-card);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--jb-portal-panel-border);
   border-radius: 20px;
   box-shadow: var(--jb-portal-shadow);
 }
@@ -110,7 +110,7 @@
   padding: 8px 14px;
   border: none;
   background: var(--jb-brand);
-  color: #fff;
+  color: var(--jb-btn-primary-fg);
 }
 
 .photoBtn:hover:not(:disabled) {
@@ -133,7 +133,7 @@
 
 .card {
   background: var(--jb-portal-card);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--jb-portal-panel-border);
   border-radius: 20px;
   padding: 24px;
   box-shadow: var(--jb-portal-shadow);
@@ -298,7 +298,7 @@
 }
 
 .chooseFileBtn:hover:not(:disabled) {
-  background: #fff;
+  background: var(--jb-surface-raised);
   border-color: var(--jb-brand);
 }
 
@@ -350,7 +350,7 @@
   padding: 11px 20px;
   border: none;
   background: var(--jb-brand);
-  color: #fff;
+  color: var(--jb-btn-primary-fg);
 }
 
 .primaryBtn:hover:not(:disabled) {

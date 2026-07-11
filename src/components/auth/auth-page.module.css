@@ -46,14 +46,14 @@
   z-index: 3;
   width: 100%;
   max-width: 560px;
-  background: rgba(255, 255, 255, 0.52);
+  background: var(--jb-glass-surface);
   backdrop-filter: blur(20px) saturate(1.15);
   -webkit-backdrop-filter: blur(20px) saturate(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--jb-glass-border);
   border-radius: var(--jb-radius-xl);
   padding: clamp(32px, 4vw, 44px);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 1px 0 var(--jb-glass-highlight) inset,
     0 24px 56px rgba(17, 17, 17, 0.08);
 }
 
@@ -328,9 +328,9 @@
 
 .submitBtn {
   width: 100%;
-  background: var(--jb-ink);
-  color: #ffffff;
-  border: 1px solid var(--jb-ink);
+  background: var(--jb-btn-primary-bg);
+  color: var(--jb-btn-primary-fg);
+  border: 1px solid var(--jb-btn-primary-bg);
   border-radius: 999px;
   padding: 14px 28px;
   font-family: var(--jb-font-sans);
@@ -343,7 +343,8 @@
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: var(--jb-dark-elevated);
+  background: var(--jb-btn-primary-hover);
+  border-color: var(--jb-btn-primary-hover);
   transform: translateY(-2px);
   box-shadow: var(--jb-shadow-md);
 }
@@ -437,9 +438,9 @@
 
   .card {
     max-width: none;
-    background: rgba(255, 255, 255, 0.58);
+    background: var(--jb-glass-surface);
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.85) inset,
+      0 1px 0 var(--jb-glass-highlight) inset,
       0 16px 40px rgba(17, 17, 17, 0.08);
   }
 }

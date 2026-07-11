@@ -3,6 +3,8 @@ import AppShell from "@/components/layout/app-shell";
 import { RouteLoader } from "@/components/layout/route-loader";
 import { SiteBootLoader } from "@/components/layout/site-boot-loader";
 import { SiteFooterShell } from "@/components/layout/site-footer-shell";
+import { ThemeProvider } from "@/components/theme/theme-provider";
+import { ThemeScript } from "@/components/theme/theme-script";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import "./globals.css";
 
@@ -32,8 +34,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <ThemeScript />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font -- known false-positive for App Router; this layout's <head> applies to every page, equivalent to pages/_document.js */}
@@ -43,14 +46,16 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <TRPCProvider>
-          <SiteBootLoader />
-          <RouteLoader />
-          <div className="flex min-h-screen min-w-0 flex-col">
-            <AppShell>{children}</AppShell>
-            <SiteFooterShell />
-          </div>
-        </TRPCProvider>
+        <ThemeProvider>
+          <TRPCProvider>
+            <SiteBootLoader />
+            <RouteLoader />
+            <div className="flex min-h-screen min-w-0 flex-col">
+              <AppShell>{children}</AppShell>
+              <SiteFooterShell />
+            </div>
+          </TRPCProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

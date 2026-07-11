@@ -93,13 +93,14 @@
 }
 
 .btnPrimary {
-  color: #ffffff;
-  background: var(--jb-ink);
-  border: 1px solid var(--jb-ink);
+  color: var(--jb-btn-primary-fg);
+  background: var(--jb-btn-primary-bg);
+  border: 1px solid var(--jb-btn-primary-bg);
 }
 
 .btnPrimary:hover {
-  background: var(--jb-dark-elevated);
+  background: var(--jb-btn-primary-hover);
+  border-color: var(--jb-btn-primary-hover);
   transform: translateY(-1px);
 }
 

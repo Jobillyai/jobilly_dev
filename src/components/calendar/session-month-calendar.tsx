@@ -6,6 +6,7 @@ import {
   formatMonthLabel,
   getSessionDateKey,
 } from "@/lib/calendar/month-grid";
+import { CAREER_ADVISORY_US_TIMEZONE } from "@/lib/career-advisory/session-datetime";
 import styles from "./session-month-calendar.module.css";
 
 export type SessionCalendarEvent = {
@@ -33,6 +34,8 @@ function formatEventTime(value: string | null): string {
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: CAREER_ADVISORY_US_TIMEZONE,
+    timeZoneName: "short",
   }).format(new Date(value));
 }
 

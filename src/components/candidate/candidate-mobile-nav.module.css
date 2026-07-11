@@ -14,8 +14,8 @@
     justify-content: space-around;
     gap: 2px;
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
-    background: rgba(255, 255, 255, 0.98);
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    background: var(--jb-elevated-surface);
+    border-top: 1px solid var(--jb-border);
     box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.06);
     backdrop-filter: blur(12px);
     font-family: var(--jb-font-sans);
@@ -38,7 +38,7 @@
 
   .linkActive {
     color: var(--jb-portal-accent-indigo);
-    background: #eef2ff;
+    background: var(--jb-brand-soft);
   }
 
   .iconWrap {
@@ -68,7 +68,7 @@
     padding: 0 4px;
     border-radius: 999px;
     background: var(--jb-portal-gradient);
-    color: #ffffff;
+    color: var(--jb-btn-primary-fg);
     font-size: 9px;
     font-weight: 700;
     line-height: 16px;

@@ -10,7 +10,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
 .eyebrow {
@@ -28,15 +28,6 @@
   letter-spacing: -0.03em;
   color: var(--jb-ink);
   line-height: 1.15;
-}
-
-.dateLabel {
-  margin: 0;
-  padding-top: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--jb-ink-muted);
-  white-space: nowrap;
 }
 
 /* Minecloud gradient hero */
@@ -67,8 +58,8 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--jb-portal-badge-on-gradient);
+  border: 1px solid var(--jb-portal-badge-border-on-gradient);
 }
 
 .heroTitle {
@@ -84,7 +75,7 @@
   max-width: 480px;
   font-size: 15px;
   line-height: 1.65;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--jb-portal-on-gradient-muted);
 }
 
 .heroCta {
@@ -96,8 +87,8 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  color: var(--jb-portal-accent-indigo);
-  background: #ffffff;
+  color: var(--jb-portal-gradient-cta-fg);
+  background: var(--jb-portal-gradient-cta-bg);
   transition: transform 0.15s, box-shadow 0.2s;
 }
 
@@ -154,7 +145,7 @@
   border-radius: 20px;
   background: var(--jb-portal-card);
   box-shadow: var(--jb-portal-shadow);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--jb-portal-card-border-soft);
 }
 
 .statIcon {
@@ -213,7 +204,7 @@
   padding: 16px 20px;
   border-radius: 16px;
   background: var(--jb-portal-gradient-soft);
-  border: 1px solid #e0e7ff;
+  border: 1px solid var(--jb-portal-alert-border);
   font-size: 14px;
   line-height: 1.55;
   color: var(--jb-ink-secondary);
@@ -278,7 +269,7 @@
   padding: 22px 24px;
   border-radius: 20px;
   background: var(--jb-portal-card);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--jb-portal-panel-border);
   box-shadow: var(--jb-portal-shadow);
   text-decoration: none;
   color: inherit;
@@ -367,10 +358,6 @@
   .topBar {
     flex-direction: column;
     gap: 8px;
-  }
-
-  .dateLabel {
-    padding-top: 0;
   }
 
   .alertBanner {

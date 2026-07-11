@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { logoutAction } from "@/server/actions/auth";
 import { adminLogoutAction } from "@/server/actions/admin-auth";
 import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { formatDisplayName } from "@/lib/format-display-name";
 import type { SessionUser } from "@/lib/auth/session";
 import styles from "./portal-logout-bar.module.css";
@@ -49,6 +50,7 @@ export function PortalLogoutBar({ user }: PortalLogoutBarProps) {
         </div>
       </div>
 
+      <ThemeToggle compact />
       <LogoutForm action={isAdminRoute ? adminLogoutAction : logoutAction}>
         <LogoutSubmitButton className={styles.logoutBtn}>Log out</LogoutSubmitButton>
       </LogoutForm>

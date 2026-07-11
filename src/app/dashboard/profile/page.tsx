@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import { getUserProfile } from "@/lib/auth/profile";
 import { ProfileForm } from "@/components/profile/profile-form";
 import dashboardStyles from "../dashboard.module.css";
@@ -21,14 +22,8 @@ export default async function ProfilePage() {
               Keep your resume, education, and career preferences up to date.
             </p>
           </div>
-          <p className={dashboardStyles.dateLabel}>
-            {new Intl.DateTimeFormat("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            }).format(new Date())}
-          </p>
         </header>
+        <PortalDateLabel />
         <ProfileForm profile={profile} />
       </main>
     </div>

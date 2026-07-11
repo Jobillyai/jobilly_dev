@@ -4,6 +4,7 @@ import type {
   AdminRecentSubmission,
 } from "@/server/services/admin-dashboard";
 import { formatDisplayName } from "@/lib/format-display-name";
+import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
 import styles from "@/app/admin/admin.module.css";
 
 type AdminRecentActivityProps = {
@@ -25,14 +26,7 @@ function formatSessionDateTime(value: string | null): string {
     return "Session time pending";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(new Date(value));
+  return formatSessionDateTimeFromIso(value, "staff") ?? "Session time pending";
 }
 
 export function AdminRecentActivity({

@@ -1,0 +1,96 @@
+.track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 64px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--jb-border);
+  border-radius: 999px;
+  background: var(--jb-surface-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    border-color 0.25s,
+    background 0.25s,
+    box-shadow 0.25s;
+}
+
+.track:hover {
+  border-color: var(--jb-brand-border);
+  box-shadow: var(--jb-shadow-sm);
+}
+
+.track:focus-visible {
+  outline: 2px solid var(--jb-brand);
+  outline-offset: 2px;
+}
+
+.trackCompact {
+  width: 56px;
+  height: 30px;
+}
+
+.trackDark {
+  background: var(--jb-surface-subtle);
+  border-color: var(--jb-border-strong);
+}
+
+.icons {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 9px;
+  pointer-events: none;
+}
+
+.trackCompact .icons {
+  padding: 0 8px;
+}
+
+.icon {
+  display: block;
+  color: var(--jb-ink-subtle);
+  transition: color 0.25s, transform 0.25s;
+}
+
+.iconActive {
+  color: var(--jb-brand);
+  transform: scale(1.05);
+}
+
+.thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--jb-elevated-surface);
+  border: 1px solid var(--jb-border);
+  box-shadow: var(--jb-shadow-sm);
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.2, 0.64, 1),
+    background 0.25s,
+    border-color 0.25s;
+}
+
+.trackCompact .thumb {
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+}
+
+.thumbDark {
+  transform: translateX(30px);
+  background: var(--jb-brand-soft);
+  border-color: var(--jb-brand-border);
+}
+
+.trackCompact .thumbDark {
+  transform: translateX(26px);
+}

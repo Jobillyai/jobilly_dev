@@ -44,16 +44,14 @@
   min-height: 100%;
   border-radius: var(--jb-radius-lg);
   border: 1px solid var(--jb-border);
-  background: linear-gradient(165deg, #ffffff 0%, #f8f9ff 48%, #f3f0ff 100%);
+  background: var(--jb-pipeline-surface);
   box-shadow: var(--jb-shadow-lg);
   overflow: hidden;
   transition: box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .card:hover .cardInner {
-  box-shadow:
-    0 24px 48px rgba(99, 102, 241, 0.14),
-    0 12px 24px rgba(15, 17, 21, 0.1);
+  box-shadow: var(--jb-pipeline-card-hover-shadow);
 }
 
 .cardHeader {
@@ -63,7 +61,7 @@
   gap: 16px;
   padding: 28px 32px;
   border-bottom: 1px solid var(--jb-border);
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--jb-pipeline-header);
   backdrop-filter: blur(8px);
 }
 
@@ -82,15 +80,15 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
+  background: var(--jb-pipeline-live-bg);
+  color: var(--jb-pipeline-live-text);
+  border: 1px solid var(--jb-pipeline-live-border);
   white-space: nowrap;
 }
 
 .cardSection {
   padding: 24px 32px;
-  border-bottom: 1px solid rgba(99, 102, 241, 0.08);
+  border-bottom: 1px solid var(--jb-pipeline-section-border);
 }
 
 .cardSection:first-of-type {
@@ -119,9 +117,9 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1.5px dashed rgba(99, 102, 241, 0.28);
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 68%);
-  box-shadow: 0 0 40px rgba(99, 102, 241, 0.12);
+  border: 1.5px dashed var(--jb-pipeline-orbit-ring);
+  background: radial-gradient(circle, var(--jb-pipeline-orbit-fill) 0%, transparent 68%);
+  box-shadow: 0 0 40px var(--jb-pipeline-orbit-glow);
 }
 
 .orbitHub {
@@ -137,9 +135,9 @@
   width: 84px;
   height: 84px;
   border-radius: 50%;
-  background: var(--jb-ink);
-  color: #fff;
-  box-shadow: 0 12px 32px rgba(15, 17, 21, 0.22);
+  background: var(--jb-btn-primary-bg);
+  color: var(--jb-btn-primary-fg);
+  box-shadow: var(--jb-shadow-md);
   z-index: 2;
 }
 
@@ -151,7 +149,7 @@
 }
 
 .orbitHubIcon {
-  color: #a5b4fc;
+  color: var(--jb-pipeline-hub-icon);
 }
 
 .orbitHubLabel {
@@ -217,7 +215,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--jb-pipeline-orbit-icon);
   border: 1px solid var(--jb-border);
   color: var(--jb-ink-secondary);
   box-shadow: var(--jb-shadow-sm);
@@ -310,7 +308,7 @@
   gap: 16px;
   padding: 14px 16px;
   border-radius: var(--jb-radius-md);
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--jb-pipeline-panel);
   border: 1px solid var(--jb-border);
   box-shadow: var(--jb-shadow-sm);
 }
@@ -355,7 +353,7 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--jb-ink-secondary);
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--jb-pipeline-chip);
   border: 1px solid var(--jb-border);
   box-shadow: var(--jb-shadow-sm);
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import styles from "@/app/admin/admin.module.css";
 
 type AdminPageHeaderProps = {
@@ -8,22 +9,16 @@ type AdminPageHeaderProps = {
 };
 
 export function AdminPageHeader({ eyebrow, title, subtitle }: AdminPageHeaderProps) {
-  const dateLabel = new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  }).format(new Date());
-
   return (
-    <header className={styles.pageHeader}>
-      <div>
-        <p className={styles.pageEyebrow}>{eyebrow}</p>
-        <h1 className={styles.pageTitle}>{title}</h1>
-        {subtitle ? <p className={styles.pageSubtitle}>{subtitle}</p> : null}
-      </div>
-      <time className={styles.pageDate} dateTime={new Date().toISOString().slice(0, 10)}>
-        {dateLabel}
-      </time>
-    </header>
+    <div className={styles.pageHeaderBlock}>
+      <header className={styles.pageHeader}>
+        <div>
+          <p className={styles.pageEyebrow}>{eyebrow}</p>
+          <h1 className={styles.pageTitle}>{title}</h1>
+          {subtitle ? <p className={styles.pageSubtitle}>{subtitle}</p> : null}
+        </div>
+      </header>
+      <PortalDateLabel variant="admin" />
+    </div>
   );
 }

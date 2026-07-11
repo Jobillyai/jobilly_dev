@@ -9,7 +9,7 @@
   justify-content: space-between;
   padding: 0 32px;
   height: 72px;
-  background: #ffffff;
+  background: var(--jb-nav-bg);
   border-bottom: 1px solid var(--jb-border);
   transition: box-shadow 0.2s, background 0.2s;
   font-family: var(--jb-font-sans);
@@ -17,7 +17,7 @@
 
 .navScrolled {
   box-shadow: var(--jb-shadow-md);
-  background: #ffffff;
+  background: var(--jb-nav-bg);
 }
 
 .navLogo {
@@ -109,7 +109,7 @@
 
 .navBtnGhost {
   color: var(--jb-ink);
-  background: #ffffff;
+  background: var(--jb-nav-bg);
   border: 1px solid var(--jb-border);
   box-shadow: var(--jb-shadow-sm);
 }
@@ -122,8 +122,8 @@
 }
 
 .navBtnPrimary {
-  color: #ffffff;
-  background: var(--jb-ink);
+  color: var(--jb-btn-primary-fg);
+  background: var(--jb-btn-primary-bg);
   border: 1px solid transparent;
   font-weight: 700;
   box-shadow: var(--jb-shadow-sm);
@@ -131,7 +131,7 @@
 
 .navBtnPrimary:hover {
   transform: translateY(-1px);
-  background: var(--jb-dark-elevated);
+  background: var(--jb-btn-primary-hover);
   box-shadow: var(--jb-shadow-md);
 }
 
@@ -155,7 +155,7 @@
   padding: 6px 12px 6px 8px;
   border: 1px solid var(--jb-border);
   border-radius: 100px;
-  background: #ffffff;
+  background: var(--jb-nav-bg);
   cursor: pointer;
   font-family: var(--jb-font-sans);
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -175,7 +175,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--jb-brand);
-  color: #fff;
+  color: var(--jb-btn-primary-fg);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -284,7 +284,7 @@
   margin-left: 4px;
   border: 1px solid var(--jb-border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--jb-nav-bg);
   color: var(--jb-ink);
   cursor: pointer;
   flex-shrink: 0;
@@ -315,7 +315,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 16px 20px 24px;
-  background: #ffffff;
+  background: var(--jb-nav-bg);
   border-bottom: 1px solid var(--jb-border);
   box-shadow: var(--jb-shadow-lg);
 }

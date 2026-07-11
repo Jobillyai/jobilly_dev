@@ -14,7 +14,7 @@
     radial-gradient(ellipse 80% 60% at 100% 0%, var(--jb-arcade-mesh-2) 0%, transparent 55%),
     radial-gradient(ellipse 70% 55% at 100% 100%, var(--jb-arcade-mesh-3) 0%, transparent 52%),
     radial-gradient(ellipse 60% 45% at 0% 100%, var(--jb-arcade-mesh-4) 0%, transparent 50%),
-    linear-gradient(160deg, #faf8ff 0%, var(--jb-portal-bg) 45%, #eef2ff 100%);
+    linear-gradient(160deg, var(--jb-arcade-base-start) 0%, var(--jb-portal-bg) 45%, var(--jb-arcade-base-end) 100%);
 }
 
 .dots {

@@ -2,6 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { sendCandidateMeetingLinkAction } from "@/server/actions/meeting-links";
+import {
+  CAREER_ADVISORY_US_TIMEZONE,
+  formatDateTimeLocalInZone,
+  parseDateTimeLocalInZone,
+} from "@/lib/career-advisory/session-datetime";
 import styles from "./mentor-meeting-link-form.module.css";
 
 type MentorMeetingLinkFormProps = {
@@ -24,8 +29,7 @@ function toDatetimeLocalValue(iso: string | null | undefined): string {
     return "";
   }
 
-  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+  return formatDateTimeLocalInZone(date, CAREER_ADVISORY_US_TIMEZONE);
 }
 
 function formatSentAt(value: string | null | undefined): string {
@@ -69,11 +73,17 @@ export function MentorMeetingLinkForm({
       return;
     }
 
+    const sessionStart = parseDateTimeLocalInZone(sessionAt, CAREER_ADVISORY_US_TIMEZONE);
+    if (!sessionStart) {
+      setError("Choose a valid session date and time (US Eastern).");
+      return;
+    }
+
     startTransition(async () => {
       const result = await sendCandidateMeetingLinkAction(
         candidateId,
         meetUrl.trim(),
-        new Date(sessionAt).toISOString(),
+        sessionStart.toISOString(),
       );
 
       if ("error" in result) {
@@ -109,7 +119,7 @@ export function MentorMeetingLinkForm({
       </label>
 
       <label className={styles.field}>
-        <span className={styles.label}>Session date & time</span>
+        <span className={styles.label}>Session date & time (US Eastern)</span>
         <input
           type="datetime-local"
           value={sessionAt}

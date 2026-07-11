@@ -1,4 +1,4 @@
-import { formatSessionDateTime } from "@/server/services/career-advisory-invite";
+import { formatSessionDateTimeForCandidate } from "@/lib/career-advisory/session-datetime";
 import {
   buildEmailLogoHtml,
   getCandidateInviteLogoAttachment,
@@ -12,7 +12,7 @@ export function buildCandidateInviteHtml(input: {
   sessionStart: Date;
   hasLogo: boolean;
 }): string {
-  const when = formatSessionDateTime(input.sessionStart);
+  const when = formatSessionDateTimeForCandidate(input.sessionStart);
   const firstName = input.recipientName.trim().split(/\s+/)[0] || input.recipientName;
   const logoHtml = buildEmailLogoHtml(input.hasLogo, "header");
   const footerLogoHtml = buildEmailLogoHtml(input.hasLogo, "footer");
@@ -44,7 +44,7 @@ export function buildCandidateInviteHtml(input: {
                   plan your next step toward your first role.
                 </p>
                 <p style="margin:0;font-size:16px;line-height:1.7;color:#374151;">
-                  Your Google Meet session is scheduled for <strong style="color:#0a1628;">${when}</strong>.
+                  Your Google Meet session is scheduled for <strong style="color:#0a1628;">${when}</strong> (US Eastern Time).
                   A calendar invite is attached so you can save it in one click.
                 </p>
               </td>

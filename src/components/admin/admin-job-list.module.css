@@ -14,7 +14,7 @@
   padding: 14px 18px 14px 22px;
   border: 1px solid var(--jb-border);
   border-radius: var(--jb-radius-md);
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--jb-admin-elevated-strong);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -50,11 +50,7 @@
 }
 
 .itemApplied {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(209, 250, 229, 0.35) 100%
-  );
+  background: var(--jb-admin-applied-item);
 }
 
 .summary {
@@ -202,7 +198,7 @@
   padding: 8px 12px;
   border: 1px solid var(--jb-border);
   border-radius: var(--jb-radius-sm);
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--jb-admin-elevated-mid);
   color: var(--jb-brand);
   font-family: var(--jb-font-sans);
   font-size: 13px;
@@ -277,7 +273,7 @@
 }
 
 .freshnessStale {
-  background: #f3f4f6;
+  background: var(--jb-surface-muted);
   color: #6b7280;
 }
 
@@ -305,7 +301,7 @@
   padding: 14px 16px;
   border-radius: var(--jb-radius-md);
   border: 1px solid var(--jb-brand-border);
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--jb-admin-elevated);
 }
 
 .jdText {
@@ -338,7 +334,7 @@
   padding: 10px 14px;
   border-radius: var(--jb-radius-sm);
   border: 1px solid var(--jb-brand-border);
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--jb-admin-elevated-mid);
   color: var(--jb-brand);
   font-size: 13px;
   font-weight: 700;
@@ -361,7 +357,7 @@
   padding: 10px 14px;
   border-radius: var(--jb-radius-sm);
   border: 1px dashed var(--jb-brand-border);
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--jb-admin-elevated-mid);
   color: var(--jb-brand);
   font-size: 13px;
   font-weight: 700;

@@ -4,7 +4,7 @@
   z-index: 10000;
   display: grid;
   place-items: center;
-  background: transparent;
+  background: var(--jb-surface);
   pointer-events: all;
   opacity: 1;
   transition: opacity 0.28s ease;

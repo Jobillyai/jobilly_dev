@@ -13,7 +13,7 @@
 .select,
 .textarea {
   width: 100%;
-  background: var(--white, #ffffff);
+  background: var(--jb-input-bg);
   border: 1.5px solid var(--gray-300, #d1d5db);
   border-radius: 12px;
   padding: 14px 18px;
@@ -50,14 +50,14 @@
 
 .uploadZoneError {
   border-color: #ef4444;
-  background: #fef2f2;
+  background: var(--jb-danger-soft);
 }
 
 .uploadTitle {
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: #0a1628;
+  color: var(--text-primary);
 }
 
 .selectedFile {
@@ -122,7 +122,7 @@
 .placeholderCard {
   border: 1.5px solid rgba(124, 58, 237, 0.12);
   border-radius: 18px;
-  background: #ffffff;
+  background: var(--jb-portal-card);
   padding: 22px;
   box-shadow: 0 8px 28px rgba(10, 22, 40, 0.05);
 }
@@ -131,14 +131,14 @@
   margin: 0 0 8px;
   font-size: 16px;
   font-weight: 800;
-  color: #0a1628;
+  color: var(--text-primary);
 }
 
 .placeholderText {
   margin: 0;
   font-size: 14px;
   line-height: 1.6;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .scoreHero {
@@ -174,17 +174,17 @@
 
 .scoreGood {
   color: #059669;
-  background: #ecfdf5;
+  background: var(--jb-success-soft);
 }
 
 .scoreMid {
   color: #d97706;
-  background: #fffbeb;
+  background: var(--jb-warning-soft);
 }
 
 .scoreLow {
   color: #dc2626;
-  background: #fef2f2;
+  background: var(--jb-danger-soft);
 }
 
 .resultLabel {
@@ -200,13 +200,13 @@
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: #0a1628;
+  color: var(--text-primary);
 }
 
 .resultSubMeta {
   margin: 4px 0 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .breakdownGrid {
@@ -232,7 +232,7 @@
 .breakdownTrack {
   height: 8px;
   border-radius: 999px;
-  background: #e5e7eb;
+  background: var(--jb-border);
   overflow: hidden;
 }
 
@@ -251,7 +251,7 @@
   margin: 0 0 10px;
   font-size: 13px;
   font-weight: 800;
-  color: #0a1628;
+  color: var(--text-primary);
 }
 
 .tagList {
@@ -270,12 +270,12 @@
 }
 
 .tagMissing {
-  background: #fef2f2;
+  background: var(--jb-danger-soft);
   color: #b91c1c;
 }
 
 .tagMatched {
-  background: #ecfdf5;
+  background: var(--jb-success-soft);
   color: #047857;
 }
 
@@ -295,13 +295,13 @@
   margin: 0 0 12px;
   font-size: 15px;
   font-weight: 800;
-  color: #0a1628;
+  color: var(--text-primary);
 }
 
 .historyEmpty {
   margin: 0;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .historyList {
@@ -320,9 +320,9 @@
   gap: 12px;
   width: 100%;
   padding: 14px 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--jb-border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--jb-portal-card);
   cursor: pointer;
   text-align: left;
   font-family: inherit;
@@ -344,13 +344,13 @@
   margin: 0 0 4px;
   font-size: 14px;
   font-weight: 700;
-  color: #0a1628;
+  color: var(--text-primary);
 }
 
 .historyMeta {
   margin: 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .historyScore {

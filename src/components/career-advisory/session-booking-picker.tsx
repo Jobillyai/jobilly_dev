@@ -19,11 +19,11 @@ export function SessionBookingPicker({ error, defaultValue }: SessionBookingPick
   return (
     <div className={authStyles.field}>
       <label htmlFor="sessionScheduledAt" className={authStyles.label}>
-        Preferred session date & time
+        Preferred session date & time (US Eastern)
       </label>
       <p className={styles.fieldHint}>
-        Pick a slot within the next 2 days. A Google Meet invite will be sent for
-        your chosen time.
+        Pick a slot within the next 2 days in US Eastern Time (ET). A Google Meet
+        invite will be sent for your chosen time.
       </p>
       <input
         id="sessionScheduledAt"

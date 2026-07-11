@@ -1,3 +1,9 @@
+import {
+  CAREER_ADVISORY_US_TIMEZONE,
+  formatDateTimeLocalInZone,
+  parseDateTimeLocalInZone,
+} from "@/lib/career-advisory/session-datetime";
+
 export const MAX_BOOKING_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
 const MIN_BOOKING_BUFFER_MS = 60 * 60 * 1000;
 
@@ -17,12 +23,7 @@ export function getBookingWindow(from = new Date()): BookingWindow {
 }
 
 export function formatDateTimeLocalValue(date: Date): string {
-  const pad = (value: number) => String(value).padStart(2, "0");
-
-  return (
-    [date.getFullYear(), pad(date.getMonth() + 1), pad(date.getDate())].join("-") +
-    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
-  );
+  return formatDateTimeLocalInZone(date, CAREER_ADVISORY_US_TIMEZONE);
 }
 
 export function validateSessionBookingTime(
@@ -38,14 +39,14 @@ export function validateSessionBookingTime(
   if (sessionStart.getTime() < min.getTime()) {
     return {
       valid: false,
-      message: "Choose a session at least 1 hour from now.",
+      message: "Choose a session at least 1 hour from now (US Eastern Time).",
     };
   }
 
   if (sessionStart.getTime() > max.getTime()) {
     return {
       valid: false,
-      message: "Sessions can only be booked within the next 2 days.",
+      message: "Sessions can only be booked within the next 2 days (US Eastern Time).",
     };
   }
 
@@ -53,6 +54,5 @@ export function validateSessionBookingTime(
 }
 
 export function parseSessionScheduledInput(value: string): Date | null {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return parseDateTimeLocalInZone(value, CAREER_ADVISORY_US_TIMEZONE);
 }

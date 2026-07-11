@@ -1,3 +1,8 @@
+import {
+  formatSessionDateTimeForCandidate,
+  formatSessionDateTimeForStaffHtml,
+} from "@/lib/career-advisory/session-datetime";
+
 const SESSION_DURATION_MINUTES = 45;
 
 /**
@@ -71,14 +76,9 @@ export function buildCareerAdvisoryIcsInvite(input: {
   ].join("\r\n");
 }
 
+/** @deprecated Use formatSessionDateTimeForCandidate instead. */
 export function formatSessionDateTime(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(date);
+  return formatSessionDateTimeForCandidate(date);
 }
+
+export { formatSessionDateTimeForStaffHtml } from "@/lib/career-advisory/session-datetime";

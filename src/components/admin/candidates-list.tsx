@@ -10,6 +10,7 @@ import { formatExperienceYears } from "@/lib/format-experience-years";
 import { formatCandidateGender } from "@/lib/candidate-profile-options";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
+import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
 import styles from "./candidates-list.module.css";
 
 type CandidatesListProps = {
@@ -30,6 +31,10 @@ function formatDate(value: string | null): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatSessionDate(value: string | null): string {
+  return formatSessionDateTimeFromIso(value, "staff") ?? "—";
 }
 
 function formatRole(role: string): string {
@@ -322,7 +327,7 @@ function CandidateRow({
                 {submission.sessionScheduledAt ? (
                   <>
                     <dt>Session scheduled</dt>
-                    <dd>{formatDate(submission.sessionScheduledAt)}</dd>
+                    <dd>{formatSessionDate(submission.sessionScheduledAt)}</dd>
                   </>
                 ) : null}
               </dl>

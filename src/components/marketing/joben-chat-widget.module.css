@@ -17,7 +17,7 @@
   flex-direction: column;
   border-radius: 20px;
   border: 1px solid var(--jb-brand-border, #dbeafe);
-  background: #ffffff;
+  background: var(--jb-surface-raised);
   box-shadow:
     0 24px 48px rgba(10, 22, 40, 0.14),
     0 4px 12px rgba(10, 22, 40, 0.06);
@@ -62,7 +62,7 @@
   height: 36px;
   border-radius: 12px;
   background: var(--jb-brand, #1877f2);
-  color: #ffffff;
+  color: var(--jb-btn-primary-fg);
   font-size: 15px;
   font-weight: 800;
   flex-shrink: 0;
@@ -147,7 +147,7 @@
   height: 28px;
   border-radius: 9px;
   background: var(--jb-brand, #1877f2);
-  color: #ffffff;
+  color: var(--jb-btn-primary-fg);
   font-size: 12px;
   font-weight: 800;
   flex-shrink: 0;
@@ -163,15 +163,15 @@
 }
 
 .messageAssistant .messageText {
-  background: #ffffff;
+  background: var(--jb-surface-raised);
   border: 1px solid var(--jb-brand-border, #dbeafe);
   color: var(--jb-ink-secondary, #374151);
   border-top-left-radius: 4px;
 }
 
 .messageUser .messageText {
-  background: var(--jb-ink, #0f172a);
-  color: #ffffff;
+  background: var(--jb-btn-primary-bg);
+  color: var(--jb-btn-primary-fg);
   border-top-right-radius: 4px;
 }
 
@@ -182,7 +182,7 @@
   align-self: flex-start;
   padding: 8px 12px 8px 8px;
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--jb-surface-raised);
   border: 1px solid var(--jb-brand-border, #ddd6fe);
 }
 
@@ -229,7 +229,7 @@
   gap: 8px;
   padding: 12px;
   border-top: 1px solid var(--jb-brand-border, #dbeafe);
-  background: #ffffff;
+  background: var(--jb-surface-raised);
 }
 
 .input {
@@ -261,8 +261,8 @@
   height: 42px;
   border: none;
   border-radius: 12px;
-  background: var(--jb-ink, #0f172a);
-  color: #ffffff;
+  background: var(--jb-btn-primary-bg);
+  color: var(--jb-btn-primary-fg);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -285,7 +285,7 @@
   padding: 0;
   border: 1px solid var(--jb-border);
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--jb-surface-raised);
   box-shadow: var(--jb-shadow-md);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -306,8 +306,8 @@
   padding: 0;
   border-radius: 50%;
   border: none;
-  background: var(--jb-ink, #0f172a);
-  color: #ffffff;
+  background: var(--jb-btn-primary-bg);
+  color: var(--jb-btn-primary-fg);
   box-shadow: var(--jb-shadow-md);
 }
 
@@ -320,7 +320,7 @@
   flex-wrap: wrap;
   gap: 8px;
   padding: 0 12px 10px;
-  background: #ffffff;
+  background: var(--jb-surface-raised);
   border-top: 1px solid var(--jb-brand-border, #dbeafe);
 }
 

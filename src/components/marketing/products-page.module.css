@@ -34,12 +34,12 @@
 }
 
 .planCompareCard:hover {
-  border-color: var(--jb-ink);
+  border-color: var(--jb-brand-border);
   transform: translateY(-2px);
 }
 
 .planCompareCardActive {
-  border-color: var(--jb-ink);
+  border-color: var(--jb-brand);
   box-shadow: var(--jb-shadow-md);
   background: var(--jb-surface);
 }
@@ -128,7 +128,7 @@
 
 .planToggleBtnActive {
   background: var(--jb-brand);
-  color: #fff;
+  color: var(--jb-btn-primary-fg);
   box-shadow: var(--jb-shadow-sm);
 }
 
@@ -515,9 +515,15 @@
 }
 
 .phaseBtnActive {
-  background: var(--jb-ink);
-  border-color: var(--jb-ink);
-  color: #ffffff;
+  background: var(--jb-btn-primary-bg);
+  border-color: var(--jb-btn-primary-bg);
+  color: var(--jb-btn-primary-fg);
+}
+
+.phaseBtnActive:hover {
+  background: var(--jb-btn-primary-hover);
+  border-color: var(--jb-btn-primary-hover);
+  color: var(--jb-btn-primary-fg);
 }
 
 .bentoGrid {

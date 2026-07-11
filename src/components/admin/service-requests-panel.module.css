@@ -17,7 +17,7 @@
   font-size: 14px;
   color: var(--jb-ink-muted);
   text-align: center;
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--jb-admin-surface-muted);
 }
 
 .success,
@@ -153,7 +153,7 @@
   border: 1px solid var(--jb-admin-card-border);
   border-radius: 10px;
   font-size: 14px;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--jb-admin-elevated-mid);
   font-family: inherit;
 }
 
@@ -176,7 +176,7 @@
 
 .secondaryBtn {
   border: 1px solid var(--jb-admin-card-border);
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--jb-admin-elevated);
   color: var(--jb-ink-secondary);
 }
 

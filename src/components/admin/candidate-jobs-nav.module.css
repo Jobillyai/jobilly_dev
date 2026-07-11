@@ -12,7 +12,7 @@
   padding: 10px 16px;
   border-radius: 10px;
   border: 1px solid var(--jb-admin-card-border);
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--jb-admin-elevated);
   color: var(--jb-ink-secondary);
   font-size: 13px;
   font-weight: 700;

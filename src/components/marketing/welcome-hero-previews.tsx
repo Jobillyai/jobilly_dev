@@ -94,7 +94,7 @@ export function DashboardHeroPreview() {
       <div className={carouselStyles.mainHeader}>
         <div>
           <p className={carouselStyles.mainEyebrow}>Your workspace</p>
-          <h3 className={carouselStyles.mainTitle}>Good morning, Priya</h3>
+          <h3 className={carouselStyles.mainTitle}>Good morning, Supriya</h3>
         </div>
         <span className={carouselStyles.creditBadge}>4 phases</span>
       </div>

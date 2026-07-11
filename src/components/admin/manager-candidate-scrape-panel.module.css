@@ -59,7 +59,7 @@
 .primaryBtn {
   border: none;
   background: var(--jb-brand);
-  color: #fff;
+  color: var(--jb-btn-primary-fg);
 }
 
 .primaryBtn:hover:not(:disabled) {

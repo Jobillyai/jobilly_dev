@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { AdminMeetingTask } from "@/server/services/admin-dashboard";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { MentorMeetingLinkForm } from "@/components/admin/mentor-meeting-link-form";
+import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
 import styles from "@/app/admin/admin.module.css";
 
 type AdminMeetingTasksProps = {
@@ -19,15 +20,9 @@ function formatSessionDateTime(value: string | null): string {
     return "Time not set";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(new Date(value));
+  return (
+    formatSessionDateTimeFromIso(value, "staff") ?? "Time not set"
+  );
 }
 
 export function AdminMeetingTasks({

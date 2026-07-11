@@ -1,4 +1,5 @@
 import { getSessionUser } from "@/lib/auth/session";
+import { formatSessionDateTimeForCandidateShort } from "@/lib/career-advisory/session-datetime";
 import { DashboardHome } from "@/components/dashboard/dashboard-home";
 import { getCareerAdvisoryIntakeForCandidate } from "@/server/services/career-advisory-intake";
 import { getCandidateAppliedJobs } from "@/server/services/candidate-jobs";
@@ -18,12 +19,7 @@ function formatSessionLabel(
 
   const sessionTime = new Date(sessionScheduledAt);
   if (sessionTime.getTime() >= Date.now()) {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(sessionTime);
+    return formatSessionDateTimeForCandidateShort(sessionTime);
   }
 
   return "Completed";

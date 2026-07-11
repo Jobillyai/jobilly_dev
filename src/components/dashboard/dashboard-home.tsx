@@ -8,6 +8,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import { formatDisplayName } from "@/lib/format-display-name";
+import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import styles from "./dashboard-home.module.css";
 
 const workspaceLinks = [
@@ -103,14 +104,9 @@ export function DashboardHome({
           <p className={styles.eyebrow}>Student portal</p>
           <h1 className={styles.title}>Hello, {displayName}</h1>
         </div>
-        <p className={styles.dateLabel}>
-          {new Intl.DateTimeFormat("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          }).format(new Date())}
-        </p>
       </header>
+
+      <PortalDateLabel />
 
       <section className={styles.heroCard}>
         <div className={styles.heroContent}>

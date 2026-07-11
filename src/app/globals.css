@@ -86,6 +86,67 @@
   --jb-shadow-brand: 0 8px 24px var(--jb-brand-glow);
   --jb-focus-ring: rgba(109, 40, 217, 0.14);
 
+  --jb-nav-bg: #ffffff;
+  --jb-elevated-surface: rgba(255, 255, 255, 0.96);
+  --jb-glass-surface: rgba(255, 255, 255, 0.52);
+  --jb-glass-border: rgba(255, 255, 255, 0.72);
+  --jb-glass-highlight: rgba(255, 255, 255, 0.85);
+  --jb-mesh-color: #586070;
+  --jb-arcade-mesh-1: rgba(167, 139, 250, 0.22);
+  --jb-arcade-mesh-2: rgba(99, 102, 241, 0.18);
+  --jb-arcade-mesh-3: rgba(124, 58, 237, 0.14);
+  --jb-arcade-mesh-4: rgba(196, 181, 253, 0.12);
+  --jb-arcade-base-start: #faf8ff;
+  --jb-arcade-base-end: #eef2ff;
+  --jb-btn-primary-bg: #111111;
+  --jb-btn-primary-fg: #ffffff;
+  --jb-btn-primary-hover: #2a2a2a;
+  --jb-sidebar-border: rgba(15, 23, 42, 0.06);
+  --jb-sidebar-shadow: 4px 0 24px rgba(15, 23, 42, 0.03);
+  --jb-loader-overlay: rgba(255, 255, 255, 0.92);
+  --jb-color-scheme: light;
+
+  --jb-pipeline-surface: linear-gradient(165deg, #ffffff 0%, #f8f9ff 48%, #f3f0ff 100%);
+  --jb-pipeline-header: rgba(255, 255, 255, 0.72);
+  --jb-pipeline-panel: rgba(255, 255, 255, 0.88);
+  --jb-pipeline-chip: rgba(255, 255, 255, 0.9);
+  --jb-pipeline-orbit-icon: rgba(255, 255, 255, 0.92);
+  --jb-pipeline-orbit-ring: rgba(99, 102, 241, 0.28);
+  --jb-pipeline-orbit-fill: rgba(99, 102, 241, 0.08);
+  --jb-pipeline-orbit-glow: rgba(99, 102, 241, 0.12);
+  --jb-pipeline-section-border: rgba(99, 102, 241, 0.08);
+  --jb-pipeline-hub-icon: #a5b4fc;
+  --jb-pipeline-live-bg: #ecfdf5;
+  --jb-pipeline-live-text: #047857;
+  --jb-pipeline-live-border: #a7f3d0;
+  --jb-pipeline-card-hover-shadow: 0 24px 48px rgba(99, 102, 241, 0.14), 0 12px 24px rgba(15, 17, 21, 0.1);
+
+  --jb-portal-panel-border: rgba(255, 255, 255, 0.9);
+  --jb-portal-card-border-soft: rgba(255, 255, 255, 0.8);
+  --jb-portal-gradient-cta-bg: #ffffff;
+  --jb-portal-gradient-cta-fg: var(--jb-portal-accent-indigo);
+  --jb-portal-on-gradient-muted: rgba(255, 255, 255, 0.88);
+  --jb-portal-on-gradient-subtle: rgba(255, 255, 255, 0.78);
+  --jb-portal-badge-on-gradient: rgba(255, 255, 255, 0.16);
+  --jb-portal-badge-border-on-gradient: rgba(255, 255, 255, 0.2);
+  --jb-portal-alert-border: #e0e7ff;
+  --jb-portal-card-highlight: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
+  --jb-portal-card-highlight-border: #e0e7ff;
+  --jb-portal-jd-panel-bg: #f8fafc;
+  --jb-portal-tips-bg: rgba(255, 255, 255, 0.65);
+  --jb-input-bg: var(--jb-surface);
+  --jb-input-bg-focus: var(--jb-surface-raised);
+  --jb-admin-navbar-bg: #ffffff;
+  --jb-admin-elevated: rgba(255, 255, 255, 0.7);
+  --jb-admin-elevated-strong: rgba(255, 255, 255, 0.95);
+  --jb-admin-elevated-mid: rgba(255, 255, 255, 0.88);
+  --jb-admin-calendar-cell: rgba(255, 255, 255, 0.55);
+  --jb-admin-calendar-outside: rgba(15, 23, 42, 0.02);
+  --jb-admin-surface-muted: rgba(255, 255, 255, 0.4);
+  --jb-admin-surface-soft: rgba(255, 255, 255, 0.5);
+  --jb-admin-excel-bar: rgba(240, 246, 255, 0.8);
+  --jb-admin-applied-item: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(209, 250, 229, 0.35) 100%);
+
   --blue-900: var(--jb-ink);
   --blue-500: var(--jb-brand);
   --blue-50: var(--jb-brand-soft);
@@ -108,11 +169,149 @@
   --radius: 0.875rem;
 }
 
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --jb-ink: #f4f4f5;
+  --jb-ink-secondary: #d4d4d8;
+  --jb-ink-muted: #a1a1aa;
+  --jb-ink-subtle: #71717a;
+  --jb-ink-on-dark: #fafafa;
+
+  --jb-brand: #8b5cf6;
+  --jb-brand-hover: #a78bfa;
+  --jb-brand-bright: #a78bfa;
+  --jb-brand-soft: rgba(139, 92, 246, 0.14);
+  --jb-brand-border: rgba(139, 92, 246, 0.28);
+  --jb-brand-glow: rgba(139, 92, 246, 0.22);
+
+  --jb-portal-bg: #0f1117;
+  --jb-portal-canvas: #090b10;
+  --jb-portal-card: #161820;
+  --jb-portal-sidebar: #12141a;
+  --jb-portal-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #a78bfa 100%);
+  --jb-portal-gradient-soft: linear-gradient(135deg, #151520 0%, #1a1528 55%, #14101f 100%);
+  --jb-portal-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --jb-portal-shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --jb-portal-icon-blue: rgba(59, 130, 246, 0.16);
+  --jb-portal-icon-purple: rgba(139, 92, 246, 0.16);
+  --jb-portal-icon-emerald: rgba(16, 185, 129, 0.16);
+  --jb-portal-icon-amber: rgba(245, 158, 11, 0.16);
+
+  --jb-admin-canvas: #090b10;
+  --jb-admin-card: rgba(22, 24, 32, 0.92);
+  --jb-admin-card-border: rgba(255, 255, 255, 0.08);
+  --jb-admin-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px rgba(0, 0, 0, 0.35);
+  --jb-admin-shadow-hover: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 20px 48px rgba(0, 0, 0, 0.45);
+  --jb-admin-ink: #f4f4f5;
+
+  --jb-accent: #f4f4f5;
+  --jb-accent-soft: #161820;
+
+  --jb-dark: #090b10;
+  --jb-dark-elevated: #161820;
+  --jb-dark-border: rgba(255, 255, 255, 0.1);
+
+  --jb-surface: #0f1117;
+  --jb-surface-subtle: #161820;
+  --jb-surface-muted: #1c1f28;
+  --jb-surface-raised: #1a1d26;
+  --jb-border: rgba(255, 255, 255, 0.08);
+  --jb-border-strong: rgba(255, 255, 255, 0.14);
+
+  --jb-success-soft: rgba(5, 150, 105, 0.14);
+  --jb-warning-soft: rgba(217, 119, 6, 0.14);
+  --jb-danger-soft: rgba(220, 38, 38, 0.14);
+
+  --jb-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --jb-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.38);
+  --jb-shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.48);
+  --jb-focus-ring: rgba(139, 92, 246, 0.28);
+
+  --jb-nav-bg: #12141a;
+  --jb-elevated-surface: rgba(22, 24, 32, 0.96);
+  --jb-glass-surface: rgba(22, 24, 32, 0.72);
+  --jb-glass-border: rgba(255, 255, 255, 0.1);
+  --jb-glass-highlight: rgba(255, 255, 255, 0.06);
+  --jb-mesh-color: #c4b5fd;
+  --jb-arcade-mesh-1: rgba(139, 92, 246, 0.18);
+  --jb-arcade-mesh-2: rgba(99, 102, 241, 0.14);
+  --jb-arcade-mesh-3: rgba(124, 58, 237, 0.12);
+  --jb-arcade-mesh-4: rgba(167, 139, 250, 0.1);
+  --jb-arcade-base-start: #0f1117;
+  --jb-arcade-base-end: #12141a;
+  --jb-btn-primary-bg: #8b5cf6;
+  --jb-btn-primary-fg: #ffffff;
+  --jb-btn-primary-hover: #a78bfa;
+  --jb-sidebar-border: rgba(255, 255, 255, 0.06);
+  --jb-sidebar-shadow: 4px 0 24px rgba(0, 0, 0, 0.28);
+  --jb-loader-overlay: rgba(15, 17, 23, 0.96);
+  --jb-color-scheme: dark;
+
+  --jb-pipeline-surface: linear-gradient(165deg, #161820 0%, #1c1830 48%, #14101f 100%);
+  --jb-pipeline-header: rgba(18, 20, 28, 0.9);
+  --jb-pipeline-panel: rgba(22, 24, 32, 0.92);
+  --jb-pipeline-chip: rgba(26, 24, 38, 0.95);
+  --jb-pipeline-orbit-icon: rgba(26, 24, 38, 0.96);
+  --jb-pipeline-orbit-ring: rgba(167, 139, 250, 0.34);
+  --jb-pipeline-orbit-fill: rgba(139, 92, 246, 0.14);
+  --jb-pipeline-orbit-glow: rgba(139, 92, 246, 0.18);
+  --jb-pipeline-section-border: rgba(139, 92, 246, 0.12);
+  --jb-pipeline-hub-icon: #c4b5fd;
+  --jb-pipeline-live-bg: rgba(5, 150, 105, 0.16);
+  --jb-pipeline-live-text: #34d399;
+  --jb-pipeline-live-border: rgba(52, 211, 153, 0.28);
+  --jb-pipeline-card-hover-shadow: 0 24px 48px rgba(139, 92, 246, 0.2), 0 12px 24px rgba(0, 0, 0, 0.35);
+
+  --jb-portal-panel-border: rgba(255, 255, 255, 0.08);
+  --jb-portal-card-border-soft: rgba(255, 255, 255, 0.08);
+  --jb-portal-gradient-cta-bg: rgba(255, 255, 255, 0.14);
+  --jb-portal-gradient-cta-fg: #ffffff;
+  --jb-portal-on-gradient-muted: rgba(255, 255, 255, 0.88);
+  --jb-portal-on-gradient-subtle: rgba(255, 255, 255, 0.78);
+  --jb-portal-badge-on-gradient: rgba(255, 255, 255, 0.14);
+  --jb-portal-badge-border-on-gradient: rgba(255, 255, 255, 0.18);
+  --jb-portal-alert-border: rgba(99, 102, 241, 0.28);
+  --jb-portal-card-highlight: linear-gradient(135deg, #161820 0%, #1a1528 100%);
+  --jb-portal-card-highlight-border: rgba(99, 102, 241, 0.28);
+  --jb-portal-jd-panel-bg: #12141a;
+  --jb-portal-tips-bg: rgba(22, 24, 32, 0.72);
+  --jb-input-bg: var(--jb-surface-subtle);
+  --jb-input-bg-focus: var(--jb-surface-raised);
+  --jb-admin-navbar-bg: #12141a;
+  --jb-admin-elevated: rgba(22, 24, 32, 0.88);
+  --jb-admin-elevated-strong: rgba(22, 24, 32, 0.96);
+  --jb-admin-elevated-mid: rgba(22, 24, 32, 0.92);
+  --jb-admin-calendar-cell: rgba(22, 24, 32, 0.78);
+  --jb-admin-calendar-outside: rgba(255, 255, 255, 0.03);
+  --jb-admin-surface-muted: rgba(22, 24, 32, 0.55);
+  --jb-admin-surface-soft: rgba(22, 24, 32, 0.68);
+  --jb-admin-excel-bar: rgba(30, 32, 44, 0.92);
+  --jb-admin-applied-item: linear-gradient(135deg, rgba(22, 24, 32, 0.98) 0%, rgba(5, 150, 105, 0.14) 100%);
+
+  --gray-100: #161820;
+  --gray-300: #3f3f46;
+  --blue-50: #161820;
+  --accent-dark: var(--jb-brand-hover);
+  --text-primary: var(--jb-ink);
+  --text-muted: var(--jb-ink-muted);
+  --text-secondary: var(--jb-ink-secondary);
+
+  --background: 240 6% 6%;
+  --foreground: 0 0% 96%;
+  --primary: 263 70% 58%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 240 4% 12%;
+  --muted-foreground: 0 0% 65%;
+  --border: 240 4% 16%;
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: clip;
+    background: var(--jb-surface);
   }
 
   body {
@@ -120,6 +319,7 @@
     font-family: var(--jb-font-sans);
     color: var(--jb-ink);
     background: var(--jb-surface);
+    color-scheme: var(--jb-color-scheme);
     overflow-x: clip;
     max-width: 100vw;
   }

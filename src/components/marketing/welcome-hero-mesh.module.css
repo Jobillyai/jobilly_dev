@@ -4,7 +4,7 @@
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
-  color: #7a8299;
+  color: var(--jb-mesh-color);
 }
 
 .mesh {
@@ -81,6 +81,17 @@
   .meshWrap {
     opacity: 0.62;
   }
+}
+
+:global([data-theme="dark"]) .meshWrap {
+  color: var(--jb-mesh-color);
+  opacity: 0.88;
+}
+
+:global([data-theme="dark"]) .meshWrapStatic,
+:global([data-theme="dark"]) .meshRevealBlTr,
+:global([data-theme="dark"]) .meshRevealTlBr {
+  opacity: 0.88;
 }
 
 @media (prefers-reduced-motion: reduce) {

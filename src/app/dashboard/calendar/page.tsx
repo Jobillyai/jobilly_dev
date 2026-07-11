@@ -1,28 +1,18 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SessionMonthCalendar } from "@/components/calendar/session-month-calendar";
+import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import { getSessionUser } from "@/lib/auth/session";
 import {
   getCareerAdvisoryIntakeForCandidate,
   mapIntakeToCalendarSessions,
 } from "@/server/services/career-advisory-intake";
+import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
 import styles from "../dashboard.module.css";
 import pageStyles from "./calendar.module.css";
 
 function formatSessionDateTime(value: string | null): string {
-  if (!value) {
-    return "Not scheduled yet";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(new Date(value));
+  return formatSessionDateTimeFromIso(value, "candidate") ?? "Not scheduled yet";
 }
 
 export default async function CandidateCalendarPage() {
@@ -46,14 +36,9 @@ export default async function CandidateCalendarPage() {
               View your career advisory sessions and join Google Meet from your calendar.
             </p>
           </div>
-          <p className={styles.dateLabel}>
-            {new Intl.DateTimeFormat("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            }).format(new Date())}
-          </p>
         </header>
+
+        <PortalDateLabel />
 
         {intake?.sessionScheduledAt && (
           <div className={pageStyles.nextSessionCard}>

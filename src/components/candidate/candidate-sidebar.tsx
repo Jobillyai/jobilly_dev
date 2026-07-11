@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { JobillyLogo } from "@/components/brand/jobilly-logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   CANDIDATE_NAV_ITEMS,
   isCandidateNavActive,
@@ -46,6 +47,10 @@ export function CandidateSidebar({ unreadApplications = 0 }: CandidateSidebarPro
           );
         })}
       </nav>
+
+      <div className={styles.sidebarFooter}>
+        <ThemeToggle compact />
+      </div>
     </aside>
   );
 }

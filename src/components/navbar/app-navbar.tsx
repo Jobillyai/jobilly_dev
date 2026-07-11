@@ -12,6 +12,7 @@ import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
 import type { SessionUser } from "@/lib/auth/session";
 import type { AdminUser } from "@/lib/auth/admin";
 import { JobillyLogo } from "@/components/brand/jobilly-logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { UserMenu } from "./user-menu";
 import styles from "./navbar.module.css";
 
@@ -227,6 +228,7 @@ export function AppNavbar({
       </div>
 
       <div className={styles.navRight}>
+        <ThemeToggle />
         {user ? (
           <div className={styles.navActions}>
             {showPortalLink ? (

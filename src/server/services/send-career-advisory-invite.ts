@@ -1,9 +1,10 @@
 import { Resend } from "resend";
 import {
   buildCareerAdvisoryIcsInvite,
-  formatSessionDateTime,
+  formatSessionDateTimeForStaffHtml,
   getSessionEndTime,
 } from "@/server/services/career-advisory-invite";
+import { formatSessionDateTimeForStaffCompact } from "@/lib/career-advisory/session-datetime";
 import { validateSessionBookingTime } from "@/lib/career-advisory/booking-window";
 import {
   buildCandidateInviteHtml,
@@ -76,7 +77,7 @@ function buildOrganizerBookingHtml(input: {
   adminCandidateUrl: string;
   adminCalendarUrl: string;
 }): string {
-  const when = formatSessionDateTime(input.sessionStart);
+  const when = formatSessionDateTimeForStaffHtml(input.sessionStart);
 
   return `
     <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #0a1628; max-width: 560px; margin: 0 auto;">
@@ -94,8 +95,11 @@ function buildOrganizerBookingHtml(input: {
         <li><strong>Branch:</strong> ${input.branch}</li>
         <li><strong>Graduation:</strong> ${input.graduationDetails}</li>
         <li><strong>Technology:</strong> ${input.interestedTechnology}</li>
-        <li><strong>Session:</strong> ${when}</li>
       </ul>
+      <div style="font-size: 14px; line-height: 1.7; color: #374151; margin: 0 0 20px; padding-left: 20px;">
+        <p style="margin:0 0 8px;font-weight:700;">Session</p>
+        ${when}
+      </div>
       <p style="margin: 28px 0;">
         <a href="${input.meetUrl}"
            style="display: inline-block; background: #1877f2; color: #ffffff; text-decoration: none; font-weight: 700; padding: 14px 24px; border-radius: 12px;">
@@ -187,7 +191,7 @@ export async function sendCareerAdvisoryMeetInvite(
     console.log("[career-advisory] Meet invite (dev — no RESEND_API_KEY):");
     console.log(`  Candidate: ${input.candidateEmail}`);
     console.log(`  Organizer: ${organizerEmail}`);
-    console.log(`  When: ${formatSessionDateTime(sessionStart)}`);
+    console.log(`  When: ${formatSessionDateTimeForStaffCompact(sessionStart)}`);
     console.log(`  Meet: ${meetLink}`);
     console.log(`  Admin: ${adminCalendarUrl}`);
     return {
