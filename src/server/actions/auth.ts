@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getRequestAppOrigin } from "@/lib/auth/app-origin";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import { combineFirstLastName } from "@/lib/format-person-name";
 import {
@@ -111,13 +112,14 @@ export async function signupAction(
   }
 
   const supabase = await createClient();
+  const appOrigin = await getRequestAppOrigin();
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: userMetadata,
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      emailRedirectTo: `${appOrigin}/auth/callback`,
     },
   });
 
@@ -194,29 +196,4 @@ export async function logoutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
-}
-
-export async function signInWithGoogleAction(): Promise<{ error?: string }> {
-  const supabase = await createClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${appUrl}/auth/callback`,
-      queryParams: {
-        prompt: "select_account",
-      },
-    },
-  });
-
-  if (error) {
-    return { error: formatAuthError(error.message) };
-  }
-
-  if (!data.url) {
-    return { error: "Could not start Google sign-in. Try again." };
-  }
-
-  redirect(data.url);
 }

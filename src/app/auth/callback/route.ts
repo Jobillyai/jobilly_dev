@@ -97,6 +97,12 @@ export async function GET(request: NextRequest) {
       });
       return redirectWithSessionCookies(origin, destination, sessionCookies);
     }
+
+    console.error("Auth callback exchangeCodeForSession error:", error.message);
+    const authError = error.message.toLowerCase().includes("code verifier")
+      ? "auth_callback_failed"
+      : "confirmation_failed";
+    return NextResponse.redirect(`${origin}/login?error=${authError}`);
   } else if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
       type,
@@ -108,6 +114,8 @@ export async function GET(request: NextRequest) {
       });
       return redirectWithSessionCookies(origin, destination, sessionCookies);
     }
+
+    console.error("Auth callback verifyOtp error:", error.message);
   }
 
   return NextResponse.redirect(`${origin}/login?error=confirmation_failed`);

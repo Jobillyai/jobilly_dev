@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { signInWithGoogleAction } from "@/server/actions/auth";
+import Link from "next/link";
 import styles from "./auth-page.module.css";
 
 type GoogleAuthButtonProps = {
@@ -32,48 +31,12 @@ function GoogleIcon() {
 }
 
 export function GoogleAuthButton({ label }: GoogleAuthButtonProps) {
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  function handleClick() {
-    setError(null);
-    startTransition(async () => {
-      try {
-        const result = await signInWithGoogleAction();
-        if (result?.error) {
-          setError(result.error);
-        }
-      } catch (err) {
-        if (
-          err &&
-          typeof err === "object" &&
-          "digest" in err &&
-          typeof err.digest === "string" &&
-          err.digest.startsWith("NEXT_REDIRECT")
-        ) {
-          throw err;
-        }
-        setError("Could not start Google sign-in. Try again.");
-      }
-    });
-  }
-
   return (
     <div className={styles.googleAuthBlock}>
-      <button
-        type="button"
-        className={styles.googleBtn}
-        onClick={handleClick}
-        disabled={pending}
-      >
+      <Link href="/auth/google" className={styles.googleBtn}>
         <GoogleIcon />
-        {pending ? "Redirecting to Google…" : label}
-      </button>
-      {error && (
-        <p role="alert" className={styles.alert}>
-          {error}
-        </p>
-      )}
+        {label}
+      </Link>
     </div>
   );
 }
