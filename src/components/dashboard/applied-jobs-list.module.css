@@ -412,6 +412,24 @@
   border-color: #fca5a5;
 }
 
+@media (max-width: 900px) {
+  .summary {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .summaryActions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .mockInterviewBtn {
+    white-space: normal;
+    text-align: left;
+  }
+}
+
 @media (max-width: 640px) {
   .summary {
     flex-direction: column;

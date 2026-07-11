@@ -1,82 +1,23 @@
-.page {
-  font-family: var(--jb-font-sans);
-  background: var(--jb-portal-bg);
-  color: var(--jb-ink);
-  min-height: 100vh;
-}
-
-.hero {
-  position: relative;
-  padding: 72px 24px 40px;
-  background: transparent;
-  border-bottom: 1px solid var(--jb-border);
-  overflow: hidden;
-  overflow: hidden;
-  text-align: center;
-}
-
-.heroInner {
-  position: relative;
-  z-index: 1;
-  max-width: 680px;
-  margin: 0 auto;
-}
-
-.memberCount {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--jb-brand);
-  background: var(--jb-brand-soft);
-  border: 1px solid var(--jb-brand-border);
-  padding: 8px 16px;
-  border-radius: 100px;
-  margin-bottom: 20px;
-}
-
-.heroTitle {
-  font-size: clamp(36px, 6vw, 52px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.08;
-  margin-bottom: 16px;
-}
-
-.heroSub {
-  font-size: 17px;
-  line-height: 1.65;
-  color: var(--jb-ink-secondary);
-  max-width: 520px;
-  margin: 0 auto;
-}
-
 .main {
-  padding: 40px 24px 64px;
-  background: var(--jb-surface-subtle);
-}
-
-.mainInner {
-  max-width: 1100px;
-  margin: 0 auto;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .tabs {
   display: inline-flex;
   gap: 4px;
   padding: 4px;
+  margin-bottom: 32px;
   background: var(--jb-surface);
   border: 1px solid var(--jb-border);
-  border-radius: var(--jb-radius-md);
+  border-radius: 999px;
   box-shadow: var(--jb-shadow-sm);
-  margin-bottom: 32px;
 }
 
 .tab {
   padding: 10px 20px;
   border: none;
-  border-radius: calc(var(--jb-radius-md) - 4px);
+  border-radius: 999px;
   background: transparent;
   font-family: inherit;
   font-size: 14px;
@@ -91,7 +32,7 @@
 }
 
 .tabActive {
-  background: var(--jb-brand);
+  background: var(--jb-ink);
   color: #fff;
 }
 
@@ -106,26 +47,28 @@
     grid-template-columns: repeat(2, 1fr);
     align-items: start;
   }
-
-  .communityCardFeatured {
-    transform: translateY(-8px);
-  }
 }
 
 .communityCard {
   position: relative;
   display: flex;
   flex-direction: column;
+  gap: 0;
   padding: 28px 24px;
   background: var(--jb-surface);
   border: 1px solid var(--jb-border);
   border-radius: var(--jb-radius-xl);
+  box-shadow: var(--jb-shadow-sm);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.communityCard:hover {
   box-shadow: var(--jb-shadow-md);
 }
 
 .communityCardFeatured {
-  border-color: var(--jb-brand-border);
-  box-shadow: var(--jb-shadow-lg);
+  border-color: var(--jb-border-strong);
+  box-shadow: var(--jb-shadow-md);
 }
 
 .cardBadge {
@@ -136,32 +79,34 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--jb-brand);
-  background: var(--jb-brand-soft);
-  border: 1px solid var(--jb-brand-border);
+  color: var(--jb-ink-muted);
+  background: var(--jb-surface-subtle);
+  border: 1px solid var(--jb-border);
   padding: 4px 10px;
   border-radius: 100px;
 }
 
 .cardTagline {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--jb-brand);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--jb-ink-muted);
   margin-bottom: 8px;
   padding-right: 72px;
 }
 
 .cardTitle {
-  font-size: 22px;
+  font-size: clamp(22px, 3vw, 28px);
   font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
   margin-bottom: 12px;
 }
 
 .cardDesc {
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--jb-ink-secondary);
   margin-bottom: 24px;
 }
@@ -176,7 +121,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--jb-ink-muted);
   margin-bottom: 12px;
@@ -196,14 +141,14 @@
   align-items: flex-start;
   gap: 10px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--jb-ink-secondary);
 }
 
 .includedList li svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: var(--jb-brand);
+  color: var(--jb-ink);
 }
 
 .extrasList {
@@ -220,26 +165,7 @@
   line-height: 1.55;
   color: var(--jb-ink-secondary);
   padding-left: 14px;
-  border-left: 3px solid var(--jb-brand-border);
-}
-
-.expandBtn {
-  align-self: flex-start;
-  margin-bottom: 16px;
-  padding: 0;
-  border: none;
-  background: none;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--jb-brand);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.expandBtn:hover {
-  color: var(--jb-brand-hover);
+  border-left: 2px solid var(--jb-border-strong);
 }
 
 .pricingSingle,
@@ -256,9 +182,9 @@
 }
 
 .pricingAmount {
-  font-size: 22px;
+  font-size: clamp(24px, 3vw, 30px);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--jb-ink);
 }
 
@@ -267,39 +193,9 @@
   color: var(--jb-ink-muted);
 }
 
-.cardCtaPrimary,
-.cardCtaSecondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.communityCard a:last-child {
   margin-top: auto;
-  padding: 12px 20px;
-  border-radius: var(--jb-radius-md);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.cardCtaPrimary {
-  background: var(--jb-brand);
-  color: #fff;
-}
-
-.cardCtaPrimary:hover {
-  background: var(--jb-brand-hover);
-}
-
-.cardCtaSecondary {
-  background: var(--jb-surface-subtle);
-  color: var(--jb-ink);
-  border: 1px solid var(--jb-border);
-}
-
-.cardCtaSecondary:hover {
-  border-color: var(--jb-brand-border);
-  color: var(--jb-brand);
+  align-self: flex-start;
 }
 
 .storiesGrid {
@@ -320,12 +216,17 @@
   border: 1px solid var(--jb-border);
   border-radius: var(--jb-radius-lg);
   box-shadow: var(--jb-shadow-sm);
+  transition: box-shadow 0.2s;
+}
+
+.storyCard:hover {
+  box-shadow: var(--jb-shadow-md);
 }
 
 .storyDate {
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--jb-ink-muted);
   margin-bottom: 8px;
@@ -334,13 +235,13 @@
 .storyTitle {
   font-size: 18px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   margin-bottom: 10px;
 }
 
 .storySummary {
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--jb-ink-secondary);
   margin-bottom: 12px;
 }
@@ -348,22 +249,5 @@
 .storyStat {
   font-size: 14px;
   font-weight: 700;
-  color: var(--jb-brand);
-}
-
-.bottomNote {
-  margin-top: 40px;
-  text-align: center;
-  font-size: 15px;
-  color: var(--jb-ink-muted);
-}
-
-.bottomLink {
-  color: var(--jb-brand);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.bottomLink:hover {
-  text-decoration: underline;
+  color: var(--jb-ink);
 }

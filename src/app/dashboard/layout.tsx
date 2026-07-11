@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { CandidateSidebar } from "@/components/candidate/candidate-sidebar";
+import { CandidateMobileNav } from "@/components/candidate/candidate-mobile-nav";
 import shellStyles from "@/components/admin/admin-shell.module.css";
 import portalStyles from "@/components/candidate/portal-content.module.css";
 import { getSessionUser } from "@/lib/auth/session";
@@ -24,6 +25,7 @@ export default async function DashboardLayout({
       <div className={`${shellStyles.adminContent} ${portalStyles.content}`}>
         <div className={portalStyles.contentInner}>{children}</div>
       </div>
+      <CandidateMobileNav unreadApplications={unreadApplications} />
     </div>
   );
 }

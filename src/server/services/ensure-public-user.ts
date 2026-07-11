@@ -36,12 +36,6 @@ export async function ensurePublicUserRecord(
     .maybeSingle();
 
   if (existing) {
-    await registerNewCandidateSignup({
-      userId: user.id,
-      email: user.email ?? "",
-      firstName: resolvedFirst,
-      lastName: resolvedLast,
-    });
     return {};
   }
 

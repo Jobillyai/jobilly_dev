@@ -1,5 +1,7 @@
 .marquee {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   text-align: center;
   overflow: hidden;
 }
@@ -18,10 +20,14 @@
   flex-direction: column;
   gap: 32px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .track {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   mask-image: linear-gradient(
     to right,

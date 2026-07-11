@@ -2,48 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Calendar,
-  Compass,
-  Briefcase,
-  LayoutDashboard,
-  UserCircle,
-} from "lucide-react";
 import { JobillyLogo } from "@/components/brand/jobilly-logo";
+import {
+  CANDIDATE_NAV_ITEMS,
+  isCandidateNavActive,
+} from "@/components/candidate/candidate-nav";
 import styles from "./candidate-sidebar.module.css";
-
-const navItems = [
-  {
-    href: "/dashboard" as const,
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    exact: true,
-  },
-  {
-    href: "/dashboard/career-advisory" as const,
-    label: "Career Advisory",
-    icon: Compass,
-    exact: false,
-  },
-  {
-    href: "/dashboard/applications" as const,
-    label: "Applications",
-    icon: Briefcase,
-    exact: false,
-  },
-  {
-    href: "/dashboard/calendar" as const,
-    label: "Calendar",
-    icon: Calendar,
-    exact: false,
-  },
-  {
-    href: "/dashboard/profile" as const,
-    label: "Profile",
-    icon: UserCircle,
-    exact: false,
-  },
-] as const;
 
 type CandidateSidebarProps = {
   unreadApplications?: number;
@@ -51,13 +15,6 @@ type CandidateSidebarProps = {
 
 export function CandidateSidebar({ unreadApplications = 0 }: CandidateSidebarProps) {
   const pathname = usePathname();
-
-  function isActive(href: string, exact: boolean) {
-    if (exact) {
-      return pathname === href;
-    }
-    return pathname.startsWith(href);
-  }
 
   return (
     <aside className={styles.sidebar}>
@@ -68,9 +25,9 @@ export function CandidateSidebar({ unreadApplications = 0 }: CandidateSidebarPro
       />
 
       <nav className={styles.nav} aria-label="Candidate navigation">
-        {navItems.map((item) => {
+        {CANDIDATE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item.href, item.exact);
+          const active = isCandidateNavActive(pathname, item.href, item.exact);
 
           return (
             <Link

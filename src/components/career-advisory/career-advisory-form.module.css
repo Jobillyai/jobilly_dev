@@ -168,3 +168,17 @@
   line-height: 1.6;
   color: var(--text-muted);
 }
+
+@media (max-width: 640px) {
+  .previousSubmissionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .previousSubmission,
+  .formPanel {
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+}

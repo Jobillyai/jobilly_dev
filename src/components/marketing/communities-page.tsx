@@ -12,6 +12,7 @@ import {
   type CommunityPlan,
 } from "@/lib/community-plans";
 import styles from "./communities-page.module.css";
+import shell from "./marketing-shell.module.css";
 
 type TabId = "communities" | "stories";
 
@@ -86,7 +87,7 @@ function CommunityCard({ plan }: { plan: CommunityPlan }) {
 
       <Link
         href={plan.ctaHref}
-        className={plan.featured ? styles.cardCtaPrimary : styles.cardCtaSecondary}
+        className={plan.featured ? shell.btnPrimary : shell.btnSecondary}
       >
         {plan.ctaLabel} <ArrowRight size={16} aria-hidden />
       </Link>
@@ -98,23 +99,59 @@ export function CommunitiesPage() {
   const [activeTab, setActiveTab] = useState<TabId>("communities");
 
   return (
-    <div className={styles.page}>
-      <section className={styles.hero}>
+    <div className={shell.page}>
+      <section className={shell.hero}>
         <AbstractBackground />
-        <div className={styles.heroInner}>
-          <p className={styles.memberCount}>
-            <Users size={16} aria-hidden />
-            {communityMemberCount} members
-          </p>
-          <h1 className={styles.heroTitle}>Communities</h1>
-          <p className={styles.heroSub}>
-            Pick your lane: go all-in with Pro or just get the news with the free digest.
-          </p>
+        <div className={shell.heroContent}>
+          <div className={shell.heroInner}>
+            <p className={shell.heroEyebrow}>Member communities</p>
+            <h1 className={shell.heroTitle}>
+              Learn together. <span className={shell.brandWord}>Grow faster.</span>
+            </h1>
+            <p className={shell.heroSub}>
+              Pick your lane: go all-in with Pro or stay in the loop with the free digest —
+              accountability, mock interview rooms, and member-only sessions.
+            </p>
+
+            <div className={shell.heroActions}>
+              <Link href="/signup" className={shell.btnPrimary}>
+                Join Jobilly Pro
+                <ArrowRight size={16} aria-hidden />
+              </Link>
+              <Link href="#communities" className={shell.btnSecondary}>
+                Compare plans
+              </Link>
+            </div>
+
+            <p className={shell.heroNote}>Free digest — no card required.</p>
+          </div>
+        </div>
+
+        <div className={shell.statsBand}>
+          <div className={shell.statItem}>
+            <span className={shell.statValue}>{communityMemberCount}</span>
+            <span className={shell.statLabel}>Members</span>
+          </div>
+          <div className={shell.statItem}>
+            <span className={shell.statValue}>{communityPlans.length}</span>
+            <span className={shell.statLabel}>Communities</span>
+          </div>
+          <div className={shell.statItem}>
+            <span className={shell.statValue}>{communityStories.length}</span>
+            <span className={shell.statLabel}>Success stories</span>
+          </div>
+          <div className={shell.statItem}>
+            <span className={shell.statValue}>Pro</span>
+            <span className={shell.statLabel}>Mock interview rooms</span>
+          </div>
         </div>
       </section>
 
-      <section className={styles.main}>
-        <div className={styles.mainInner}>
+      <section id="communities" className={`${shell.section} ${styles.main}`}>
+        <div className={shell.sectionContent}>
+          <p className={shell.sectionLabel}>Communities</p>
+          <h2 className={shell.sectionTitle}>Find your cohort</h2>
+
           <div className={styles.tabs} role="tablist" aria-label="Community sections">
             <button
               type="button"
@@ -147,7 +184,7 @@ export function CommunitiesPage() {
               {communityStories.map((story) => (
                 <article key={story.id} className={styles.storyCard}>
                   <p className={styles.storyDate}>{story.date}</p>
-                  <h2 className={styles.storyTitle}>{story.title}</h2>
+                  <h3 className={styles.storyTitle}>{story.title}</h3>
                   <p className={styles.storySummary}>{story.summary}</p>
                   {story.stat ? (
                     <p className={styles.storyStat}>{story.stat}</p>
@@ -156,15 +193,30 @@ export function CommunitiesPage() {
               ))}
             </div>
           )}
+        </div>
+      </section>
 
-          <div className={styles.bottomNote}>
-            <p>
-              Questions about chapters or group pricing?{" "}
-            <Link href="/contact" className={styles.bottomLink}>
-              Contact us
-              </Link>
-              .
+      <section className={shell.ctaSection}>
+        <div className={shell.sectionContent}>
+          <div className={shell.ctaInner}>
+            <h2 className={shell.ctaTitle}>
+              Want a community for
+              <br />
+              your university?
+            </h2>
+            <p className={shell.ctaSub}>
+              We partner with universities and cohort leads. Tell us what you need and
+              we will help you set up a chapter or group plan.
             </p>
+            <div className={shell.ctaActions}>
+              <Link href="/contact" className={shell.btnPrimary}>
+                Get in touch
+                <ArrowRight size={16} aria-hidden />
+              </Link>
+              <Link href="/products" className={shell.btnSecondary}>
+                View candidate plans
+              </Link>
+            </div>
           </div>
         </div>
       </section>

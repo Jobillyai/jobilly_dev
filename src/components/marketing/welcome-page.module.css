@@ -1,14 +1,20 @@
 .page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   font-family: var(--jb-font-sans);
   background: var(--jb-surface);
   color: var(--jb-ink);
-  overflow-x: hidden;
+  overflow-x: clip;
   line-height: 1.6;
 }
 
 /* ── HERO ── */
 .hero {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 120px 24px 0;
   background: var(--jb-surface);
   overflow: hidden;
@@ -17,7 +23,9 @@
 .heroGrid {
   position: relative;
   z-index: 1;
+  width: 100%;
   max-width: 1180px;
+  min-width: 0;
   margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -27,13 +35,18 @@
 }
 
 .heroInner {
+  width: 100%;
+  min-width: 0;
   max-width: 560px;
   text-align: left;
 }
 
 .heroPreview {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding-bottom: 48px;
-  min-height: 420px;
+  min-height: clamp(280px, 50vh, 420px);
 }
 
 .heroEyebrow {
@@ -65,10 +78,12 @@
   line-height: 1.06;
   letter-spacing: -0.04em;
   color: var(--jb-ink);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .brandWord {
-  display: inline-block;
+  display: inline;
   color: var(--jb-brand);
 }
 
@@ -78,6 +93,7 @@
   font-size: clamp(17px, 2.2vw, 20px);
   line-height: 1.7;
   color: var(--jb-ink-secondary);
+  overflow-wrap: anywhere;
 }
 
 .btnPrimary,
@@ -120,11 +136,14 @@
 .statsBand {
   position: relative;
   z-index: 1;
+  width: 100%;
   max-width: 1180px;
+  min-width: 0;
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border-top: 1px solid var(--jb-border);
+  box-sizing: border-box;
 }
 
 .statItem {
@@ -168,9 +187,12 @@
 .sectionContent {
   position: relative;
   z-index: 1;
+  width: 100%;
   max-width: 1180px;
+  min-width: 0;
   margin: 0 auto;
   padding: 0 24px;
+  box-sizing: border-box;
 }
 
 .editorialInner {
@@ -325,6 +347,9 @@
 /* ── COMPANIES ── */
 .companiesStrip {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   background: var(--jb-surface);
   border-top: 1px solid var(--jb-border);
@@ -333,10 +358,13 @@
 .companiesStripInner {
   position: relative;
   z-index: 1;
+  width: 100%;
   max-width: 1180px;
+  min-width: 0;
   margin: 0 auto;
   padding: 72px 24px;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .companiesLabel {
@@ -431,15 +459,39 @@
     gap: 16px;
     padding: 24px;
   }
+
+  .openItemLink {
+    align-self: flex-start;
+    white-space: normal;
+  }
 }
 
 @media (max-width: 600px) {
   .hero {
-    padding-top: 112px;
+    padding: 112px 16px 0;
   }
 
   .heroInner {
     padding-bottom: 56px;
+  }
+
+  .h1 {
+    font-size: clamp(28px, 8.2vw, 40px);
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+  }
+
+  .heroSub {
+    font-size: 16px;
+  }
+
+  .heroActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .heroNote {
+    overflow-wrap: anywhere;
   }
 
   .statsBand {
@@ -462,6 +514,12 @@
   .btnPrimary,
   .btnSecondary {
     width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero {
+    padding: 104px 12px 0;
   }
 }
 

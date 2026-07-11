@@ -112,6 +112,7 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
   }
 
   body {
@@ -119,5 +120,7 @@
     font-family: var(--jb-font-sans);
     color: var(--jb-ink);
     background: var(--jb-surface);
+    overflow-x: clip;
+    max-width: 100vw;
   }
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import AppShell from "@/components/layout/app-shell";
 import { RouteLoader } from "@/components/layout/route-loader";
 import { SiteBootLoader } from "@/components/layout/site-boot-loader";
@@ -7,6 +7,12 @@ import { TRPCProvider } from "@/lib/trpc/provider";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "Jobilly.ai — From Graduation to Your First Job",
@@ -40,7 +46,7 @@ export default function RootLayout({
         <TRPCProvider>
           <SiteBootLoader />
           <RouteLoader />
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-screen min-w-0 flex-col">
             <AppShell>{children}</AppShell>
             <SiteFooterShell />
           </div>

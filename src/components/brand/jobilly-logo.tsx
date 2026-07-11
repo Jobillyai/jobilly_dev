@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { useId } from "react";
 import { JobillyMark } from "./jobilly-mark";
 import styles from "./jobilly-logo.module.css";
 
@@ -23,11 +22,9 @@ export function JobillyLogo({
   onDark = false,
   className,
 }: JobillyLogoProps) {
-  const gradientId = useId().replace(/:/g, "");
-
   const content = (
     <>
-      <JobillyMark size={markSize} gradientId={gradientId} className={styles.mark} />
+      <JobillyMark size={markSize} className={styles.mark} />
       {showWordmark || subtitle ? (
         <span className={styles.wordmarkBlock}>
           {showWordmark ? (

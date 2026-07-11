@@ -8,3 +8,9 @@
 .contentInner {
   min-height: 100%;
 }
+
+@media (max-width: 640px) {
+  .contentInner {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}

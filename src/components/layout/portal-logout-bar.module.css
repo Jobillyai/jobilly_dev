@@ -103,8 +103,9 @@
 
 @media (max-width: 640px) {
   .bar {
-    top: 12px;
-    right: 12px;
+    top: max(12px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    left: auto;
     gap: 8px;
   }
 

@@ -25,13 +25,13 @@ import {
   formatPlanPriceMonthly,
   getServicesByPhase,
   premiumPlans,
-  productTrustPoints,
   servicePhases,
   type CandidateService,
   type PremiumPlanId,
   type ServicePhase,
 } from "@/lib/candidate-services";
 import styles from "./products-page.module.css";
+import shell from "./marketing-shell.module.css";
 
 const serviceIcons: Record<string, typeof Compass> = {
   "career-advisory": Compass,
@@ -153,52 +153,60 @@ export function ProductsPage() {
   const freeCount = candidateServices.filter((service) => service.tier === "free").length;
 
   return (
-    <div className={styles.page}>
-      <section className={styles.hero}>
+    <div className={shell.page}>
+      <section className={shell.hero}>
         <AbstractBackground />
-        <div className={styles.heroInner}>
-          <p className={styles.eyebrow}>Premium candidate services</p>
-          <h1 className={styles.heroTitle}>One plan. Real results.</h1>
-          <p className={styles.heroSub}>
-            Practice mock interviews, let our team apply to matched roles, or get both —
-            while free career tools keep you on track from graduate to hired.
-          </p>
+        <div className={shell.heroContent}>
+          <div className={shell.heroInner}>
+            <p className={shell.heroEyebrow}>Premium candidate services</p>
+            <h1 className={shell.heroTitle}>
+              One plan. <span className={shell.brandWord}>Real results.</span>
+            </h1>
+            <p className={shell.heroSub}>
+              Practice mock interviews, let our team apply to matched roles, or get both —
+              while free career tools keep you on track from graduate to hired.
+            </p>
 
-          <div className={styles.heroStats}>
-            <div className={styles.heroStat}>
-              <span className={styles.heroStatNum}>{candidateServices.length}</span>
-              <span className={styles.heroStatLabel}>Services</span>
+            <div className={shell.heroActions}>
+              <Link href="/signup" className={shell.btnPrimary}>
+                Get started free
+                <ArrowRight size={16} aria-hidden />
+              </Link>
+              <Link href="#pricing" className={shell.btnSecondary}>
+                View plans
+              </Link>
             </div>
-            <div className={styles.heroStat}>
-              <span className={styles.heroStatNum}>{liveCount}</span>
-              <span className={styles.heroStatLabel}>Live today</span>
-            </div>
-            <div className={styles.heroStat}>
-              <span className={styles.heroStatNum}>{freeCount}</span>
-              <span className={styles.heroStatLabel}>Free tools</span>
-            </div>
-            <div className={styles.heroStat}>
-              <span className={styles.heroStatNum}>{premiumPlans.length}</span>
-              <span className={styles.heroStatLabel}>Premium plans</span>
-            </div>
+
+            <p className={shell.heroNote}>Free advisory and portal tools included.</p>
           </div>
+        </div>
 
-          <div className={styles.trustStrip}>
-            {productTrustPoints.map((point) => (
-              <span key={point} className={styles.trustPill}>
-                <Check size={14} strokeWidth={2.5} aria-hidden />
-                {point}
-              </span>
-            ))}
+        <div className={shell.statsBand}>
+          <div className={shell.statItem}>
+            <span className={shell.statValue}>{candidateServices.length}</span>
+            <span className={shell.statLabel}>Services</span>
+          </div>
+          <div className={shell.statItem}>
+            <span className={shell.statValue}>{liveCount}</span>
+            <span className={shell.statLabel}>Live today</span>
+          </div>
+          <div className={shell.statItem}>
+            <span className={shell.statValue}>{freeCount}</span>
+            <span className={shell.statLabel}>Free tools</span>
+          </div>
+          <div className={shell.statItem}>
+            <span className={shell.statValue}>{premiumPlans.length}</span>
+            <span className={shell.statLabel}>Premium plans</span>
           </div>
         </div>
       </section>
 
-      <section className={styles.pricingSection}>
-        <div className={styles.pricingWrap}>
-          <p className={styles.pricingIntro}>Choose your premium plan</p>
-
-          <div className={styles.planCompareGrid}>
+      <section id="pricing" className={`${shell.section} ${styles.pricingSection}`}>
+        <div className={shell.sectionContent}>
+          <p className={shell.sectionLabel}>Pricing</p>
+          <h2 className={shell.sectionTitle}>Choose your premium plan</h2>
+          <div className={styles.pricingWrap}>
+            <div className={styles.planCompareGrid}>
             {premiumPlans.map((plan) => (
               <button
                 key={plan.id}
@@ -223,7 +231,7 @@ export function ProductsPage() {
                 </span>
               </button>
             ))}
-          </div>
+            </div>
 
           <article key={activePlan.id} className={styles.planCard}>
             {activePlan.featured ? (
@@ -265,18 +273,20 @@ export function ProductsPage() {
               </ul>
             </div>
 
-            <Link href="/signup" className={styles.planCta}>
+            <Link href="/signup" className={`${shell.btnPrimary} ${styles.planCta}`}>
               {activePlan.ctaLabel}
+              <ArrowRight size={16} aria-hidden />
             </Link>
           </article>
+          </div>
         </div>
       </section>
 
-      <section className={styles.detailsSection}>
-        <div className={styles.detailsInner}>
+      <section className={`${shell.section} ${shell.sectionMuted} ${styles.detailsSection}`}>
+        <div className={`${shell.sectionContent} ${styles.detailsInner}`}>
           <div className={styles.valueBlock}>
-            <p className={styles.sectionLabel}>Why Jobilly</p>
-            <h2 className={styles.sectionTitle}>Built for outcomes, not noise</h2>
+            <p className={shell.sectionLabel}>Why Jobilly</p>
+            <h2 className={shell.sectionTitle}>Built for outcomes, not noise</h2>
             <div className={styles.valueGrid}>
               {valuePoints.map((point) => {
                 const Icon = point.icon;
@@ -294,8 +304,8 @@ export function ProductsPage() {
           </div>
 
           <div className={styles.journeyBlock}>
-            <p className={styles.sectionLabel}>The candidate journey</p>
-            <h2 className={styles.sectionTitle}>Four phases. One platform.</h2>
+            <p className={shell.sectionLabel}>The candidate journey</p>
+            <h2 className={shell.sectionTitle}>Four phases. One platform.</h2>
             <div className={styles.journeyTrack}>
               {servicePhases.slice(1).map((phase, index) => {
                 const PhaseIcon = phaseIcons[phase.id as ServicePhase];
@@ -324,8 +334,8 @@ export function ProductsPage() {
           <div className={styles.catalogBlock}>
             <div className={styles.catalogHeader}>
               <div>
-                <p className={styles.sectionLabel}>Service catalog</p>
-                <h2 className={styles.sectionTitle}>What you get as a candidate</h2>
+                <p className={shell.sectionLabel}>Service catalog</p>
+                <h2 className={shell.sectionTitle}>What you get as a candidate</h2>
               </div>
             </div>
 
@@ -378,6 +388,31 @@ export function ProductsPage() {
             </Link>{" "}
             to your portal.
           </p>
+        </div>
+      </section>
+
+      <section className={shell.ctaSection}>
+        <div className={shell.sectionContent}>
+          <div className={shell.ctaInner}>
+            <h2 className={shell.ctaTitle}>
+              Ready to start your
+              <br />
+              job search journey?
+            </h2>
+            <p className={shell.ctaSub}>
+              Create a free account to access career advisory, your portal dashboard,
+              and premium plans when you are ready.
+            </p>
+            <div className={shell.ctaActions}>
+              <Link href="/signup" className={shell.btnPrimary}>
+                Get started free
+                <ArrowRight size={16} aria-hidden />
+              </Link>
+              <Link href="/contact" className={shell.btnSecondary}>
+                Talk to us
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </div>

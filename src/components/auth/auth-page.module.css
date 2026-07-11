@@ -6,8 +6,20 @@
   min-height: 100vh;
   font-family: var(--jb-font-sans);
   color: var(--jb-ink);
-  overflow: hidden;
+  overflow-x: clip;
   background: transparent;
+}
+
+:global(.auth-with-navbar) .shell {
+  min-height: calc(100vh - 72px);
+}
+
+:global(.auth-with-navbar) .formPanel {
+  min-height: calc(100vh - 72px);
+}
+
+:global(.auth-with-navbar) .mobileBrand {
+  display: none;
 }
 
 .formPanel {
@@ -21,7 +33,6 @@
   width: 100%;
   padding: clamp(40px, 6vh, 72px) clamp(32px, 5vw, 64px);
   min-height: 100vh;
-  isolation: isolate;
   background: transparent;
 }
 
@@ -35,14 +46,15 @@
   z-index: 3;
   width: 100%;
   max-width: 560px;
-  background: #ffffff;
-  border: 1.5px solid var(--jb-border-strong);
+  background: rgba(255, 255, 255, 0.52);
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: var(--jb-radius-xl);
   padding: clamp(32px, 4vw, 44px);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.95) inset,
-    0 24px 64px rgba(17, 17, 17, 0.1),
-    0 8px 24px rgba(79, 70, 229, 0.08);
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 24px 56px rgba(17, 17, 17, 0.08);
 }
 
 .header {
@@ -207,7 +219,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   margin-bottom: 8px;
 }
 
@@ -217,7 +230,6 @@
   color: var(--jb-ink);
   text-decoration: none;
   transition: opacity 0.2s;
-  white-space: nowrap;
 }
 
 .forgotLink:hover {
@@ -425,8 +437,27 @@
 
   .card {
     max-width: none;
+    background: rgba(255, 255, 255, 0.58);
     box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.95) inset,
-      0 16px 48px rgba(17, 17, 17, 0.1);
+      0 1px 0 rgba(255, 255, 255, 0.85) inset,
+      0 16px 40px rgba(17, 17, 17, 0.08);
+  }
+}
+
+@media (max-width: 480px) {
+  .formPanel {
+    padding: 32px 16px 48px;
+  }
+
+  .card {
+    padding: 28px 20px;
+    border-radius: var(--jb-radius-lg);
+  }
+
+  .footer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }

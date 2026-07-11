@@ -175,3 +175,9 @@
     padding: 8px;
   }
 }
+
+@media (max-width: 640px) {
+  .sidebar {
+    display: none;
+  }
+}

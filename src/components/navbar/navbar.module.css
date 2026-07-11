@@ -3,7 +3,7 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 300;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -133,6 +133,10 @@
   transform: translateY(-1px);
   background: var(--jb-dark-elevated);
   box-shadow: var(--jb-shadow-md);
+}
+
+.guestNavActionsCompact {
+  display: none;
 }
 
 .navBtnGhost:active,
@@ -271,9 +275,85 @@
   color: var(--jb-danger);
 }
 
+.menuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: 4px;
+  border: 1px solid var(--jb-border);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--jb-ink);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.menuBtn:hover {
+  border-color: var(--jb-brand-border);
+  background: var(--jb-brand-soft);
+}
+
+.menuOverlay {
+  position: fixed;
+  inset: 72px 0 0;
+  z-index: 199;
+  border: none;
+  background: rgba(17, 17, 17, 0.35);
+  cursor: pointer;
+}
+
+.mobileMenu {
+  position: fixed;
+  top: 72px;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--jb-border);
+  box-shadow: var(--jb-shadow-lg);
+}
+
+.mobileMenu .navLinks {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.mobileMenu .navLink {
+  padding: 12px 14px;
+  border-radius: 12px;
+  white-space: normal;
+}
+
+.mobileMenu .navLink:hover {
+  background: var(--jb-brand-soft);
+}
+
+.mobileMenuActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--jb-border);
+}
+
+.mobileMenuActions .navBtnGhost,
+.mobileMenuActions .navBtnPrimary {
+  width: 100%;
+}
+
 @media (max-width: 900px) {
   .nav {
-    padding: 0 24px;
+    padding: 0 20px;
   }
 
   .navLinks {
@@ -283,20 +363,55 @@
   .navLeft {
     gap: 0;
   }
+
+  .guestNavActions {
+    display: none;
+  }
+
+  .guestNavActionsCompact {
+    display: flex;
+  }
+}
+
+@media (min-width: 901px) {
+  .menuBtn,
+  .mobileMenu,
+  .menuOverlay {
+    display: none;
+  }
+
+  .guestNavActionsCompact {
+    display: none;
+  }
 }
 
 @media (max-width: 600px) {
   .nav {
-    padding: 0 20px;
+    padding: 0 16px;
   }
 
   .userName {
-    max-width: 100px;
+    max-width: 88px;
   }
 
   .navBtnGhost,
   .navBtnPrimary {
-    padding: 10px 16px;
+    padding: 10px 14px;
     font-size: 13px;
+  }
+
+  .navLogoutBtn {
+    display: none;
+  }
+
+  .navBtnCompact {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .navActions .userName {
+    display: none;
   }
 }
