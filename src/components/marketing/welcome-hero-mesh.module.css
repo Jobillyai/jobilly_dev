@@ -77,9 +77,23 @@
   }
 }
 
+.meshWrapHero {
+  z-index: 0;
+}
+
+@media (min-width: 961px) {
+  .meshWrapHero {
+    z-index: 1;
+  }
+}
+
 @media (max-width: 960px) {
   .meshWrap {
     opacity: 0.62;
+  }
+
+  .meshWrapHero .meshLine {
+    stroke-width: 0.8;
   }
 }
 

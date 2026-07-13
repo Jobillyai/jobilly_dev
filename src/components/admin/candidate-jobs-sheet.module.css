@@ -1,5 +1,6 @@
 .sheet {
   width: 100%;
+  max-width: none;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -38,7 +39,6 @@
   font-size: 14px;
   line-height: 1.55;
   color: var(--jb-ink-muted);
-  max-width: 56ch;
 }
 
 .controlsActions {
@@ -112,7 +112,7 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--jb-brand-hover);
+  color: var(--jb-admin-accent-bright);
 }
 
 .fieldInput,
@@ -132,8 +132,8 @@
 .fieldInput:focus,
 .fieldSelect:focus {
   outline: none;
-  border-color: var(--jb-brand-border);
-  box-shadow: var(--jb-focus-ring);
+  border-color: rgba(6, 182, 212, 0.45);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.16);
   background: var(--jb-input-bg-focus);
 }
 
@@ -162,8 +162,8 @@
   align-items: center;
   padding: 7px 12px;
   border-radius: 999px;
-  border: 1px solid var(--jb-brand-border);
-  background: var(--jb-brand-soft);
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  background: var(--jb-admin-accent-soft);
   font-size: 12px;
   font-weight: 600;
   color: var(--jb-ink-secondary);
@@ -171,7 +171,7 @@
 
 .statPill strong {
   margin-right: 4px;
-  color: var(--jb-brand);
+  color: var(--jb-admin-accent);
 }
 
 .filterRow {
@@ -202,7 +202,7 @@
   line-height: 1.5;
   color: #92400e;
   background: var(--jb-warning-soft);
-  border: 1px solid var(--jb-brand-border);
+  border: 1px solid rgba(6, 182, 212, 0.28);
   border-radius: var(--jb-radius-sm);
   padding: 10px 12px;
 }
@@ -211,10 +211,10 @@
   display: inline-flex;
   align-items: center;
   padding: 10px 16px;
-  border: 1px solid var(--jb-brand-border);
+  border: 1px solid rgba(6, 182, 212, 0.28);
   border-radius: var(--jb-radius-sm);
   background: var(--jb-admin-elevated-strong);
-  color: var(--jb-brand);
+  color: var(--jb-admin-accent);
   font-family: var(--jb-font-sans);
   font-size: 13px;
   font-weight: 700;
@@ -224,8 +224,8 @@
 }
 
 .resumeViewLink:hover {
-  background: var(--jb-brand-soft);
-  border-color: var(--jb-brand);
+  background: var(--jb-admin-accent-soft);
+  border-color: var(--jb-admin-accent);
 }
 
 .resumeMissingLabel {
@@ -238,10 +238,10 @@
   display: inline-flex;
   align-items: center;
   padding: 10px 16px;
-  border: 1px dashed var(--jb-brand-border);
+  border: 1px dashed rgba(6, 182, 212, 0.28);
   border-radius: var(--jb-radius-sm);
   background: var(--jb-admin-elevated-strong);
-  color: var(--jb-brand);
+  color: var(--jb-admin-accent);
   font-family: var(--jb-font-sans);
   font-size: 13px;
   font-weight: 700;
@@ -251,17 +251,17 @@
 }
 
 .resumeAnalyzeBtn:hover {
-  background: var(--jb-brand-soft);
-  border-color: var(--jb-brand);
+  background: var(--jb-admin-accent-soft);
+  border-color: var(--jb-admin-accent);
 }
 
 .sendMailBtn {
   display: inline-flex;
   align-items: center;
   padding: 10px 16px;
-  border: 1px solid var(--jb-brand);
+  border: 1px solid var(--jb-admin-accent);
   border-radius: var(--jb-radius-sm);
-  background: var(--jb-brand);
+  background: var(--jb-admin-accent);
   color: var(--jb-btn-primary-fg);
   font-family: var(--jb-font-sans);
   font-size: 13px;
@@ -272,7 +272,7 @@
 }
 
 .sendMailBtn:hover:not(:disabled) {
-  background: var(--jb-brand-hover);
+  background: #0891b2;
   transform: translateY(-1px);
 }
 
@@ -289,14 +289,14 @@
   margin: 8px 0 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--jb-brand);
+  color: var(--jb-admin-accent);
 }
 
 .searchBtn {
   border: none;
   border-radius: var(--jb-radius-sm);
   padding: 10px 16px;
-  background: var(--jb-brand);
+  background: var(--jb-admin-accent);
   color: var(--jb-btn-primary-fg);
   font-family: var(--jb-font-sans);
   font-size: 13px;
@@ -307,7 +307,7 @@
 }
 
 .searchBtn:hover:not(:disabled) {
-  background: var(--jb-brand-hover);
+  background: #0891b2;
   transform: translateY(-1px);
 }
 
@@ -318,12 +318,15 @@
 
 .contentArea {
   position: relative;
-  min-height: 200px;
-  max-height: calc(100vh - 340px);
+  min-height: 240px;
+  max-height: calc(100vh - 300px);
   overflow: auto;
-  border: 1px solid var(--jb-border);
-  border-radius: var(--jb-radius-md);
-  background: var(--jb-admin-elevated-mid);
+  border: 1px solid var(--jb-admin-card-border);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top right, rgba(6, 182, 212, 0.06), transparent 42%),
+    var(--jb-admin-elevated-mid);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .loadingOverlay {
@@ -359,8 +362,8 @@
 .toolbarSpinner {
   width: 36px;
   height: 36px;
-  border: 3px solid var(--jb-brand-border);
-  border-top-color: var(--jb-brand);
+  border: 3px solid rgba(6, 182, 212, 0.28);
+  border-top-color: var(--jb-admin-accent);
   border-radius: 50%;
   animation: jobSearchSpin 0.8s linear infinite;
 }
@@ -382,8 +385,8 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--jb-brand-soft);
-  border-bottom: 1px solid var(--jb-brand-border);
+  background: var(--jb-admin-accent-soft);
+  border-bottom: 1px solid rgba(6, 182, 212, 0.28);
   font-size: 13px;
   color: var(--jb-ink-secondary);
 }
@@ -422,9 +425,9 @@
 }
 
 .messageInfo {
-  color: var(--jb-brand-hover);
-  background: var(--jb-brand-soft);
-  border-color: var(--jb-brand-border);
+  color: var(--jb-admin-accent-bright);
+  background: var(--jb-admin-accent-soft);
+  border-color: rgba(6, 182, 212, 0.28);
 }
 
 .empty {

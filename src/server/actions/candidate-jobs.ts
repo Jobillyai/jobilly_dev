@@ -42,8 +42,8 @@ import { sendCandidateApplicationsDigest } from "@/server/services/run-daily-app
 import {
   createSignedResumeUrl,
   saveApplicationResumeFile,
-} from "@/server/services/resume-ats-check";
-import { RESUME_MIME_TYPES } from "@/server/services/apify-ats-score";
+} from "@/server/services/resume-storage";
+import { RESUME_MIME_TYPES } from "@/lib/resume-mime";
 
 export type JobSearchSourceMode = JobMarketSource | "all";
 
@@ -213,6 +213,7 @@ export async function prepareCandidateJobSearchAction(
       searchRole: string;
       cacheStatus: RoleScrapeCacheStatus[];
       shouldScrape: boolean;
+      sourcesToScrape: JobMarketSource[];
       info?: string;
     }
 > {
@@ -294,6 +295,7 @@ export async function prepareCandidateJobSearchAction(
     searchRole: stored.searchRole,
     cacheStatus: stored.cacheStatus,
     shouldScrape,
+    sourcesToScrape: shouldScrape ? sourcesToScrape : [],
     info,
   };
 }
@@ -700,8 +702,6 @@ export type CandidateResumeAnalysisResult = {
   downloadUrl?: string;
   resumeText?: string;
   wordCount?: number;
-  atsScore?: number | null;
-  atsGrade?: string | null;
   error?: string;
 };
 
@@ -776,8 +776,6 @@ export async function uploadAndAnalyzeCandidateResumeAction(
       downloadUrl: analysis.downloadUrl,
       resumeText: analysis.resumeText,
       wordCount: analysis.wordCount,
-      atsScore: analysis.atsScore,
-      atsGrade: analysis.atsGrade,
     };
   } catch (error) {
     return {
@@ -807,8 +805,6 @@ export async function analyzeCandidateResumeOnFileAction(
       downloadUrl: analysis.downloadUrl,
       resumeText: analysis.resumeText,
       wordCount: analysis.wordCount,
-      atsScore: analysis.atsScore,
-      atsGrade: analysis.atsGrade,
     };
   } catch (error) {
     return {

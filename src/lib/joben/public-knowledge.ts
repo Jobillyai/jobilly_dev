@@ -52,9 +52,11 @@ const phaseSummary = servicePhases
   .join(" → ");
 
 export const JOBEN_SUGGESTED_PROMPTS = [
-  "How does Jobilly work?",
-  "What is 1+1?",
+  "What is Jobilly AI?",
+  "How does Jobilly help me get hired?",
   "What's free for candidates?",
+  "How do AI mock interviews work?",
+  "Will Jobilly apply to jobs for me?",
   "What are the premium plans?",
 ] as const;
 
@@ -91,6 +93,9 @@ const CANDIDATE_ONLY_TOPICS: JobenTopic[] = [
       "how does this work",
       "graduate to hired",
       "what happens",
+      "help me get hired",
+      "get hired",
+      "help graduates",
     ],
     minScore: 2,
     answer: `For candidates, Jobilly follows four steps: ${phaseSummary}. Sign up free, book career advisory, keep your profile updated, and upgrade only if you want mock interviews or managed applications.`,
@@ -136,6 +141,7 @@ const CANDIDATE_ONLY_TOPICS: JobenTopic[] = [
       "what's free",
       "whats free",
       "free for candidate",
+      "free for candidates",
       "included free",
       "no cost",
       "free tier",
@@ -206,6 +212,8 @@ const CANDIDATE_ONLY_TOPICS: JobenTopic[] = [
       "managed application",
       "job application",
       "apply for me",
+      "apply to jobs for me",
+      "will jobilly apply",
       "team applies",
       "applied jobs",
       "applications tab",
@@ -275,7 +283,7 @@ const NON_CANDIDATE_BLOCK_PATTERNS: RegExp[] = [
 
 const ACCOUNT_SPECIFIC_PATTERNS: RegExp[] = [
   /\b(my application status|my account|reset my password|change my email)\b/i,
-  /\b(ats score|match %|match percent|resume score)\b/i,
+  /\b(match %|match percent)\b/i,
 ];
 
 const CANDIDATE_SERVICE_IDS = new Set(
@@ -308,29 +316,82 @@ function scoreTopic(query: string, topic: JobenTopic): number {
   return score;
 }
 
+export function matchJobenTopic(message: string): JobenTopic | null {
+  const query = normalizeQuery(message);
+  if (!query) {
+    return null;
+  }
+
+  let best: JobenTopic | null = null;
+  let bestScore = 0;
+
+  for (const topic of CANDIDATE_ONLY_TOPICS) {
+    const score = scoreTopic(query, topic);
+    const required = topic.minScore ?? 1;
+    if (score >= required && score > bestScore) {
+      bestScore = score;
+      best = topic;
+    }
+  }
+
+  return best;
+}
+
+const TOPIC_REDIRECT_PATHS: Partial<Record<JobenTopicId, string[]>> = {
+  overview: ["/products"],
+  how_it_works: ["/signup"],
+  candidate_portal: ["/signup"],
+  pricing: ["/products"],
+  free_vs_premium: ["/products"],
+  career_advisory: ["/signup"],
+  profile: ["/dashboard/profile"],
+  calendar: ["/dashboard/calendar"],
+  mock_interviews: ["/products"],
+  applications: ["/products"],
+  signup: ["/signup"],
+  contact: ["/contact"],
+  growth_school: ["/products"],
+};
+
 function appendCandidateLink(topicId: JobenTopicId, content: string): string {
-  if (
-    topicId === "pricing" ||
-    topicId === "applications" ||
-    topicId === "mock_interviews" ||
-    topicId === "free_vs_premium" ||
-    topicId === "growth_school"
-  ) {
-    return `${content} See /products.`;
+  const paths = TOPIC_REDIRECT_PATHS[topicId];
+  if (!paths?.length) {
+    return content;
   }
-  if (topicId === "signup") {
-    return `${content} Start at /signup.`;
+
+  let result = content;
+  for (const path of paths) {
+    if (!result.includes(path)) {
+      result = `${result} ${path}`;
+    }
   }
-  if (topicId === "contact") {
-    return `${content} Go to /contact.`;
+
+  return result.trim();
+}
+
+export function enrichJobenReply(content: string, userMessage: string): string {
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return trimmed;
   }
-  if (topicId === "career_advisory") {
-    return `${content} After login: /dashboard/career-advisory.`;
+
+  if (isJobenInternalQuery(userMessage)) {
+    return trimmed;
   }
-  if (topicId === "candidate_portal" || topicId === "how_it_works") {
-    return `${content} Explore /products.`;
+
+  if (isJobenAccountSpecificQuery(userMessage)) {
+    if (trimmed.includes("/login") || trimmed.includes("/contact")) {
+      return trimmed;
+    }
+    return `${trimmed} /login`;
   }
-  return content;
+
+  const topic = matchJobenTopic(userMessage);
+  if (!topic) {
+    return trimmed;
+  }
+
+  return appendCandidateLink(topic.id, trimmed);
 }
 
 export type JobenReply = {
@@ -371,8 +432,10 @@ export function respondToJobenQuery(message: string): JobenReply {
   if (isJobenAccountSpecificQuery(message)) {
     return {
       topicId: "account",
-      content:
-        "I can't see your personal account here. Log in to your candidate dashboard, or use /contact if you need help with your account.",
+      content: enrichJobenReply(
+        "I can't see your personal account here. Log in to your candidate dashboard, or contact us if you need help with your account.",
+        message,
+      ),
     };
   }
 
@@ -411,7 +474,10 @@ export function respondToJobenQuery(message: string): JobenReply {
         : `Premium (${serviceMatch.priceUsd ? formatPlanPriceMonthly(serviceMatch.priceUsd) : "see products page"}).`;
     return {
       topicId: "overview",
-      content: `${serviceMatch.title} — ${serviceMatch.description} ${tier} See /products.`,
+      content: appendCandidateLink(
+        "overview",
+        `${serviceMatch.title} — ${serviceMatch.description} ${tier}`,
+      ),
     };
   }
 

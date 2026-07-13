@@ -1,4 +1,4 @@
-import { getApifyToken } from "@/server/services/apify-ats-score";
+import { getApifyToken } from "@/server/services/apify-client";
 import { experienceLevelSearchTerms } from "@/lib/format-experience-years";
 import { extractJobPostedDate } from "@/lib/job-posted-date";
 
@@ -9,13 +9,8 @@ const APIFY_LINKEDIN_ACTOR_ID = "curious_coder~linkedin-jobs-scraper";
 
 export type JobMarketSource = "indeed" | "linkedin" | "glassdoor" | "ziprecruiter";
 
-/** Active scrape sources — searched in this order for progressive UI updates. */
-export const JOB_MARKET_SOURCES: JobMarketSource[] = [
-  "linkedin",
-  "indeed",
-  "glassdoor",
-  "ziprecruiter",
-];
+/** Active scrape sources — run in parallel; each writes to DB as it finishes. */
+export const JOB_MARKET_SOURCES: JobMarketSource[] = ["linkedin", "indeed"];
 
 export const JOB_MARKET_SOURCE_LABELS: Record<JobMarketSource, string> = {
   indeed: "Indeed",
@@ -652,64 +647,47 @@ export async function searchJobsBySources(input: {
   sources: JobMarketSource[];
   maxItemsPerSource?: number;
 }): Promise<{ jobs: JobListing[]; errors: string[] }> {
-  const jobs: JobListing[] = [];
-  const errors: string[] = [];
   const maxItems = input.maxItemsPerSource ?? 20;
   const location = input.location ?? "United States";
   const requested = new Set(
     input.sources.filter((source) => JOB_MARKET_SOURCES.includes(source)),
   );
+  const activeSources = JOB_MARKET_SOURCES.filter((source) => requested.has(source));
 
-  for (const source of JOB_MARKET_SOURCES) {
-    if (!requested.has(source)) {
-      continue;
-    }
-
-    if (source === "linkedin") {
-      const linkedin = await searchLinkedInJobs({ position: input.position, location, maxItems });
-      if ("error" in linkedin) {
-        errors.push(`LinkedIn: ${linkedin.error}`);
-      } else {
-        jobs.push(...linkedin.jobs);
+  const results = await Promise.all(
+    activeSources.map(async (source) => {
+      if (source === "linkedin") {
+        const linkedin = await searchLinkedInJobs({
+          position: input.position,
+          location,
+          maxItems,
+        });
+        if ("error" in linkedin) {
+          return { jobs: [] as JobListing[], error: `LinkedIn: ${linkedin.error}` };
+        }
+        return { jobs: linkedin.jobs, error: null as string | null };
       }
-      continue;
-    }
 
-    if (source === "indeed") {
-      const indeed = await searchIndeedJobs({ position: input.position, location, maxItems });
+      const indeed = await searchIndeedJobs({
+        position: input.position,
+        location,
+        maxItems,
+      });
       if ("error" in indeed) {
-        errors.push(`Indeed: ${indeed.error}`);
-      } else {
-        jobs.push(...indeed.jobs);
+        return { jobs: [] as JobListing[], error: `Indeed: ${indeed.error}` };
       }
-      continue;
-    }
+      return { jobs: indeed.jobs, error: null as string | null };
+    }),
+  );
 
-    if (source === "glassdoor") {
-      const glassdoor = await searchGlassdoorJobs({
-        position: input.position,
-        location,
-        maxItems,
-      });
-      if ("error" in glassdoor) {
-        errors.push(`Glassdoor: ${glassdoor.error}`);
-      } else {
-        jobs.push(...glassdoor.jobs);
-      }
-      continue;
-    }
+  const jobs: JobListing[] = [];
+  const errors: string[] = [];
 
-    if (source === "ziprecruiter") {
-      const ziprecruiter = await searchZipRecruiterJobs({
-        position: input.position,
-        location,
-        maxItems,
-      });
-      if ("error" in ziprecruiter) {
-        errors.push(`ZipRecruiter: ${ziprecruiter.error}`);
-      } else {
-        jobs.push(...ziprecruiter.jobs);
-      }
+  for (const result of results) {
+    if (result.error) {
+      errors.push(result.error);
+    } else {
+      jobs.push(...result.jobs);
     }
   }
 
@@ -1005,7 +983,7 @@ export async function searchJobsWithApify(input: {
     return {
       error:
         result.errors.join(" ") ||
-        "No jobs found on Indeed, LinkedIn, Glassdoor, or ZipRecruiter.",
+        "No jobs found on LinkedIn or Indeed.",
     };
   }
 

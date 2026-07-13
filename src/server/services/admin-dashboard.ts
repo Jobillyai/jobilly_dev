@@ -1,6 +1,6 @@
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
-import { getFreshCandidateResumeUrl } from "@/server/services/resume-ats-check";
+import { getFreshCandidateResumeUrl } from "@/server/services/resume-storage";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/server/db/database.types";
 import type { StaffContext } from "@/lib/auth/admin";

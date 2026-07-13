@@ -28,7 +28,7 @@ import {
   formatSearchRoleLabel,
   type RoleScrapeCacheStatus,
 } from "@/server/services/job-role-cache";
-import { createSignedResumeUrl } from "@/server/services/resume-ats-check";
+import { createSignedResumeUrl } from "@/server/services/resume-storage";
 
 export type JobListingViewMode = "pipeline" | "applied";
 
@@ -542,44 +542,52 @@ export async function runCandidateJobScrapeForSources(input: {
 }): Promise<{ newJobsAdded: number; scrapeErrors: string[]; fatalError?: string }> {
   const searchRole = normalizeSearchRole(input.interestedRole);
   const searchKeywords = input.searchKeywords?.trim() || null;
-  const scrapeErrors: string[] = [];
-  let newJobsAdded = 0;
 
-  for (const source of input.sources) {
-    const scraped = await scrapeJobsForCandidate(
-      input.candidate,
-      [source],
-      input.interestedRole,
-      {
-        experienceYears: input.candidate.experienceYears,
-        searchKeywords,
-      },
-    );
-    scrapeErrors.push(...scraped.errors);
+  const results = await Promise.all(
+    input.sources.map(async (source) => {
+      const scraped = await scrapeJobsForCandidate(
+        input.candidate,
+        [source],
+        input.interestedRole,
+        {
+          experienceYears: input.candidate.experienceYears,
+          searchKeywords,
+        },
+      );
 
-    const appendResult = await appendJobsForRole(
-      input.candidate.id,
-      input.adminUserId,
-      searchRole,
-      scraped.jobs,
-      input.db,
-    );
-    newJobsAdded += appendResult.inserted;
+      const appendResult = await appendJobsForRole(
+        input.candidate.id,
+        input.adminUserId,
+        searchRole,
+        scraped.jobs,
+        input.db,
+      );
 
-    if (appendResult.error) {
+      if (appendResult.error) {
+        return {
+          newJobsAdded: 0,
+          scrapeErrors: scraped.errors,
+          fatalError: appendResult.error,
+        };
+      }
+
+      if (!sourceScrapeHadError(source, scraped.errors)) {
+        await markRoleScraped(input.candidate.id, searchRole, source, input.db);
+      }
+
       return {
-        newJobsAdded,
-        scrapeErrors,
-        fatalError: appendResult.error,
+        newJobsAdded: appendResult.inserted,
+        scrapeErrors: scraped.errors,
+        fatalError: undefined as string | undefined,
       };
-    }
+    }),
+  );
 
-    if (!sourceScrapeHadError(source, scraped.errors)) {
-      await markRoleScraped(input.candidate.id, searchRole, source, input.db);
-    }
-  }
+  const scrapeErrors = results.flatMap((result) => result.scrapeErrors);
+  const newJobsAdded = results.reduce((sum, result) => sum + result.newJobsAdded, 0);
+  const fatalError = results.find((result) => result.fatalError)?.fatalError;
 
-  return { newJobsAdded, scrapeErrors };
+  return { newJobsAdded, scrapeErrors, fatalError };
 }
 
 export async function refreshCandidateJobListings(

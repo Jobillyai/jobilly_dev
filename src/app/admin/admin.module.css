@@ -13,6 +13,14 @@
   box-sizing: border-box;
 }
 
+.jobsMain {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 24px clamp(12px, 1.25vw, 28px) 40px;
+  box-sizing: border-box;
+}
+
 .header {
   margin-bottom: 32px;
 }
@@ -1047,6 +1055,7 @@
 
 .jobsSheetSection {
   margin-top: 24px;
+  width: 100%;
 }
 
 .emptyState {
@@ -1212,5 +1221,9 @@
 @media (max-width: 768px) {
   .main {
     padding: 28px 20px 56px;
+  }
+
+  .jobsMain {
+    padding: 20px 12px 48px;
   }
 }

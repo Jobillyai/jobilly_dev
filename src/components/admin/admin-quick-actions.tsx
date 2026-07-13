@@ -27,7 +27,7 @@ const quickActions = [
   {
     href: "/admin/tasks",
     label: "Tasks",
-    description: "Follow-ups, reviews, and action items.",
+    description: "Log today's work, add remarks, and notify your manager.",
     icon: ClipboardList,
     tone: "emerald" as const,
   },

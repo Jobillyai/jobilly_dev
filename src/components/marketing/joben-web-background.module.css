@@ -1,0 +1,138 @@
+.root {
+  --joben-mesh: var(--jb-mesh-color);
+  --joben-grid: rgba(88, 96, 112, 0.07);
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  transform-origin: center center;
+  animation: webRecede 0.75s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.root[data-joben-theme="dark"] {
+  --joben-mesh: #c4b5fd;
+  --joben-grid: rgba(196, 181, 253, 0.1);
+}
+
+@keyframes webRecede {
+  from {
+    opacity: 0.35;
+    transform: scale(1.08) translateZ(-40px);
+    filter: blur(1px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateZ(0);
+    filter: blur(0);
+  }
+}
+
+.blockGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--joben-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--joben-grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, #000 20%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, #000 20%, transparent 72%);
+}
+
+.root[data-joben-theme="dark"] .blockGrid {
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, #000 12%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, #000 12%, transparent 72%);
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--joben-mesh);
+}
+
+.webLine {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.58;
+}
+
+.webConnector {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 4 8;
+  stroke-dashoffset: 0;
+  opacity: 0.42;
+  animation: connectorFlow 2.8s linear infinite;
+}
+
+.webConnectorAlt {
+  opacity: 0.34;
+  stroke-dasharray: 3 9;
+  animation-duration: 3.6s;
+  animation-direction: reverse;
+  animation-delay: -1.2s;
+}
+
+@keyframes connectorFlow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.webBlock {
+  fill: rgba(255, 255, 255, 0.72);
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.85;
+}
+
+.root[data-joben-theme="dark"] .webBlock {
+  fill: rgba(8, 8, 8, 0.92);
+  stroke: var(--joben-mesh);
+}
+
+.root[data-joben-theme="dark"] .webLine,
+.root[data-joben-theme="dark"] .webConnector {
+  opacity: 0.55;
+}
+
+.root[data-joben-theme="dark"] .webHub {
+  opacity: 0.72;
+}
+
+.webHub {
+  fill: currentColor;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    animation: none;
+    transform: none;
+    filter: none;
+    opacity: 0.65;
+  }
+
+  .webConnector {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .svg {
+    opacity: 0.72;
+  }
+
+  .blockGrid {
+    background-size: 40px 40px;
+  }
+}

@@ -40,7 +40,7 @@
   --jb-portal-icon-amber: #fffbeb;
 
   /* Admin portal — clean futuristic */
-  --jb-admin-canvas: #e8ebf2;
+  --jb-admin-canvas: var(--jb-portal-canvas);
   --jb-admin-sidebar-bg: #0c1018;
   --jb-admin-sidebar-text: #8b95a8;
   --jb-admin-sidebar-hover: rgba(255, 255, 255, 0.06);
@@ -198,7 +198,7 @@
   --jb-portal-icon-emerald: rgba(16, 185, 129, 0.16);
   --jb-portal-icon-amber: rgba(245, 158, 11, 0.16);
 
-  --jb-admin-canvas: #090b10;
+  --jb-admin-canvas: var(--jb-portal-canvas);
   --jb-admin-card: rgba(22, 24, 32, 0.92);
   --jb-admin-card-border: rgba(255, 255, 255, 0.08);
   --jb-admin-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px rgba(0, 0, 0, 0.35);

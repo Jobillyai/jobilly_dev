@@ -1,6 +1,6 @@
 import fs from "fs";
 import { setTimeout as sleep } from "timers/promises";
-import { getProjectDistDir } from "./next-dist-path.mjs";
+import { getDevDistDir, getProjectDistDir } from "./next-dist-path.mjs";
 
 async function removePath(target, attempts = 5) {
   if (!fs.existsSync(target)) {
@@ -22,4 +22,5 @@ async function removePath(target, attempts = 5) {
 }
 
 await removePath(getProjectDistDir());
+await removePath(getDevDistDir());
 console.log("Next.js dev cache cleared.");

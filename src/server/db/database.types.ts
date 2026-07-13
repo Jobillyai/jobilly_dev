@@ -312,6 +312,30 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["job_scrape_runs"]["Insert"]>;
         Relationships: [];
       };
+      admin_daily_updates: {
+        Row: {
+          id: string;
+          employee_id: string;
+          work_date: string;
+          remarks: string;
+          activity_snapshot: Record<string, unknown>;
+          submitted_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          work_date: string;
+          remarks?: string;
+          activity_snapshot?: Record<string, unknown>;
+          submitted_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["admin_daily_updates"]["Insert"]>;
+        Relationships: [];
+      };
       // Remaining tables (mentor_profiles, institutions, advisory_sessions,
       // learning_*, quiz_*, sandbox_*, company_personas, interview_*,
       // job_*, application_profile, scraped_jobs, recruiter_messages,
@@ -328,6 +352,10 @@ export type Database = {
         Returns: string;
       };
       is_staff: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      is_manager: {
         Args: Record<string, never>;
         Returns: boolean;
       };

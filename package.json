@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "db:generate-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/server/db/database.types.ts",
     "db:migrate": "supabase db push",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "dev-activities": "node scripts/generate-dev-activities.mjs"
   },
   "dependencies": {
     "@lottiefiles/dotlottie-react": "^0.19.9",

@@ -1,6 +1,6 @@
 import { createClient } from "@/server/db/supabase-server";
 import { splitFullName } from "@/lib/format-person-name";
-import { getFreshCandidateResumeUrl } from "@/server/services/resume-ats-check";
+import { getFreshCandidateResumeUrl } from "@/server/services/resume-storage";
 import type { SessionUser } from "@/lib/auth/session";
 
 export type UserProfile = SessionUser & {
