@@ -10,9 +10,35 @@ type WelcomeWaveMeshProps = {
   direction?: WaveDirection;
   lineCount?: number;
   extent?: WaveExtent;
+  /** Parallel-line spacing (default 2.6). */
+  lineSpacing?: number;
+  /** Tighter spacing on viewports ≤960px when set. */
+  mobileLineSpacing?: number;
+  wrapClassName?: string;
 };
 
 const SEGMENTS = 180;
+const DEFAULT_LINE_SPACING = 2.6;
+const MOBILE_MESH_BREAKPOINT = 960;
+
+function useMobileMeshLayout(enabled: boolean) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) {
+      setIsMobile(false);
+      return;
+    }
+
+    const media = window.matchMedia(`(max-width: ${MOBILE_MESH_BREAKPOINT}px)`);
+    const apply = () => setIsMobile(media.matches);
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, [enabled]);
+
+  return isMobile;
+}
 
 function getSpineParams(direction: WaveDirection, extent: WaveExtent) {
   if (direction === "bl-tr" && extent === "strip") {
@@ -59,8 +85,9 @@ function buildWavePath(
   lineCount: number,
   direction: WaveDirection,
   extent: WaveExtent,
+  lineSpacing: number,
 ) {
-  const offset = (lineIndex - lineCount / 2) * 2.6;
+  const offset = (lineIndex - lineCount / 2) * lineSpacing;
   const points: string[] = [];
 
   for (let step = 0; step <= SEGMENTS; step++) {
@@ -84,7 +111,11 @@ export function WelcomeWaveMesh({
   direction = "bl-tr",
   lineCount = 64,
   extent = "normal",
+  lineSpacing: lineSpacingProp,
+  mobileLineSpacing,
+  wrapClassName,
 }: WelcomeWaveMeshProps) {
+  const isMobile = useMobileMeshLayout(mobileLineSpacing != null);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -95,12 +126,17 @@ export function WelcomeWaveMesh({
     return () => media.removeEventListener("change", apply);
   }, []);
 
+  const lineSpacing =
+    isMobile && mobileLineSpacing != null
+      ? mobileLineSpacing
+      : lineSpacingProp ?? DEFAULT_LINE_SPACING;
+
   const paths = useMemo(
     () =>
       Array.from({ length: lineCount }, (_, index) =>
-        buildWavePath(index, lineCount, direction, extent),
+        buildWavePath(index, lineCount, direction, extent, lineSpacing),
       ),
-    [direction, extent, lineCount],
+    [direction, extent, lineCount, lineSpacing],
   );
 
   const revealClass =
@@ -119,7 +155,7 @@ export function WelcomeWaveMesh({
 
   return (
     <div
-      className={`${styles.meshWrap} ${extentClass} ${reducedMotion ? styles.meshWrapStatic : revealClass}`}
+      className={`${styles.meshWrap} ${extentClass} ${wrapClassName ?? ""} ${reducedMotion ? styles.meshWrapStatic : revealClass}`}
       aria-hidden
     >
       <svg
@@ -143,5 +179,13 @@ export function WelcomeWaveMesh({
 }
 
 export function WelcomeHeroMesh() {
-  return <WelcomeWaveMesh direction="bl-tr" lineCount={64} />;
+  return (
+    <WelcomeWaveMesh
+      direction="bl-tr"
+      lineCount={64}
+      lineSpacing={2.05}
+      mobileLineSpacing={1.9}
+      wrapClassName={styles.meshWrapHero}
+    />
+  );
 }

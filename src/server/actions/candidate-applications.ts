@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth/session";
 import { markAppliedJobsAsViewed } from "@/server/services/candidate-jobs";
 import { createClient } from "@/server/db/supabase-server";
-import { createSignedResumeUrl } from "@/server/services/resume-ats-check";
+import { createSignedResumeUrl } from "@/server/services/resume-storage";
 
 export async function markApplicationsViewedAction(): Promise<{ success: true } | { error: string }> {
   const user = await getSessionUser();

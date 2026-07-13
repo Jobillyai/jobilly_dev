@@ -1,12 +1,50 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Send, X } from "lucide-react";
+import type { Route } from "next";
+import { Send, SquarePen, X } from "lucide-react";
 import { JOBEN_SUGGESTED_PROMPTS } from "@/lib/joben/public-knowledge";
+import {
+  getJobenLinksInContent,
+  JOBEN_LINKS,
+} from "@/lib/joben/joben-redirects";
 import { askJobenAction } from "@/server/actions/joben-chat";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { JobenAvatar } from "@/components/marketing/joben-avatar";
+import { JobenWebBackground } from "@/components/marketing/joben-web-background";
 import styles from "./joben-chat-widget.module.css";
+
+type JobenTheme = "light" | "dark";
+
+function getDocumentTheme(): JobenTheme {
+  if (typeof document === "undefined") {
+    return "light";
+  }
+
+  return document.documentElement.getAttribute("data-theme") === "dark"
+    ? "dark"
+    : "light";
+}
+
+function subscribeDocumentTheme(onStoreChange: () => void) {
+  const observer = new MutationObserver(onStoreChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
+
+  return () => observer.disconnect();
+}
+
+function useJobenTheme(): JobenTheme {
+  return useSyncExternalStore(
+    subscribeDocumentTheme,
+    getDocumentTheme,
+    () => "light",
+  );
+}
 
 type ChatMessage = {
   id: string;
@@ -24,47 +62,57 @@ function createId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function renderAssistantContent(content: string) {
-  const parts = content.split(/(\/(?:products|signup|contact|dashboard\/career-advisory))/g);
+function stripRedirectPaths(content: string): string {
+  let text = content;
+  for (const link of JOBEN_LINKS) {
+    text = text.split(link.path).join("");
+  }
+  return text
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.!?])/g, "$1")
+    .trim();
+}
 
-  return parts.map((part, index) => {
-    if (part === "/products") {
-      return (
-        <Link key={`link-${index}`} href="/products" className={styles.inlineLink}>
-          products page
-        </Link>
-      );
-    }
-    if (part === "/signup") {
-      return (
-        <Link key={`link-${index}`} href="/signup" className={styles.inlineLink}>
-          sign up
-        </Link>
-      );
-    }
-    if (part === "/contact") {
-      return (
-        <Link key={`link-${index}`} href="/contact" className={styles.inlineLink}>
-          Contact us
-        </Link>
-      );
-    }
-    if (part === "/dashboard/career-advisory") {
-      return (
-        <Link
-          key={`link-${index}`}
-          href="/dashboard/career-advisory"
-          className={styles.inlineLink}
-        >
-          Career Advisory
-        </Link>
-      );
-    }
-    return part;
-  });
+function renderAssistantContent(content: string) {
+  const redirects = getJobenLinksInContent(content);
+  const displayText = redirects.length > 0 ? stripRedirectPaths(content) : content;
+
+  return displayText;
+}
+
+function AssistantMessageBody({
+  content,
+  onRedirect,
+}: {
+  content: string;
+  onRedirect: () => void;
+}) {
+  const redirects = getJobenLinksInContent(content);
+  const displayText = renderAssistantContent(content);
+
+  return (
+    <div className={styles.messageBody}>
+      <p className={styles.messageBubble}>{displayText}</p>
+      {redirects.length > 0 ? (
+        <div className={styles.redirectRow}>
+          {redirects.map((link) => (
+            <Link
+              key={link.path}
+              href={link.path as Route}
+              className={styles.redirectBtn}
+              onClick={onRedirect}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function JobenChatWidget() {
+  const theme = useJobenTheme();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
@@ -89,6 +137,29 @@ export function JobenChatWidget() {
     node.scrollTop = node.scrollHeight;
   }, [messages, open, pending]);
 
+  const closeChat = useCallback(() => {
+    setOpen(false);
+  }, []);
+
+  const startNewChat = useCallback(() => {
+    if (pending) {
+      return;
+    }
+
+    setMessages([INITIAL_MESSAGE]);
+    setInput("");
+    inputRef.current?.focus();
+  }, [pending]);
+
+  const handleBackdropClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (event.target === event.currentTarget) {
+        closeChat();
+      }
+    },
+    [closeChat],
+  );
+
   useEffect(() => {
     if (!open) {
       return;
@@ -96,13 +167,19 @@ export function JobenChatWidget() {
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setOpen(false);
+        closeChat();
       }
     }
 
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [closeChat, open]);
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
@@ -146,131 +223,180 @@ export function JobenChatWidget() {
     void sendMessage(input);
   }
 
-  return (
-    <div className={styles.root} aria-live="polite">
-      {open ? (
-        <section
-          id="joben-chat-panel"
-          className={styles.panel}
-          role="dialog"
-          aria-modal="false"
-          aria-label="Joben chat"
-        >
-          <header className={styles.header}>
-            <div className={styles.headerIdentity}>
-              <JobenAvatar size="md" showOnline />
-              <div>
-                <p className={styles.headerName}>Joben</p>
-                <p className={styles.headerStatus}>
-                  <span className={styles.statusDot} aria-hidden />
-                  Online
-                </p>
-              </div>
+  const showWelcomeHero =
+    messages.length === 1 && messages[0]?.id === "welcome" && !pending;
+  const visibleMessages = showWelcomeHero ? [] : messages;
+
+  const chatPanel = open ? (
+    <div
+      className={styles.overlay}
+      data-joben-theme={theme}
+      role="presentation"
+      onClick={handleBackdropClick}
+    >
+      <section
+        id="joben-chat-panel"
+        className={styles.panel}
+        data-joben-theme={theme}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Joben chat"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <JobenWebBackground theme={theme} />
+
+        <header className={styles.header}>
+          <div className={styles.headerIdentity}>
+            <JobenAvatar size="md" showOnline />
+            <div className={styles.headerCopy}>
+              <p className={styles.headerName}>Joben</p>
+              <p className={styles.headerMeta}>Your Jobilly guide · Online</p>
             </div>
+          </div>
+          <div className={styles.headerActions}>
+            <ThemeToggle compact className={styles.themeToggle} />
+            <button
+              type="button"
+              className={styles.newChatBtn}
+              onClick={startNewChat}
+              disabled={pending || showWelcomeHero}
+              aria-label="Start new chat"
+            >
+              <SquarePen size={16} aria-hidden />
+              <span className={styles.newChatLabel}>New chat</span>
+            </button>
             <button
               type="button"
               className={styles.iconBtn}
-              onClick={() => setOpen(false)}
+              onClick={closeChat}
               aria-label="Close Joben chat"
             >
-              <X size={18} aria-hidden />
+              <X size={20} aria-hidden />
             </button>
-          </header>
+          </div>
+        </header>
 
-          <div className={styles.messages} ref={listRef}>
-            {messages.map((message) => (
-              <article
-                key={message.id}
-                className={
-                  message.role === "assistant"
-                    ? styles.messageAssistant
-                    : styles.messageUser
-                }
-              >
+        <div className={styles.body}>
+          <div className={styles.content}>
+            {showWelcomeHero ? (
+              <div className={styles.welcomeHero}>
+                <h2 className={styles.welcomeTitle}>How can I help?</h2>
+                <p className={styles.welcomeSubtitle}>
+                  Ask about Jobilly AI, plans, mock interviews, and how we help
+                  candidates get hired.
+                </p>
+              </div>
+            ) : null}
+
+            <div className={styles.messages} ref={listRef}>
+              {visibleMessages.map((message) => (
+                <article
+                  key={message.id}
+                  className={
+                    message.role === "assistant"
+                      ? styles.messageAssistant
+                      : styles.messageUser
+                  }
+                >
                 {message.role === "assistant" ? (
                   <JobenAvatar size="sm" />
                 ) : null}
-                <p className={styles.messageText}>
-                  {message.role === "assistant"
-                    ? renderAssistantContent(message.content)
-                    : message.content}
-                </p>
-              </article>
-            ))}
-            {pending ? (
-              <div className={styles.typing} aria-label="Joben is typing">
-                <JobenAvatar size="sm" />
-                <div className={styles.typingDots}>
-                  <span />
-                  <span />
-                  <span />
+                {message.role === "assistant" ? (
+                  <AssistantMessageBody
+                    content={message.content}
+                    onRedirect={closeChat}
+                  />
+                ) : (
+                  <p className={styles.messageBubble}>{message.content}</p>
+                )}
+                </article>
+              ))}
+              {pending ? (
+                <div className={styles.typing} aria-label="Joben is typing">
+                  <JobenAvatar size="sm" />
+                  <div className={styles.typingDots}>
+                    <span />
+                    <span />
+                    <span />
+                  </div>
                 </div>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
 
-          {messages.length <= 2 ? (
+          <footer className={styles.footer}>
             <div className={styles.prompts}>
-              {JOBEN_SUGGESTED_PROMPTS.map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  className={styles.promptBtn}
-                  onClick={() => void sendMessage(prompt)}
-                  disabled={pending}
-                >
-                  {prompt}
-                </button>
-              ))}
+              <p className={styles.promptsLabel}>Suggestions</p>
+              <div className={styles.promptList}>
+                {JOBEN_SUGGESTED_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    className={styles.promptBtn}
+                    onClick={() => void sendMessage(prompt)}
+                    disabled={pending}
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
-          ) : null}
 
-          <form className={styles.composer} onSubmit={handleSubmit}>
-            <label className={styles.srOnly} htmlFor="joben-chat-input">
-              Message Joben
-            </label>
-            <textarea
-              id="joben-chat-input"
-              ref={inputRef}
-              rows={1}
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  event.currentTarget.form?.requestSubmit();
-                }
-              }}
-              placeholder="Message Joben…"
-              className={styles.input}
-              disabled={pending}
-            />
-            <button
-              type="submit"
-              className={styles.sendBtn}
-              disabled={pending || !input.trim()}
-              aria-label="Send message"
-            >
-              <Send size={16} aria-hidden />
-            </button>
-          </form>
-        </section>
-      ) : null}
+            <div className={styles.composerShell}>
+              <form className={styles.composer} onSubmit={handleSubmit}>
+                <label className={styles.srOnly} htmlFor="joben-chat-input">
+                  Message Joben
+                </label>
+                <textarea
+                  id="joben-chat-input"
+                  ref={inputRef}
+                  rows={1}
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
+                  }}
+                  placeholder="Message Joben…"
+                  className={styles.input}
+                  disabled={pending}
+                />
+                <button
+                  type="submit"
+                  className={styles.sendBtn}
+                  disabled={pending || !input.trim()}
+                  aria-label="Send message"
+                >
+                  <Send size={17} aria-hidden />
+                </button>
+              </form>
+            </div>
+          </footer>
+        </div>
+      </section>
+    </div>
+  ) : null;
 
-      <button
-        type="button"
-        className={`${styles.launcher} ${open ? styles.launcherOpen : ""}`}
-        onClick={() => setOpen((current) => !current)}
-        aria-expanded={open}
-        aria-controls="joben-chat-panel"
-        aria-label={open ? "Close Joben chat" : "Open Joben chat"}
-      >
-        {open ? (
-          <X size={20} aria-hidden />
-        ) : (
+  return (
+    <div className={styles.root} data-joben-theme={theme} aria-live="polite">
+      {typeof document !== "undefined" && chatPanel
+        ? createPortal(chatPanel, document.body)
+        : null}
+
+      {!open ? (
+        <button
+          type="button"
+          className={styles.launcher}
+          onClick={() => setOpen(true)}
+          aria-expanded={false}
+          aria-controls="joben-chat-panel"
+          aria-label="Open Joben chat"
+        >
           <JobenAvatar size="launcher" showOnline className={styles.launcherAvatar} />
-        )}
-      </button>
+        </button>
+      ) : null}
     </div>
   );
 }

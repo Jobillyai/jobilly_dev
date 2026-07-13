@@ -1,7 +1,7 @@
 "use server";
 
 import type { JobenChatTurn } from "@/lib/joben/joben-prompt";
-import { respondToJobenQuery } from "@/lib/joben/public-knowledge";
+import { enrichJobenReply, respondToJobenQuery } from "@/lib/joben/public-knowledge";
 import { runGeminiJobenChat } from "@/server/services/gemini-joben-chat";
 
 export async function askJobenAction(
@@ -37,7 +37,7 @@ export async function askJobenAction(
   });
 
   if ("content" in aiResult) {
-    return aiResult;
+    return { content: enrichJobenReply(aiResult.content, trimmed) };
   }
 
   const fallback = respondToJobenQuery(trimmed);

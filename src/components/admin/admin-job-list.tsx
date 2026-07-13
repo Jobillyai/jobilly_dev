@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, ExternalLink, FileText } from "lucide-react";
+import { useCallback, useEffect, useState, type MouseEvent } from "react";
+import { createPortal } from "react-dom";
+import { ExternalLink, MapPin, X } from "lucide-react";
 import {
   formatJobSourceLabel,
   getCleanJobListingUrl,
@@ -40,99 +41,110 @@ function sourceBadgeClass(source: string, jobUrl: string): string {
   return fallback;
 }
 
-function matchBadgeClass(score: number): string {
-  const fallback = styles.matchLow ?? "";
-  if (score >= 70) return styles.matchHigh ?? fallback;
-  if (score >= 45) return styles.matchMedium ?? fallback;
-  return fallback;
-}
-
 type AdminJobListProps = {
   jobs: CandidateJobListing[];
   viewMode: JobListingViewMode;
-  uploadingResumeJobId: string | null;
-  matchUsesAnalyzedResume?: boolean;
   onToggleSelected: (jobId: string, selected: boolean) => void;
   onToggleApplied: (jobId: string, applied: boolean) => void;
-  onResumeUpload: (jobId: string, file: File) => void;
 };
 
-type AdminJobRowProps = {
+type AdminJobDetailModalProps = {
   job: CandidateJobListing;
   viewMode: JobListingViewMode;
-  expanded: boolean;
-  matchUsesAnalyzedResume: boolean;
-  onToggle: () => void;
-  uploadingResumeJobId: string | null;
+  onClose: () => void;
   onToggleSelected: (jobId: string, selected: boolean) => void;
   onToggleApplied: (jobId: string, applied: boolean) => void;
-  onResumeUpload: (jobId: string, file: File) => void;
 };
 
-function AdminJobRow({
+function AdminJobDetailModal({
   job,
   viewMode,
-  expanded,
-  matchUsesAnalyzedResume,
-  onToggle,
-  uploadingResumeJobId,
+  onClose,
   onToggleSelected,
   onToggleApplied,
-  onResumeUpload,
-}: AdminJobRowProps) {
+}: AdminJobDetailModalProps) {
   const isAppliedView = viewMode === "applied";
-  const detailsId = `admin-job-details-${job.id}`;
   const listingUrl = getCleanJobListingUrl(job.jobUrl, job.source);
 
-  return (
-    <li
-      className={[
-        styles.item,
-        job.selected && !isAppliedView ? styles.itemSelected : undefined,
-        isAppliedView ? styles.itemApplied : undefined,
-        expanded ? styles.itemExpanded : undefined,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+  const handleBackdropClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (event.target === event.currentTarget) {
+        onClose();
+      }
+    },
+    [onClose],
+  );
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      className={styles.overlay}
+      role="presentation"
+      onClick={handleBackdropClick}
     >
-      <div className={styles.summary}>
-        <div className={styles.summaryText}>
-          <p className={styles.role}>{job.role}</p>
-          <p className={styles.summaryLine}>
-            <span className={styles.company}>{job.company}</span>
-            <span className={styles.dot} aria-hidden>
-              ·
-            </span>
-            <span className={styles.metaText}>{job.location}</span>
-            <span className={styles.dot} aria-hidden>
-              ·
-            </span>
-            <span
-              className={`${styles.sourceBadge} ${sourceBadgeClass(job.source, job.jobUrl)}`}
-            >
-              {formatJobSourceLabel(job.source, job.jobUrl)}
-            </span>
-          </p>
-          <p className={styles.summaryDates}>
-            {isAppliedView ? (
-              <>
-                <span className={styles.appliedDateLabel}>
-                  Applied {job.appliedAt ? formatSummaryDate(job.appliedAt) : "—"}
-                </span>
-                <span className={styles.dot} aria-hidden>
-                  ·
-                </span>
-                <span>Found {formatSummaryDate(job.scrapedAt)}</span>
-              </>
-            ) : (
-              <>
-                <span>Found {formatSummaryDate(job.scrapedAt)}</span>
-                <span className={styles.dot} aria-hidden>
-                  ·
-                </span>
-                {job.postedAt ? (
-                  <>
-                    <span>Posted {formatSummaryDate(job.postedAt)}</span>
+      <div
+        className={styles.modal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`job-modal-title-${job.id}`}
+      >
+        <header className={styles.modalHeader}>
+          <div className={styles.modalHeaderMain}>
+            <h2 className={styles.modalCompany}>{job.company}</h2>
+            <h3 id={`job-modal-title-${job.id}`} className={styles.modalTitle}>
+              {job.role}
+            </h3>
+            <p className={styles.modalMeta}>
+              <span>{job.location}</span>
+              <span className={styles.dot} aria-hidden>
+                ·
+              </span>
+              <span
+                className={`${styles.sourceBadge} ${sourceBadgeClass(job.source, job.jobUrl)}`}
+              >
+                {formatJobSourceLabel(job.source, job.jobUrl)}
+              </span>
+            </p>
+          </div>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Close job details"
+          >
+            <X size={22} aria-hidden />
+          </button>
+        </header>
+
+        <div className={styles.modalBody}>
+          <section className={styles.modalSection}>
+            <h3 className={styles.sectionTitle}>Overview</h3>
+            <div className={styles.overviewGrid}>
+              <div className={styles.overviewItem}>
+                <span className={styles.overviewLabel}>Found</span>
+                <span>{formatDetailDate(job.scrapedAt)}</span>
+              </div>
+              {job.postedAt ? (
+                <div className={styles.overviewItem}>
+                  <span className={styles.overviewLabel}>Posted</span>
+                  <span>
+                    {formatSummaryDate(job.postedAt)}
                     <span
                       className={`${styles.freshnessBadge} ${
                         isPostedWithinDays(job.postedAt, 3)
@@ -142,90 +154,58 @@ function AdminJobRow({
                     >
                       {formatJobFreshnessLabel(job.postedAt)}
                     </span>
-                  </>
-                ) : (
-                  <span className={styles.unknown}>Posted unknown</span>
-                )}
-              </>
-            )}
-          </p>
-        </div>
+                  </span>
+                </div>
+              ) : (
+                <div className={styles.overviewItem}>
+                  <span className={styles.overviewLabel}>Posted</span>
+                  <span className={styles.unknown}>Unknown</span>
+                </div>
+              )}
+              {isAppliedView && job.appliedAt ? (
+                <div className={styles.overviewItem}>
+                  <span className={styles.overviewLabel}>Applied</span>
+                  <span>{formatDetailDate(job.appliedAt)}</span>
+                </div>
+              ) : null}
+              {!isAppliedView && job.selected ? (
+                <div className={styles.overviewItem}>
+                  <span className={styles.overviewLabel}>Status</span>
+                  <span className={styles.shortlistBadge}>Shortlisted</span>
+                </div>
+              ) : null}
+            </div>
+          </section>
 
-        <div className={styles.summaryActions}>
-          <span
-            className={`${styles.matchBadge} ${matchBadgeClass(job.relevanceScore)}`}
-            title={
-              matchUsesAnalyzedResume
-                ? "Match % from uploaded resume text vs job description keywords"
-                : "Match % from profile text vs job description keywords — upload a resume to analyze"
-            }
-          >
-            {job.relevanceScore}% match
-          </span>
-          {!isAppliedView && job.selected ? (
-            <span className={styles.shortlistBadge}>Shortlisted</span>
-          ) : null}
-          <button
-            type="button"
-            className={styles.moreBtn}
-            onClick={onToggle}
-            aria-expanded={expanded}
-            aria-controls={detailsId}
-          >
-            {expanded ? "Less" : "More"}
-            <ChevronDown
-              size={16}
-              aria-hidden
-              className={expanded ? styles.moreIconOpen : styles.moreIcon}
-            />
-          </button>
-        </div>
-      </div>
-
-      {expanded ? (
-        <div id={detailsId} className={styles.details}>
-          <p className={styles.metaRow}>
-            <span>{job.location}</span>
-            <span className={styles.dot} aria-hidden>
-              ·
-            </span>
-            <span>{formatJobSourceLabel(job.source, job.jobUrl)}</span>
-            {isAppliedView && job.appliedAt ? (
-              <>
-                <span className={styles.dot} aria-hidden>
-                  ·
-                </span>
-                <span>Applied {formatDetailDate(job.appliedAt)}</span>
-              </>
-            ) : null}
-          </p>
-
-          <section className={styles.linkSection}>
-            <a
-              href={listingUrl}
-              target="_blank"
-              rel="noreferrer"
-              className={styles.jobLink}
-              title={listingUrl}
-            >
-              <ExternalLink size={14} aria-hidden />
-              View job
-            </a>
-            {job.applyUrl ? (
+          <section className={styles.modalSection}>
+            <h3 className={styles.sectionTitle}>Links</h3>
+            <div className={styles.linkSection}>
               <a
-                href={job.applyUrl}
+                href={listingUrl}
                 target="_blank"
                 rel="noreferrer"
                 className={styles.jobLink}
-                title={job.applyUrl}
+                title={listingUrl}
               >
                 <ExternalLink size={14} aria-hidden />
-                Apply
+                View job listing
               </a>
-            ) : null}
+              {job.applyUrl ? (
+                <a
+                  href={job.applyUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.jobLink}
+                  title={job.applyUrl}
+                >
+                  <ExternalLink size={14} aria-hidden />
+                  Apply on site
+                </a>
+              ) : null}
+            </div>
           </section>
 
-          <section className={styles.section}>
+          <section className={styles.modalSection}>
             <h3 className={styles.sectionTitle}>Job description</h3>
             {job.jdText ? (
               <div className={styles.jdPanel}>
@@ -235,53 +215,19 @@ function AdminJobRow({
               <p className={styles.jdEmpty}>No description captured.</p>
             )}
           </section>
+        </div>
 
+        <footer className={styles.modalFooter}>
           {isAppliedView ? (
-            <>
-              <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Applied resume</h3>
-                <div className={styles.resumeControl}>
-                  {job.applicationResumeDownloadUrl ? (
-                    <a
-                      href={job.applicationResumeDownloadUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={styles.resumeLink}
-                    >
-                      <FileText size={16} aria-hidden />
-                      <span>{job.applicationResumeFileName ?? "View resume"}</span>
-                    </a>
-                  ) : (
-                    <span className={styles.resumeMissing}>No resume attached yet</span>
-                  )}
-                  <label className={styles.resumeUploadBtn}>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      className={styles.resumeFileInput}
-                      disabled={uploadingResumeJobId === job.id}
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) onResumeUpload(job.id, file);
-                        event.target.value = "";
-                      }}
-                    />
-                    {uploadingResumeJobId === job.id ? "Uploading…" : "Attach resume"}
-                  </label>
-                </div>
-              </section>
-              <div className={styles.actions}>
-                <button
-                  type="button"
-                  className={styles.undoApplyBtn}
-                  onClick={() => onToggleApplied(job.id, false)}
-                >
-                  Undo apply
-                </button>
-              </div>
-            </>
+            <button
+              type="button"
+              className={styles.undoApplyBtn}
+              onClick={() => onToggleApplied(job.id, false)}
+            >
+              Undo apply
+            </button>
           ) : (
-            <div className={styles.actions}>
+            <>
               <label className={styles.actionCheck}>
                 <input
                   type="checkbox"
@@ -298,50 +244,121 @@ function AdminJobRow({
                 />
                 <span>Mark applied</span>
               </label>
-            </div>
+            </>
           )}
+        </footer>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function companyInitials(company: string): string {
+  const words = company.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) {
+    return "?";
+  }
+  if (words.length === 1) {
+    return words[0].slice(0, 2).toUpperCase();
+  }
+  return `${words[0]?.[0] ?? ""}${words[1]?.[0] ?? ""}`.toUpperCase();
+}
+
+type AdminJobCardProps = {
+  job: CandidateJobListing;
+  viewMode: JobListingViewMode;
+  onOpen: () => void;
+};
+
+function AdminJobCard({ job, viewMode, onOpen }: AdminJobCardProps) {
+  const isAppliedView = viewMode === "applied";
+
+  return (
+    <button
+      type="button"
+      className={[
+        styles.card,
+        job.selected && !isAppliedView ? styles.cardSelected : undefined,
+        isAppliedView ? styles.cardApplied : undefined,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      onClick={onOpen}
+    >
+      <div className={styles.cardGlow} aria-hidden />
+      <div className={styles.cardHeader}>
+        <div className={styles.companyMark} aria-hidden>
+          {companyInitials(job.company)}
         </div>
-      ) : null}
-    </li>
+      </div>
+
+      <div className={styles.cardTitles}>
+        <h2 className={styles.cardCompany}>{job.company}</h2>
+        <h3 className={styles.cardRole}>{job.role}</h3>
+        <span
+          className={`${styles.sourceBadge} ${sourceBadgeClass(job.source, job.jobUrl)}`}
+        >
+          {formatJobSourceLabel(job.source, job.jobUrl)}
+        </span>
+      </div>
+
+      <p className={styles.cardLocation}>
+        <MapPin size={14} aria-hidden className={styles.cardLocationIcon} />
+        <span>{job.location}</span>
+      </p>
+
+      <div className={styles.cardFooter}>
+        <span className={styles.cardDate}>
+          {isAppliedView ? (
+            <>Applied {job.appliedAt ? formatSummaryDate(job.appliedAt) : "—"}</>
+          ) : job.postedAt ? (
+            <>Posted {formatSummaryDate(job.postedAt)}</>
+          ) : (
+            <>Found {formatSummaryDate(job.scrapedAt)}</>
+          )}
+        </span>
+        <div className={styles.cardFooterEnd}>
+          {!isAppliedView && job.selected ? (
+            <span className={styles.cardShortlist}>Shortlisted</span>
+          ) : null}
+          <span className={styles.cardCta}>Open</span>
+        </div>
+      </div>
+    </button>
   );
 }
 
 export function AdminJobList({
   jobs,
   viewMode,
-  uploadingResumeJobId,
-  matchUsesAnalyzedResume = false,
   onToggleSelected,
   onToggleApplied,
-  onResumeUpload,
 }: AdminJobListProps) {
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
-  function toggleExpanded(id: string) {
-    setExpandedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const [openJobId, setOpenJobId] = useState<string | null>(null);
+  const openJob = jobs.find((job) => job.id === openJobId) ?? null;
 
   return (
-    <ul className={styles.list}>
-      {jobs.map((job) => (
-        <AdminJobRow
-          key={job.id}
-          job={job}
+    <>
+      <div className={styles.grid}>
+        {jobs.map((job) => (
+          <AdminJobCard
+            key={job.id}
+            job={job}
+            viewMode={viewMode}
+            onOpen={() => setOpenJobId(job.id)}
+          />
+        ))}
+      </div>
+
+      {openJob ? (
+        <AdminJobDetailModal
+          job={openJob}
           viewMode={viewMode}
-          expanded={expandedIds.has(job.id)}
-          matchUsesAnalyzedResume={matchUsesAnalyzedResume}
-          onToggle={() => toggleExpanded(job.id)}
-          uploadingResumeJobId={uploadingResumeJobId}
+          onClose={() => setOpenJobId(null)}
           onToggleSelected={onToggleSelected}
           onToggleApplied={onToggleApplied}
-          onResumeUpload={onResumeUpload}
         />
-      ))}
-    </ul>
+      ) : null}
+    </>
   );
 }

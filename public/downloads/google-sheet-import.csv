@@ -1,0 +1,59 @@
+Date,Day,Module,Tasks Completed,Status,Notes
+2026-06-17,Tuesday,Project Setup,Initial repository created; loaded codebase from GitHub; fixed dev server / environment issues,Completed,Project kickoff
+2026-06-18,Wednesday,Authentication,Built login & signup pages with Supabase token auth; navbar login/signup toggle; removed early-access button; redesigned forms to match welcome page; normal email signup (not university-only),Completed,Committed: Login page signup page and dashboard
+2026-06-18,Wednesday,Candidate Portal,Dashboard with welcome-page-style service boxes; session persistence after login; global footer; user icon + edit profile; profile photo upload (avatars bucket); signup success → redirect to login,Completed,
+2026-06-18,Wednesday,Password Reset,Forgot-password flow attempted (OTP + reset link); email rate-limit issues; feature removed temporarily for stability,Paused,Later replaced with simpler reset-link flow
+2026-06-18,Wednesday,Resume ATS,Added resume ATS score checker on candidate dashboard,Completed,
+2026-06-18,Wednesday,Career Advisory,Career advisory intake form (name email phone graduation branch technology); Google Meet invite email on submit (local/dev only),Completed,Committed: career advisory form and Meet invites
+2026-06-18,Wednesday,Admin Portal,Admin login + protected dashboard; admin user credentials; left sidebar (Dashboard Tasks Candidate Details Calendar); removed public admin navbar link; display names capitalized; admin profile edit,Completed,Committed: admin dashboard and job scraping polish
+2026-06-18,Wednesday,Documentation,Updated README with features and setup,Completed,
+2026-06-18,Wednesday,Deployment,Netlify deployment guidance; NEXT_PUBLIC_APP_URL configured; production deploy on Netlify,Completed,jobillyai.netlify.app
+2026-06-22,Monday,Career Advisory,Candidate-selected session booking time; branded invite emails; admin calendar for scheduled sessions,Completed,
+2026-06-23,Tuesday,Admin Portal,Admin calendar + meeting tasks pages; improved career advisory save reliability,Completed,
+2026-06-23,Tuesday,UI/Design,Switched layouts to cleaner plain-white backgrounds,Completed,
+2026-06-25,Thursday,Resume & Jobs,ATS scoring enhancements; Apify job scraping integration; candidate portal job features,Completed,
+2026-06-26,Friday,Marketing,Products Community Contact Us navbar; products/services page with pricing ($79.99 mock / $99.99 jobs / $149.99 bundle monthly); marketing pages and design system polish,Completed,
+2026-06-26,Friday,Welcome Page,Animated two-row company logo marquee (18 companies) with IntersectionObserver stagger animation,Completed,
+2026-06-27,Saturday,Job Scraping,Indeed LinkedIn Google Jobs sources; applied-job updates visible to candidates; job source column in listings,Completed,
+2026-06-30,Monday,Roles & Auth,Manager role + mentor admin role; manager oversees mentors; production auth hardening; member ID badges,Completed,
+2026-06-30,Monday,Candidate Profile,Expanded profile fields; contact/service request form; UI polish,Completed,
+2026-06-30,Monday,Job Scraping,24-hour role cache — scrape once per role per day stored in DB; previous searches dropdown; interested role field before search,Completed,Reduces Apify billing
+2026-06-30,Monday,Build,Fixed ESLint prefer-const error blocking production build,Completed,
+2026-07-03,Friday,UI Redesign,Created UI branch; ChronoTask-inspired redesign; new brand logo; removed repetitive/clumsy UI elements,Completed,Pushed to UI branch
+2026-07-03,Friday,Git/DevOps,Pushed to main; sandbox repo copy; cleaned up branches,Completed,
+2026-07-03,Friday,Admin Jobs,Admin job workflow updates; scrape-related DB migrations,Completed,
+2026-07-05,Sunday,DevOps,Dev server run / maintenance,Completed,No major feature commits
+2026-07-06,Monday,Portal UX,Removed veteran field from career advisory; US/India phone picker with flags (+1/+91); logout + user block top-right; welcome-page footer on candidate portal (session-safe links),Completed,Committed: portal UX polish
+2026-07-06,Monday,UI-2 Branch,Created UI-2 branch; login/signup split layout with gradient logo panel; privacy & terms pages (full-width prose); logo aligned to new design; loading spinner brand colors,Completed,
+2026-07-06,Monday,Candidate Dashboard,Removed card constraints wider layout; applications list — title + company with expand; mock interview placeholder button per job,Completed,
+2026-07-06,Monday,Admin Portal,Admin sidebar matches candidate portal style; wider layouts; job sheet redesigned from table to expandable list; scraped/posted dates on jobs,Completed,
+2026-07-06,Monday,Job Scraping,Renamed Job Scraping → Apply for jobs; experience as Entry/Mid/Senior levels; resume upload for match % scoring; per-candidate resume storage; apply URL field (employer link not LinkedIn view URL); removed Jobright integration,Completed,
+2026-07-06,Monday,Candidate Details,Candidate list with expand-for-details; apply actions moved to Apply for jobs page only,Completed,
+2026-07-07,Tuesday,Job Scraping,Added Glassdoor & ZipRecruiter Apify sources; replaced clumsy source buttons with Job board dropdown + Search; per-candidate resume (not shared); removed analyze-on-file button; managers blocked from Apply for jobs,Completed,
+2026-07-07,Tuesday,Copy/UI Cleanup,Removed 3-hour cache hints match-% hints candidate page subtitles and API billing wording,Completed,
+2026-07-07,Tuesday,Email — Daily Digest,End-of-day applied-jobs email to candidates (company + role list show 3 + see more → portal); cron route + migration 0039; manual Send mail button on Applied jobs tab,Completed,Migrations 0039/0040 applied
+2026-07-07,Tuesday,Manager Workflow,New candidate signup → service request + manager email alert; assign mentor on signup (migration 0040); mentor assign UI on Candidate Details page,Completed,
+2026-07-07,Tuesday,Mentor Meetings,Mentors can send Google Meet links to assigned candidates (email + calendar invite); UI on Candidate Details and Tasks pages,Completed,Uses RESEND_API_KEY in production
+2026-07-07,Tuesday,Bug Fixes,Fixed .next cache vendor-chunks error; Supabase multi-relationship embed error on digest; JSX syntax errors in job sheet; resume upload Object.defineProperty error,Completed,Delete .next and restart dev if cache corrupts
+2026-07-08,Wednesday,Job Scraping,LinkedIn-first background job scraping with progressive table updates; admin scrape API route; resume text extraction and job-match scoring; apply URL migration,Completed,Migrations 0037-0038; committed 86de109
+2026-07-08,Wednesday,Joben Chat,Floating Joben chatbot on welcome page; AI backend (Gemini/Anthropic) with public knowledge guardrails; candidate-only topic matching; suggested prompts,Completed,Committed 86de109
+2026-07-08,Wednesday,Email,Candidate welcome email on signup; daily applied-jobs digest cron; new-candidate manager alerts; shared Jobilly.AI email branding and logo,Completed,Migrations 0039-0041
+2026-07-08,Wednesday,Mentor Workflow,Mentor meeting link form; Google Meet invite emails to assigned candidates; service request flow on new signup,Completed,
+2026-07-08,Wednesday,Admin Portal,Admin job list component; candidate jobs sheet redesign; candidates expand list; privacy and terms legal pages; error boundaries,Completed,
+2026-07-09,Thursday,Marketing,Animated arrow Lottie loader; welcome page marketing polish,Completed,Committed ff5a1cf
+2026-07-10,Friday,Resume & Applications,Improved application job descriptions; better tailored resume visibility for candidates,Completed,Committed 2c4c5a3
+2026-07-11,Saturday,Welcome Page,Hero carousel; pipeline section; wave mesh backgrounds; arcade portal styling; Lottie loader integration,Completed,Committed d78f952
+2026-07-11,Saturday,Admin Portal,Admin dashboard arcade refresh; calendar/jobs/tasks/requests page styling; portal background mesh,Completed,
+2026-07-11,Saturday,Candidate Portal,Dashboard calendar and applications UI refresh; profile page polish; portal gradient styling,Completed,
+2026-07-11,Saturday,Authentication,Google OAuth production fixes; Resend-ready auth redirect URLs for production,Completed,Committed 7e2e826
+2026-07-11,Saturday,Password Reset,Fixed reset links to use token_hash instead of Supabase action_link,Completed,Committed a5ae3b7
+2026-07-11,Saturday,Branding,Integrated Option 5 brand logo; mobile UI polish across marketing and portal,Completed,Committed c79ea14
+2026-07-11,Saturday,Career Advisory,Fixed invite and welcome email delivery in production; US/IST timezone scheduling for sessions,Completed,Committed da070b9
+2026-07-11,Saturday,UI / Theme,Site-wide dark theme toggle (sun/moon); portal timezone strip; globals.css theme tokens,Completed,Committed 7bbabe7
+2026-07-11,Saturday,DevOps,"OneDrive build path fixes; clean-dev, prepare-build, and ensure-no-dev scripts",Completed,
+2026-07-13,Monday,Admin Jobs,Cyan admin accent (replacing indigo/lavender); larger company and role on job cards and modal; removed match % from list and modal,Completed,nemesis branch — local
+2026-07-13,Monday,Joben Chat,Full-screen portal chat with blurred backdrop; spider-web lavender grid background; animated connector lines; sun/moon theme toggle; New chat button; always-visible suggestions; redirect CTAs to products/signup/dashboard; black dark theme; transparent header and welcome blocks; wider chat layout,Completed,nemesis branch — local
+2026-07-13,Monday,Admin Tasks,Daily mentor task updates form; manager email digest; rewritten tasks page for mentors and managers; admin_daily_updates table,Completed,Migration 0042 — apply in Supabase
+2026-07-13,Monday,Resume / ATS,Removed standalone ATS resume score and tailor-resume pages; consolidated resume storage and analyze flow; shared Apify client,Completed,nemesis branch — local
+2026-07-13,Monday,Portal UI,Portal background component with mesh styling; auth page and lottie loader polish,Completed,nemesis branch — local
+2026-07-13,Monday,DevOps,nemesis branch active; OneDrive .next cache maintenance; next.config and clean-dev script updates,Completed,origin/nemesis pushed

@@ -1,13 +1,8 @@
 import { createAdminClient } from "@/server/db/supabase-admin";
 import {
-  getApifyToken,
-  mapInterestedRoleToAtsTarget,
-  runApifyAtsScoreCheck,
-} from "@/server/services/apify-ats-score";
-import {
   getFreshCandidateResumeUrl,
   saveCandidateResumeFile,
-} from "@/server/services/resume-ats-check";
+} from "@/server/services/resume-storage";
 import {
   countResumeWords,
   downloadResumeBuffer,
@@ -19,32 +14,7 @@ export type CandidateResumeAnalysis = {
   downloadUrl: string;
   resumeText: string;
   wordCount: number;
-  atsScore: number | null;
-  atsGrade: string | null;
 };
-
-async function runOptionalAtsCheck(input: {
-  resumeUrl: string;
-  interestedRole?: string | null;
-}): Promise<{ atsScore: number | null; atsGrade: string | null }> {
-  if (!getApifyToken()) {
-    return { atsScore: null, atsGrade: null };
-  }
-
-  const apifyResult = await runApifyAtsScoreCheck({
-    resumeUrl: input.resumeUrl,
-    targetRole: mapInterestedRoleToAtsTarget(input.interestedRole),
-  });
-
-  if ("error" in apifyResult) {
-    return { atsScore: null, atsGrade: null };
-  }
-
-  return {
-    atsScore: apifyResult.result.atsScore,
-    atsGrade: apifyResult.result.grade,
-  };
-}
 
 async function persistAnalyzedResumeText(
   candidateId: string,
@@ -100,18 +70,11 @@ export async function analyzeCandidateResumeBuffer(input: {
     fileName = existing.fileName;
   }
 
-  const ats = await runOptionalAtsCheck({
-    resumeUrl: downloadUrl,
-    interestedRole: input.interestedRole,
-  });
-
   return {
     fileName,
     downloadUrl,
     resumeText,
     wordCount: countResumeWords(resumeText),
-    atsScore: ats.atsScore,
-    atsGrade: ats.atsGrade,
   };
 }
 
@@ -145,17 +108,10 @@ export async function analyzeCandidateResumeOnFile(input: {
 
   await persistAnalyzedResumeText(input.candidateId, resumeText);
 
-  const ats = await runOptionalAtsCheck({
-    resumeUrl: freshResume.resumeUrl,
-    interestedRole: input.interestedRole,
-  });
-
   return {
     fileName: freshResume.fileName,
     downloadUrl: freshResume.resumeUrl,
     resumeText,
     wordCount: countResumeWords(resumeText),
-    atsScore: ats.atsScore,
-    atsGrade: ats.atsGrade,
   };
 }

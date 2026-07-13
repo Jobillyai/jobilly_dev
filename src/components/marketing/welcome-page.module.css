@@ -143,23 +143,44 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-top: 1px solid var(--jb-border);
+  gap: 12px;
+  padding-top: 8px;
   box-sizing: border-box;
 }
 
+@media (min-width: 961px) {
+  .heroGrid {
+    z-index: 2;
+  }
+
+  .statsBand {
+    z-index: 2;
+    padding-top: 20px;
+  }
+}
+
 .statItem {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 40px 24px;
+  padding: 32px 20px;
   text-align: center;
-  border-right: 1px solid var(--jb-border);
-  background: var(--jb-surface);
+  border: 1px solid var(--jb-glass-border);
+  border-radius: var(--jb-radius-md);
+  background: var(--jb-glass-surface);
+  box-shadow:
+    inset 0 1px 0 var(--jb-glass-highlight),
+    0 8px 24px rgba(17, 17, 17, 0.04);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
 }
 
-.statItem:last-child {
-  border-right: none;
+:global([data-theme="dark"]) .statItem {
+  box-shadow:
+    inset 0 1px 0 var(--jb-glass-highlight),
+    0 10px 28px rgba(0, 0, 0, 0.22);
 }
 
 .statValue {
@@ -440,19 +461,11 @@
 
   .statsBand {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .statItem {
-    border-right: none;
-    border-bottom: 1px solid var(--jb-border);
-  }
-
-  .statItem:nth-child(2n) {
-    border-right: none;
-  }
-
-  .statItem:nth-last-child(-n + 2) {
-    border-bottom: none;
+    padding: 28px 16px;
   }
 
   .openItem {
@@ -497,15 +510,11 @@
 
   .statsBand {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .statItem {
-    border-right: none;
-    border-bottom: 1px solid var(--jb-border);
-  }
-
-  .statItem:last-child {
-    border-bottom: none;
+    padding: 24px 16px;
   }
 
   .ctaActions {

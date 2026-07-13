@@ -1,8 +1,20 @@
+const path = require("path");
+const os = require("os");
+
 const isOneDriveProject = __dirname.replace(/\\/g, "/").includes("OneDrive");
+const isNextDev = process.argv.includes("dev");
+
+function getDevDistDirRelative() {
+  return path
+    .relative(__dirname, path.join(os.tmpdir(), "jobilly-next-dev"))
+    .replace(/\\/g, "/");
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Keep dev build output outside OneDrive — sync corrupts vendor-chunks and CSS.
+  ...(isOneDriveProject && isNextDev ? { distDir: getDevDistDirRelative() } : {}),
   experimental: {
     typedRoutes: true,
     serverComponentsExternalPackages: ["pdf-parse", "pdfjs-dist", "mammoth"],

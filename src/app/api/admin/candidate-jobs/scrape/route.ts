@@ -28,7 +28,7 @@ export const maxDuration = 300;
 
 const bodySchema = z.object({
   candidateId: z.string().uuid(),
-  sourceMode: z.enum(["all", "linkedin", "indeed", "glassdoor", "ziprecruiter"]),
+  sourceMode: z.enum(["all", "linkedin", "indeed"]),
   interestedRole: z.string().min(1),
   searchKeywords: z.string().nullable().optional(),
 });

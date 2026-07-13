@@ -58,11 +58,11 @@ export default async function AdminJobsPage() {
 
   return (
     <div className={styles.adminPage}>
-      <main className={styles.main}>
+      <main className={styles.jobsMain}>
         <AdminPageHeader
           eyebrow="Applications"
           title="Apply for jobs"
-          subtitle="Search Indeed, LinkedIn, Glassdoor, and ZipRecruiter for your assigned candidates from each job sheet. Each role can be searched once every 3 hours."
+          subtitle="Search LinkedIn and Indeed in parallel for your assigned candidates from each job sheet. Each role can be searched once every 3 hours."
         />
 
         <section className={styles.section}>

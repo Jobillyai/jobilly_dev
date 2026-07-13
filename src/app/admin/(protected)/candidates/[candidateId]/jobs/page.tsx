@@ -60,7 +60,7 @@ export default async function AdminCandidateJobsPage({
 
   return (
     <div className={styles.adminPage}>
-      <main className={styles.main}>
+      <main className={styles.jobsMain}>
         <Link href="/admin/candidates" className={styles.backLink}>
           ← Back to candidates
         </Link>
@@ -90,7 +90,6 @@ export default async function AdminCandidateJobsPage({
             canScrape={staffCanScrapeJobs(staff)}
             viewMode="pipeline"
             appliedCount={appliedCount}
-            initialAnalyzedResumeText={candidate.analyzedResumeText}
             candidateResumeMatch={{
               workExperience: candidate.workExperience,
               profileEducation: candidate.profileEducation,

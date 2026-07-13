@@ -1,0 +1,341 @@
+.panel {
+  padding: 28px;
+  border-radius: 20px;
+  background: var(--jb-admin-card);
+  border: 1px solid var(--jb-admin-card-border);
+  box-shadow: var(--jb-admin-shadow);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.panelEyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--jb-admin-accent);
+}
+
+.panelTitle {
+  margin: 0 0 8px;
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--jb-ink);
+}
+
+.panelSubtitle {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--jb-ink-muted);
+}
+
+.submittedBadge,
+.pendingBadge {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.submittedBadge {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.pendingBadge {
+  color: var(--jb-ink-secondary);
+  background: var(--jb-admin-surface-muted);
+  border: 1px solid var(--jb-admin-card-border);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--jb-admin-surface-muted);
+  border: 1px solid var(--jb-admin-card-border);
+}
+
+.summaryValue {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--jb-ink);
+  line-height: 1;
+}
+
+.summaryLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--jb-ink-muted);
+}
+
+.sectionBlock {
+  margin-bottom: 24px;
+}
+
+.sectionHeading {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--jb-ink);
+}
+
+.remarksHint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--jb-ink-muted);
+}
+
+.remarksInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--jb-admin-card-border);
+  background: var(--jb-admin-elevated-mid);
+  color: var(--jb-ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.remarksInput:focus {
+  outline: 2px solid var(--jb-brand-border);
+  outline-offset: 1px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.submitBtn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--jb-brand);
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.feedbackSuccess,
+.feedbackError {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.feedbackSuccess {
+  color: #047857;
+}
+
+.feedbackError {
+  color: #b91c1c;
+}
+
+.emptyInline {
+  margin: 0;
+  padding: 20px 16px;
+  border-radius: 14px;
+  border: 1px dashed var(--jb-admin-card-border);
+  background: var(--jb-admin-surface-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--jb-ink-muted);
+  text-align: center;
+}
+
+.activityList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activityItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--jb-admin-card-border);
+  background: var(--jb-admin-surface-muted);
+}
+
+.activityMain {
+  min-width: 0;
+}
+
+.activityBadge {
+  display: inline-flex;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--jb-admin-accent);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.activityLabel {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--jb-ink);
+}
+
+.activityDetail {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--jb-ink-muted);
+}
+
+.activityTime {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--jb-ink-muted);
+}
+
+.managerList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.managerCard {
+  padding: 22px 24px;
+  border-radius: 18px;
+  border: 1px solid var(--jb-admin-card-border);
+  background: var(--jb-admin-card);
+  box-shadow: var(--jb-admin-shadow);
+}
+
+.managerCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.managerCardTitle {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--jb-ink);
+}
+
+.managerCardMeta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--jb-ink-muted);
+}
+
+.managerSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--jb-ink-secondary);
+}
+
+.managerSummary span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--jb-admin-surface-muted);
+  border: 1px solid var(--jb-admin-card-border);
+}
+
+.managerRemarks {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--jb-admin-card-border);
+}
+
+.managerRemarksLabel {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jb-ink-muted);
+}
+
+.managerRemarksText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--jb-ink-secondary);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 900px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panelHeader,
+  .managerCardHeader {
+    flex-direction: column;
+  }
+
+  .activityItem {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .panel {
+    padding: 20px 16px;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}

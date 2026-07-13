@@ -10,8 +10,8 @@ import {
 } from "@/lib/candidate-profile-options";
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
-import { saveCandidateResumeFile } from "@/server/services/resume-ats-check";
-import { RESUME_MIME_TYPES } from "@/server/services/apify-ats-score";
+import { saveCandidateResumeFile } from "@/server/services/resume-storage";
+import { RESUME_MIME_TYPES } from "@/lib/resume-mime";
 
 const AVATAR_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -215,7 +215,6 @@ export async function uploadProfileResumeAction(
 
     revalidatePath("/dashboard/profile");
     revalidatePath("/admin/candidates");
-    revalidatePath("/dashboard/ats-resume-score");
 
     return { resumeUrl: saved.resumeUrl, fileName: file.name };
   } catch (error) {

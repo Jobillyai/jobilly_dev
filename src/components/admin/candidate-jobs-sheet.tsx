@@ -11,8 +11,6 @@ import {
   sendCandidateApplicationsDigestAction,
   toggleCandidateJobAppliedAction,
   toggleCandidateJobSelectedAction,
-  uploadAppliedJobResumeAction,
-  uploadAndAnalyzeCandidateResumeAction,
   type JobSearchSourceMode,
 } from "@/server/actions/candidate-jobs";
 import {
@@ -22,7 +20,6 @@ import {
   JOB_MARKET_SOURCES,
   JOB_MARKET_SOURCE_LABELS,
   type JobListingSourceFilter,
-  type JobMarketSource,
 } from "@/server/services/job-market-search";
 import type {
   CandidateJobListing,
@@ -30,12 +27,10 @@ import type {
   PreviousSearchRole,
 } from "@/server/services/candidate-jobs";
 import {
-  cacheExpiresAt,
   countJobsMatchingFreshnessFilter,
   jobMatchesFreshnessFilter,
   normalizeSearchRole,
   type JobFreshnessFilter,
-  type RoleScrapeCacheStatus,
 } from "@/server/services/job-role-cache";
 import {
   experienceLevelFromYears,
@@ -65,7 +60,6 @@ type CandidateJobsSheetProps = {
   candidateResumeMatch?: CandidateResumeMatchInput;
   candidateResumeDownloadUrl?: string | null;
   candidateResumeFileName?: string | null;
-  initialAnalyzedResumeText?: string | null;
 };
 
 type SourceFilter = JobListingSourceFilter;
@@ -78,6 +72,49 @@ function formatDate(value: string): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+const SCRAPE_SESSION_PREFIX = "jobilly-scrape:";
+const SCRAPE_SESSION_MAX_AGE_MS = 15 * 60 * 1000;
+
+function scrapeSessionKey(candidateId: string) {
+  return `${SCRAPE_SESSION_PREFIX}${candidateId}`;
+}
+
+function readActiveScrapeSession(
+  candidateId: string,
+): { role: string; startedAt: number } | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = sessionStorage.getItem(scrapeSessionKey(candidateId));
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as { role: string; startedAt: number };
+    if (Date.now() - parsed.startedAt > SCRAPE_SESSION_MAX_AGE_MS) {
+      sessionStorage.removeItem(scrapeSessionKey(candidateId));
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeActiveScrapeSession(candidateId: string, role: string) {
+  sessionStorage.setItem(
+    scrapeSessionKey(candidateId),
+    JSON.stringify({ role, startedAt: Date.now() }),
+  );
+}
+
+function clearActiveScrapeSession(candidateId: string) {
+  sessionStorage.removeItem(scrapeSessionKey(candidateId));
 }
 
 function mergeJobListings(
@@ -103,14 +140,6 @@ function mergeJobListings(
   });
 }
 
-function formatCacheExpiry(status: RoleScrapeCacheStatus): string {
-  if (!status.fresh || !status.lastScrapedAt) {
-    return "Search needed";
-  }
-
-  return `Cached until ${formatDate(cacheExpiresAt(status.lastScrapedAt))}`;
-}
-
 export function CandidateJobsSheet({
   candidateId,
   candidateName,
@@ -124,7 +153,6 @@ export function CandidateJobsSheet({
   candidateResumeMatch,
   candidateResumeDownloadUrl = null,
   candidateResumeFileName = null,
-  initialAnalyzedResumeText = null,
 }: CandidateJobsSheetProps) {
   const isAppliedView = viewMode === "applied";
   const router = useRouter();
@@ -145,29 +173,17 @@ export function CandidateJobsSheet({
     () => experienceLevelFromYears(candidateExperienceYears) ?? "",
   );
   const [keywordsInput, setKeywordsInput] = useState("");
-  const [cacheStatus, setCacheStatus] = useState<RoleScrapeCacheStatus[]>([]);
   const [previousSearches, setPreviousSearches] = useState(initialPreviousSearches);
   const [selectedPreviousSearch, setSelectedPreviousSearch] = useState("");
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [isBackgroundScraping, setIsBackgroundScraping] = useState(false);
-  const [uploadingResumeJobId, setUploadingResumeJobId] = useState<string | null>(null);
-  const [analyzedResumeText, setAnalyzedResumeText] = useState<string | null>(
-    initialAnalyzedResumeText,
-  );
   const [resumeDownloadUrl, setResumeDownloadUrl] = useState<string | null>(
     candidateResumeDownloadUrl,
   );
   const [resumeFileName, setResumeFileName] = useState<string | null>(
     candidateResumeFileName,
   );
-  const [resumeAnalysisMeta, setResumeAnalysisMeta] = useState<{
-    wordCount: number;
-    atsScore: number | null;
-    atsGrade: string | null;
-  } | null>(null);
-  const [analyzingResume, setAnalyzingResume] = useState(false);
   const [sendingDigestEmail, setSendingDigestEmail] = useState(false);
-  const resumeAnalyzeInputRef = useRef<HTMLInputElement>(null);
   const skipRoleReloadRef = useRef(false);
   const lastSearchRoleRef = useRef<string | null>(null);
 
@@ -188,7 +204,6 @@ export function CandidateJobsSheet({
     const result = await loadCandidateJobsForRoleAction(candidateId, role, "pipeline");
     if ("success" in result && result.success) {
       setJobs((current) => mergeJobListings(current, result.jobs));
-      setCacheStatus(result.cacheStatus);
     }
   }, [candidateId, interestedRole, isAppliedView]);
 
@@ -204,20 +219,9 @@ export function CandidateJobsSheet({
     setJobs(initialJobs);
     setPreviousSearches(initialPreviousSearches);
     setInterestedRole(defaultInterestedRole);
-    setAnalyzedResumeText(initialAnalyzedResumeText);
     setResumeDownloadUrl(candidateResumeDownloadUrl);
     setResumeFileName(candidateResumeFileName);
-    setResumeAnalysisMeta(
-      initialAnalyzedResumeText?.trim()
-        ? {
-            wordCount: initialAnalyzedResumeText.trim().split(/\s+/).filter(Boolean).length,
-            atsScore: null,
-            atsGrade: null,
-          }
-        : null,
-    );
     setMessage(null);
-    setCacheStatus([]);
     setSelectedPreviousSearch("");
     setSourceFilter("all");
     setFreshnessFilter("all");
@@ -229,10 +233,17 @@ export function CandidateJobsSheet({
     initialJobs,
     initialPreviousSearches,
     defaultInterestedRole,
-    initialAnalyzedResumeText,
     candidateResumeDownloadUrl,
     candidateResumeFileName,
   ]);
+
+  useEffect(() => {
+    const activeScrape = readActiveScrapeSession(candidateId);
+    if (activeScrape) {
+      setIsBackgroundScraping(true);
+      void refreshJobsForRole();
+    }
+  }, [candidateId, refreshJobsForRole]);
 
   useEffect(() => {
     setExperienceLevelInput(experienceLevelFromYears(candidateExperienceYears) ?? "");
@@ -245,7 +256,7 @@ export function CandidateJobsSheet({
 
     const role = interestedRole.trim();
 
-    if (!role || isBackgroundScraping) {
+    if (!role) {
       return;
     }
 
@@ -265,7 +276,6 @@ export function CandidateJobsSheet({
         const result = await loadCandidateJobsForRoleAction(candidateId, role, "pipeline");
         if ("success" in result && result.success) {
           setJobs(result.jobs);
-          setCacheStatus(result.cacheStatus);
         }
       } finally {
         setLoadingStored(false);
@@ -273,7 +283,7 @@ export function CandidateJobsSheet({
     }, 450);
 
     return () => window.clearTimeout(timer);
-  }, [candidateId, interestedRole, isBackgroundScraping, isAppliedView]);
+  }, [candidateId, interestedRole, isAppliedView]);
 
   async function refreshPreviousSearchesList() {
     const result = await listCandidatePreviousSearchesAction(candidateId);
@@ -310,7 +320,6 @@ export function CandidateJobsSheet({
         lastSearchRoleRef.current = result.searchRole;
         setInterestedRole(result.label);
         setJobs(result.jobs);
-        setCacheStatus(result.cacheStatus);
         setMessageKind("info");
         setMessage(
           `Loaded ${result.jobs.length} stored job${result.jobs.length === 1 ? "" : "s"} from previous search "${result.label}".`,
@@ -325,14 +334,12 @@ export function CandidateJobsSheet({
     () =>
       buildCandidateResumeCorpus({
         ...candidateResumeMatch,
-        resumeText: analyzedResumeText,
+        resumeText: null,
         interestedRole:
           interestedRole.trim() || candidateResumeMatch?.interestedRole || null,
       }),
-    [candidateResumeMatch, interestedRole, analyzedResumeText],
+    [candidateResumeMatch, interestedRole],
   );
-
-  const usingAnalyzedResume = Boolean(analyzedResumeText?.trim());
 
   const jobsWithMatch = useMemo(
     () =>
@@ -437,68 +444,98 @@ export function CandidateJobsSheet({
       }
 
       setJobs((current) => mergeJobListings(current, prep.jobs));
-      setCacheStatus(prep.cacheStatus);
       setSelectedPreviousSearch(prep.searchRole);
       void refreshPreviousSearchesList();
 
       if (prep.shouldScrape && canScrape) {
         backgroundScrapeStarted = true;
         setIsBackgroundScraping(true);
+        writeActiveScrapeSession(candidateId, role);
         setMessageKind("info");
         setMessage(
           prep.jobs.length > 0
-            ? `Showing ${prep.jobs.length} stored job${prep.jobs.length === 1 ? "" : "s"}. Searching ${searchSourceLabel(sourceMode)} in the background (LinkedIn → Indeed → Glassdoor → ZipRecruiter) — new rows append automatically.`
-            : `Searching ${searchSourceLabel(sourceMode)} in the background (LinkedIn → Indeed → Glassdoor → ZipRecruiter) — jobs appear as each source finishes.`,
+            ? `Showing ${prep.jobs.length} stored job${prep.jobs.length === 1 ? "" : "s"}. Searching ${searchSourceLabel(sourceMode)} in parallel — you can open Tasks, Calendar, or other tabs while jobs load.`
+            : `Searching ${searchSourceLabel(sourceMode)} in parallel — feel free to work elsewhere; jobs save automatically.`,
         );
 
-        void fetch("/api/admin/candidate-jobs/scrape", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            candidateId,
-            sourceMode,
-            interestedRole: role,
-            searchKeywords: keywordsInput.trim() || null,
-          }),
-        })
-          .then(async (response) => {
-            const result = (await response.json()) as {
+        const scrapeModes: JobSearchSourceMode[] =
+          sourceMode === "all"
+            ? prep.sourcesToScrape.length > 0
+              ? prep.sourcesToScrape
+              : ["linkedin", "indeed"]
+            : [sourceMode];
+
+        const runScrapeRequest = async (mode: JobSearchSourceMode) => {
+          const response = await fetch("/api/admin/candidate-jobs/scrape", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              candidateId,
+              sourceMode: mode,
+              interestedRole: role,
+              searchKeywords: keywordsInput.trim() || null,
+            }),
+          });
+
+          return {
+            mode,
+            response,
+            result: (await response.json()) as {
               error?: string;
               success?: boolean;
               scrapeCalled?: boolean;
               newJobsAdded?: number;
               count?: number;
-              cacheStatus?: typeof cacheStatus;
               warning?: string;
               info?: string;
-            };
+            },
+          };
+        };
 
-            if (!response.ok || result.error) {
+        setPendingSource(null);
+
+        void Promise.all(scrapeModes.map((mode) => runScrapeRequest(mode)))
+          .then(async (outcomes) => {
+            const failed = outcomes.find(
+              ({ response, result }) => !response.ok || result.error,
+            );
+            if (failed) {
               setMessageKind("error");
-              setMessage(result.error ?? "Background job search failed.");
+              setMessage(failed.result.error ?? "Background job search failed.");
               return;
             }
 
-            if (result.cacheStatus) {
-              setCacheStatus(result.cacheStatus);
-            }
             await refreshJobsForRole();
 
-            if (result.warning) {
+            const warnings = outcomes
+              .map(({ result }) => result.warning)
+              .filter(Boolean) as string[];
+            const infos = outcomes
+              .map(({ result }) => result.info)
+              .filter(Boolean) as string[];
+            const scraped = outcomes.some(({ result }) => result.scrapeCalled);
+            const newJobsAdded = outcomes.reduce(
+              (sum, { result }) => sum + (result.newJobsAdded ?? 0),
+              0,
+            );
+            const totalCount =
+              outcomes[outcomes.length - 1]?.result.count ?? prep.jobs.length;
+
+            if (warnings.length > 0) {
               setMessageKind("warning");
               setMessage(
-                result.info
-                  ? `${result.info} ${result.warning}`
-                  : result.warning,
+                infos.length > 0
+                  ? `${infos.join(" ")} ${warnings.join(" ")}`
+                  : warnings.join(" "),
               );
-            } else if (result.scrapeCalled) {
+            } else if (scraped) {
               setMessageKind("success");
               setMessage(
-                `Search finished — ${result.newJobsAdded ?? 0} new unique job${result.newJobsAdded === 1 ? "" : "s"} added (${result.count ?? prep.jobs.length} total for this role).`,
+                `Search finished — ${newJobsAdded} new unique job${newJobsAdded === 1 ? "" : "s"} added (${totalCount} total for this role).`,
               );
-            } else if (result.info) {
+            } else if (infos.length > 0) {
               setMessageKind("info");
-              setMessage(result.info);
+              setMessage(infos.join(" "));
             }
           })
           .catch(() => {
@@ -506,6 +543,7 @@ export function CandidateJobsSheet({
             setMessage("Background job search failed. Check your connection and try again.");
           })
           .finally(() => {
+            clearActiveScrapeSession(candidateId);
             setIsBackgroundScraping(false);
             setPendingSource(null);
           });
@@ -593,7 +631,7 @@ export function CandidateJobsSheet({
       if (applied && job && !isAppliedView) {
         setMessageKind("success");
         setMessage(
-          `Moved "${job.role}" at ${job.company} to Applied. Open the Applied tab to attach the resume the candidate will see.`,
+          `Moved "${job.role}" at ${job.company} to Applied.`,
         );
       } else if (!applied && isAppliedView) {
         setMessageKind("success");
@@ -605,32 +643,6 @@ export function CandidateJobsSheet({
         );
       }
     });
-  }
-
-  function applyResumeAnalysisResult(result: {
-    resumeText?: string;
-    downloadUrl?: string;
-    fileName?: string;
-    wordCount?: number;
-    atsScore?: number | null;
-    atsGrade?: string | null;
-  }) {
-    if (result.resumeText) {
-      setAnalyzedResumeText(result.resumeText);
-    }
-    if (result.downloadUrl) {
-      setResumeDownloadUrl(result.downloadUrl);
-    }
-    if (result.fileName) {
-      setResumeFileName(result.fileName);
-    }
-    if (result.wordCount !== undefined) {
-      setResumeAnalysisMeta({
-        wordCount: result.wordCount,
-        atsScore: result.atsScore ?? null,
-        atsGrade: result.atsGrade ?? null,
-      });
-    }
   }
 
   async function handleSendApplicationsDigest() {
@@ -654,97 +666,14 @@ export function CandidateJobsSheet({
     }
   }
 
-  async function handleAnalyzeResumeUpload(file: File | undefined) {
-    if (!file) {
-      return;
-    }
-
-    setAnalyzingResume(true);
-    setMessage(null);
-
-    const formData = new FormData();
-    formData.append("resume", file);
-    formData.append("interestedRole", interestedRole.trim());
-
-    try {
-      const result = await uploadAndAnalyzeCandidateResumeAction(candidateId, formData);
-      if (result.error) {
-        setMessageKind("error");
-        setMessage(result.error);
-        return;
-      }
-
-      if (result.success) {
-        applyResumeAnalysisResult(result);
-        setMessageKind("success");
-        const atsNote =
-          result.atsScore != null
-            ? ` Overall ATS score: ${result.atsScore}${result.atsGrade ? ` (${result.atsGrade})` : ""}.`
-            : "";
-        setMessage(
-          `Resume analyzed (${result.wordCount?.toLocaleString() ?? 0} words). Match % updated for all jobs.${atsNote}`,
-        );
-      }
-    } finally {
-      setAnalyzingResume(false);
-    }
-  }
-
-  async function handleResumeUpload(jobId: string, file: File | undefined) {
-    if (!file) {
-      return;
-    }
-
-    setUploadingResumeJobId(jobId);
-    setMessage(null);
-
-    const formData = new FormData();
-    formData.append("resume", file);
-
-    try {
-      const result = await uploadAppliedJobResumeAction(candidateId, jobId, formData);
-      if (result.error) {
-        setMessageKind("error");
-        setMessage(result.error);
-        return;
-      }
-
-      setJobs((current) =>
-        current.map((entry) =>
-          entry.id === jobId
-            ? {
-                ...entry,
-                applicationResumeFileName: result.fileName ?? entry.applicationResumeFileName,
-                applicationResumeDownloadUrl:
-                  result.downloadUrl ?? entry.applicationResumeDownloadUrl,
-              }
-            : entry,
-        ),
-      );
-      setMessageKind("success");
-      setMessage("Application resume saved. The candidate can view it in Applications.");
-    } finally {
-      setUploadingResumeJobId(null);
-    }
-  }
-
 
   const loadingPreviousSearch = loadingPrevious;
   const scrapeInProgress = isBackgroundScraping;
+  const searchRequestInFlight = pendingSource !== null;
   const showMentorLoading = isSearching && !canScrape;
-  const sourceCacheByName = useMemo(
-    () =>
-      Object.fromEntries(
-        JOB_MARKET_SOURCES.map((source) => [
-          source,
-          cacheStatus.find((entry) => entry.source === source),
-        ]),
-      ) as Record<JobMarketSource, (typeof cacheStatus)[number] | undefined>,
-    [cacheStatus],
-  );
 
   const controlsHint = isAppliedView
-    ? "Attach the resume used, or undo apply to return a job to the pipeline."
+    ? "Undo apply to return a job to the pipeline."
     : canScrape
       ? null
       : "Load a previous search below, or wait for an admin to search again.";
@@ -758,18 +687,6 @@ export function CandidateJobsSheet({
               {isAppliedView ? "Applied jobs" : canScrape ? "Apply for jobs" : "Stored jobs"}
             </h2>
             {controlsHint ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
-            {resumeAnalysisMeta ? (
-              <p className={styles.analysisMeta}>
-                {usingAnalyzedResume ? "Resume analyzed" : "Profile match only"}
-                {" · "}
-                {resumeAnalysisMeta.wordCount.toLocaleString()} words
-                {resumeAnalysisMeta.atsScore != null
-                  ? ` · ATS ${resumeAnalysisMeta.atsScore}${
-                      resumeAnalysisMeta.atsGrade ? ` (${resumeAnalysisMeta.atsGrade})` : ""
-                    }`
-                  : ""}
-              </p>
-            ) : null}
           </div>
           <div className={styles.controlsActions}>
             {resumeDownloadUrl ? (
@@ -785,21 +702,6 @@ export function CandidateJobsSheet({
             ) : (
               <span className={styles.resumeMissingLabel}>No resume on file for {candidateName}</span>
             )}
-            <label className={styles.resumeAnalyzeBtn}>
-              <input
-                ref={resumeAnalyzeInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                className={styles.resumeFileInput}
-                disabled={analyzingResume || loadingPreviousSearch || scrapeInProgress}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  void handleAnalyzeResumeUpload(file);
-                  event.target.value = "";
-                }}
-              />
-              {analyzingResume ? "Analyzing…" : "Upload & analyze resume"}
-            </label>
             {(scrapeInProgress || showMentorLoading) && (
               <span className={styles.toolbarSpinner} aria-hidden />
             )}
@@ -818,7 +720,7 @@ export function CandidateJobsSheet({
                 type="button"
                 className={styles.searchBtn}
                 onClick={() => (isAppliedView ? void refreshJobsForRole() : handleSearch("all"))}
-                disabled={loadingPreviousSearch || scrapeInProgress}
+                disabled={loadingPreviousSearch}
               >
                 {isAppliedView
                   ? loadingStored
@@ -848,7 +750,7 @@ export function CandidateJobsSheet({
                 }}
                 placeholder="e.g. Software Engineer, Data Analyst"
                 className={styles.fieldInput}
-                disabled={loadingPreviousSearch || scrapeInProgress}
+                disabled={loadingPreviousSearch}
               />
             </div>
             <div className={styles.fieldExperience}>
@@ -862,7 +764,7 @@ export function CandidateJobsSheet({
                   setExperienceLevelInput(event.target.value as ExperienceLevel | "")
                 }
                 className={styles.fieldInput}
-                disabled={!canScrape || loadingPreviousSearch || scrapeInProgress}
+                disabled={!canScrape || loadingPreviousSearch}
                 aria-label="Experience level for job search"
               >
                 <option value="">Not set</option>
@@ -882,7 +784,7 @@ export function CandidateJobsSheet({
                 onChange={(event) => setKeywordsInput(event.target.value)}
                 placeholder="React, remote, Python — optional"
                 className={styles.fieldInput}
-                disabled={loadingPreviousSearch || scrapeInProgress}
+                disabled={loadingPreviousSearch}
               />
             </div>
             <div className={styles.fieldHistory}>
@@ -894,7 +796,7 @@ export function CandidateJobsSheet({
                 value={selectedPreviousSearch}
                 onChange={(event) => handlePreviousSearchChange(event.target.value)}
                 className={styles.fieldSelect}
-                disabled={loadingPreviousSearch || scrapeInProgress}
+                disabled={loadingPreviousSearch}
               >
                 <option value="">
                   {previousSearches.length > 0
@@ -925,7 +827,7 @@ export function CandidateJobsSheet({
                   setSearchSourceMode(event.target.value as JobSearchSourceMode)
                 }
                 className={styles.fieldSelect}
-                disabled={loadingPreviousSearch || scrapeInProgress}
+                disabled={loadingPreviousSearch}
               >
                 <option value="all">All sources</option>
                 {JOB_MARKET_SOURCES.map((source) => (
@@ -939,7 +841,7 @@ export function CandidateJobsSheet({
               type="button"
               className={styles.searchBtn}
               onClick={() => void handleSearch(searchSourceMode)}
-              disabled={loadingPreviousSearch || scrapeInProgress}
+              disabled={loadingPreviousSearch || searchRequestInFlight || scrapeInProgress}
             >
               {pendingSource
                 ? `Searching ${searchSourceLabel(pendingSource)}…`
@@ -951,34 +853,13 @@ export function CandidateJobsSheet({
         ) : null}
 
         <div className={styles.metaFilters}>
-          <div className={styles.statPills}>
-            {isAppliedView ? (
+          {isAppliedView ? (
+            <div className={styles.statPills}>
               <span className={styles.statPill}>
                 <strong>{appliedCount}</strong> role{appliedCount === 1 ? "" : "s"} submitted
               </span>
-            ) : (
-              <>
-                {JOB_MARKET_SOURCES.map((source) => (
-                  <span key={source} className={styles.statPill}>
-                    {JOB_MARKET_SOURCE_LABELS[source]} cache:{" "}
-                    {sourceCacheByName[source]
-                      ? formatCacheExpiry(sourceCacheByName[source]!)
-                      : "not searched"}
-                  </span>
-                ))}
-                <span className={styles.statPill}>
-                  In sheet:{" "}
-                  {JOB_MARKET_SOURCES.map((source, index) => (
-                    <span key={source}>
-                      {index > 0 ? " · " : ""}
-                      {JOB_MARKET_SOURCE_LABELS[source]} {sourceCounts[source]}
-                    </span>
-                  ))}
-                  {sourceCounts.other > 0 ? ` · Other ${sourceCounts.other}` : ""}
-                </span>
-              </>
-            )}
-          </div>
+            </div>
+          ) : null}
           <div className={styles.filterRow}>
             <div className={styles.filterGroup}>
               <label htmlFor="sourceFilter" className={styles.fieldLabel}>
@@ -989,7 +870,7 @@ export function CandidateJobsSheet({
                 value={sourceFilter}
                 onChange={(event) => setSourceFilter(event.target.value as SourceFilter)}
                 className={styles.fieldSelect}
-                disabled={loadingPreviousSearch || scrapeInProgress}
+                disabled={loadingPreviousSearch}
               >
                 <option value="all">All sources ({jobs.length})</option>
                 {JOB_MARKET_SOURCES.map((source) => (
@@ -1012,7 +893,7 @@ export function CandidateJobsSheet({
                     setFreshnessFilter(event.target.value as JobFreshnessFilter)
                   }
                   className={styles.fieldSelect}
-                  disabled={loadingPreviousSearch || scrapeInProgress}
+                  disabled={loadingPreviousSearch}
                 >
                   <option value="all">All posting dates ({jobs.length})</option>
                   <option value="last_24h">Posted today / 24h ({freshnessCounts.last_24h})</option>
@@ -1066,8 +947,8 @@ export function CandidateJobsSheet({
               <strong>
                 Searching {pendingSource ? searchSourceLabel(pendingSource) : "for jobs"}…
               </strong>{" "}
-              Stored jobs are shown below. New rows are added automatically as each
-              source finishes (LinkedIn → Indeed → Glassdoor → ZipRecruiter) via live updates.
+              You can switch to Tasks, Calendar, or other tabs — scraping continues in the
+              background. New jobs appear here automatically as LinkedIn and Indeed finish.
             </p>
           </div>
         )}
@@ -1118,11 +999,8 @@ export function CandidateJobsSheet({
         <AdminJobList
           jobs={filteredJobs}
           viewMode={isAppliedView ? "applied" : "pipeline"}
-          uploadingResumeJobId={uploadingResumeJobId}
-          matchUsesAnalyzedResume={usingAnalyzedResume}
           onToggleSelected={handleToggleSelected}
           onToggleApplied={handleToggleApplied}
-          onResumeUpload={(jobId, file) => void handleResumeUpload(jobId, file)}
         />
       )}
 

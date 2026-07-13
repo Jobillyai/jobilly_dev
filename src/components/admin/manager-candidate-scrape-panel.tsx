@@ -334,7 +334,7 @@ export function ManagerCandidateScrapePanel({
           <p className={styles.subtitle}>
             Set each candidate&apos;s target role and years of experience, then
             search for jobs. Searches combine the role, career advisory keywords, and
-            experience level on Indeed, LinkedIn, Glassdoor, and ZipRecruiter.
+            experience level on LinkedIn and Indeed.
           </p>
           {lastRunLabel ? (
             <p className={styles.meta}>Last search run: {lastRunLabel}</p>
