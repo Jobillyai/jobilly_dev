@@ -38,6 +38,7 @@ import {
   yearsFromExperienceLevel,
   type ExperienceLevel,
 } from "@/lib/format-experience-years";
+import { suggestJobSearchKeywords } from "@/lib/job-search-keywords";
 import { useScrapedJobsLiveUpdates } from "@/lib/hooks/use-scraped-jobs-live-updates";
 import {
   buildCandidateResumeCorpus,
@@ -177,7 +178,9 @@ export function CandidateJobsSheet({
   const [experienceLevelInput, setExperienceLevelInput] = useState<ExperienceLevel | "">(
     () => experienceLevelFromYears(candidateExperienceYears) ?? "",
   );
-  const [keywordsInput, setKeywordsInput] = useState("");
+  const [keywordsInput, setKeywordsInput] = useState(() =>
+    suggestJobSearchKeywords(defaultInterestedRole),
+  );
   const [previousSearches, setPreviousSearches] = useState(initialPreviousSearches);
   const [selectedPreviousSearch, setSelectedPreviousSearch] = useState("");
   const [loadingPrevious, setLoadingPrevious] = useState(false);
@@ -223,7 +226,7 @@ export function CandidateJobsSheet({
     setSourceFilter("all");
     setFreshnessFilter("all");
     setJobSort("best_match");
-    setKeywordsInput("");
+    setKeywordsInput(suggestJobSearchKeywords(defaultInterestedRole));
     skipRoleReloadRef.current = false;
     lastSearchRoleRef.current = null;
   }, [
@@ -315,6 +318,7 @@ export function CandidateJobsSheet({
         skipRoleReloadRef.current = true;
         lastSearchRoleRef.current = result.searchRole;
         setInterestedRole(result.label);
+        setKeywordsInput(suggestJobSearchKeywords(result.label));
         setJobs(result.jobs);
         setMessageKind("info");
         setMessage(
@@ -763,7 +767,9 @@ export function CandidateJobsSheet({
                 type="text"
                 value={interestedRole}
                 onChange={(event) => {
-                  setInterestedRole(event.target.value);
+                  const nextRole = event.target.value;
+                  setInterestedRole(nextRole);
+                  setKeywordsInput(suggestJobSearchKeywords(nextRole));
                   setSelectedPreviousSearch("");
                 }}
                 placeholder="e.g. Software Engineer, Data Analyst"
@@ -793,14 +799,14 @@ export function CandidateJobsSheet({
             </div>
             <div className={styles.fieldWide}>
               <label htmlFor="searchKeywords" className={styles.fieldLabel}>
-                Keywords
+                Role-based keywords
               </label>
               <input
                 id="searchKeywords"
                 type="text"
                 value={keywordsInput}
                 onChange={(event) => setKeywordsInput(event.target.value)}
-                placeholder="React, remote, Python — optional"
+                placeholder="Generated from the interested role"
                 className={styles.fieldInput}
                 disabled={loadingPreviousSearch}
               />

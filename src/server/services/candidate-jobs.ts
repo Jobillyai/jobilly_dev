@@ -19,6 +19,7 @@ import {
   parsePreparationTips,
   serializePreparationTips,
 } from "@/server/services/job-preparation-tips";
+import { suggestJobSearchKeywords } from "@/lib/job-search-keywords";
 import {
   describeCacheStatus,
   describeScrapeWindow,
@@ -548,7 +549,8 @@ export async function runCandidateJobScrapeForSources(input: {
   windowInfo?: string;
 }> {
   const searchRole = normalizeSearchRole(input.interestedRole);
-  const searchKeywords = input.searchKeywords?.trim() || null;
+  const searchKeywords =
+    input.searchKeywords?.trim() || suggestJobSearchKeywords(input.interestedRole);
 
   // Windowed scraping: the first scrape for a candidate+role looks back 15
   // days; each later scrape only covers the gap since that source's last
@@ -666,7 +668,8 @@ export async function refreshCandidateJobListings(
   }
 
   const searchRole = normalizeSearchRole(roleInput);
-  const searchKeywords = options?.searchKeywords?.trim() || null;
+  const searchKeywords =
+    options?.searchKeywords?.trim() || suggestJobSearchKeywords(roleInput);
   const searchTerms = buildCandidateSearchTerms(
     candidate,
     roleInput,

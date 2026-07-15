@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,8 +9,10 @@ import {
   ClipboardList,
   Inbox,
   LayoutDashboard,
+  Menu,
   UserCircle,
   Users,
+  X,
 } from "lucide-react";
 import styles from "./admin-sidebar.module.css";
 
@@ -71,9 +74,14 @@ type AdminSidebarProps = {
 
 export function AdminSidebar({ showJobApplyNav = true }: AdminSidebarProps) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const visibleNavItems = navItems.filter(
     (item) => !item.jobApplyOnly || showJobApplyNav,
   );
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   function isActive(href: string, exact: boolean) {
     if (exact) {
@@ -83,7 +91,26 @@ export function AdminSidebar({ showJobApplyNav = true }: AdminSidebarProps) {
   }
 
   return (
-    <aside className={styles.sidebar}>
+    <>
+      <button
+        type="button"
+        className={styles.mobileToggle}
+        aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+        aria-expanded={mobileOpen}
+        onClick={() => setMobileOpen((open) => !open)}
+      >
+        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+      {mobileOpen ? (
+        <div
+          className={styles.backdrop}
+          onClick={() => setMobileOpen(false)}
+          aria-hidden
+        />
+      ) : null}
+      <aside
+        className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`}
+      >
       <Link href="/admin" className={styles.brand} aria-label="Jobilly.ai home">
         {/* eslint-disable-next-line @next/next/no-img-element -- local brand PNG lockup */}
         <img
@@ -115,6 +142,7 @@ export function AdminSidebar({ showJobApplyNav = true }: AdminSidebarProps) {
           );
         })}
       </nav>
-    </aside>
+      </aside>
+    </>
   );
 }
