@@ -21,9 +21,11 @@ import {
 } from "@/server/services/job-preparation-tips";
 import {
   describeCacheStatus,
+  describeScrapeWindow,
   isScrapeCacheFresh,
   LEGACY_SEARCH_ROLE,
   normalizeSearchRole,
+  resolveScrapeWindow,
   sourceScrapeHadError,
   formatSearchRoleLabel,
   type RoleScrapeCacheStatus,
@@ -539,12 +541,42 @@ export async function runCandidateJobScrapeForSources(input: {
   interestedRole: string;
   searchKeywords?: string | null;
   db?: AppSupabase;
-}): Promise<{ newJobsAdded: number; scrapeErrors: string[]; fatalError?: string }> {
+}): Promise<{
+  newJobsAdded: number;
+  scrapeErrors: string[];
+  fatalError?: string;
+  windowInfo?: string;
+}> {
   const searchRole = normalizeSearchRole(input.interestedRole);
   const searchKeywords = input.searchKeywords?.trim() || null;
 
+  // Windowed scraping: the first scrape for a candidate+role looks back 15
+  // days; each later scrape only covers the gap since that source's last
+  // successful scrape (3h cache TTL, overnight logouts, weekends — all
+  // covered because the window always starts at the last success).
+  const cacheStatus = await getRoleScrapeCache(
+    input.candidate.id,
+    searchRole,
+    input.sources,
+    input.db,
+  );
+  const lastScrapedBySource = new Map(
+    cacheStatus.map((entry) => [entry.source, entry.lastScrapedAt]),
+  );
+
+  // Describe the widest window among the scraped sources (first scrape wins,
+  // otherwise the source with the oldest previous success).
+  const lastScrapes = input.sources.map(
+    (source) => lastScrapedBySource.get(source) ?? null,
+  );
+  const oldestLastScrape = lastScrapes.includes(null)
+    ? null
+    : (lastScrapes as string[]).sort()[0] ?? null;
+  const widestWindow = resolveScrapeWindow(oldestLastScrape);
+
   const results = await Promise.all(
     input.sources.map(async (source) => {
+      const postedWithin = resolveScrapeWindow(lastScrapedBySource.get(source));
       const scraped = await scrapeJobsForCandidate(
         input.candidate,
         [source],
@@ -552,6 +584,7 @@ export async function runCandidateJobScrapeForSources(input: {
         {
           experienceYears: input.candidate.experienceYears,
           searchKeywords,
+          postedWithin,
         },
       );
 
@@ -587,7 +620,12 @@ export async function runCandidateJobScrapeForSources(input: {
   const newJobsAdded = results.reduce((sum, result) => sum + result.newJobsAdded, 0);
   const fatalError = results.find((result) => result.fatalError)?.fatalError;
 
-  return { newJobsAdded, scrapeErrors, fatalError };
+  return {
+    newJobsAdded,
+    scrapeErrors,
+    fatalError,
+    windowInfo: describeScrapeWindow(widestWindow),
+  };
 }
 
 export async function refreshCandidateJobListings(

@@ -60,6 +60,74 @@ export type JobFreshnessFilter =
   | "older";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+
+/** First scrape for a candidate+role looks back this many days. */
+export const FIRST_SCRAPE_WINDOW_DAYS = 15;
+const MAX_SCRAPE_WINDOW_MS = FIRST_SCRAPE_WINDOW_DAYS * DAY_MS;
+/**
+ * Overlap added to incremental windows so listings posted right around the
+ * previous scrape aren't missed — URL-level dedupe drops any repeats.
+ */
+const SCRAPE_WINDOW_OVERLAP_MS = HOUR_MS;
+
+export type ScrapeWindow = {
+  isFirstScrape: boolean;
+  windowMs: number;
+  /** Window as whole seconds — LinkedIn `f_TPR=r{seconds}` filter. */
+  seconds: number;
+  /** Window as whole days (1–15) — Indeed `fromage={days}` filter. */
+  days: number;
+};
+
+/**
+ * How far back a scrape should look for new postings.
+ *
+ * - No successful scrape yet → the full first-scrape window (15 days).
+ * - Otherwise → time since the last successful scrape plus a small overlap,
+ *   capped at 15 days. This naturally covers logout→login gaps, overnight
+ *   idle time, and weekends: the next scrape simply spans everything since
+ *   the last successful one, so no posting window is skipped.
+ */
+export function resolveScrapeWindow(
+  lastScrapedAt: string | null | undefined,
+  now: number = Date.now(),
+): ScrapeWindow {
+  const lastMs = lastScrapedAt ? new Date(lastScrapedAt).getTime() : Number.NaN;
+
+  if (Number.isNaN(lastMs)) {
+    return {
+      isFirstScrape: true,
+      windowMs: MAX_SCRAPE_WINDOW_MS,
+      seconds: Math.ceil(MAX_SCRAPE_WINDOW_MS / 1000),
+      days: FIRST_SCRAPE_WINDOW_DAYS,
+    };
+  }
+
+  const elapsedMs = Math.max(0, now - lastMs);
+  const windowMs = Math.min(elapsedMs + SCRAPE_WINDOW_OVERLAP_MS, MAX_SCRAPE_WINDOW_MS);
+
+  return {
+    isFirstScrape: false,
+    windowMs,
+    seconds: Math.ceil(windowMs / 1000),
+    days: Math.min(FIRST_SCRAPE_WINDOW_DAYS, Math.max(1, Math.ceil(windowMs / DAY_MS))),
+  };
+}
+
+export function describeScrapeWindow(window: ScrapeWindow): string {
+  if (window.isFirstScrape) {
+    return `First search for this role — scanning jobs posted in the last ${FIRST_SCRAPE_WINDOW_DAYS} days.`;
+  }
+
+  const hours = Math.max(1, Math.round(window.windowMs / HOUR_MS));
+  if (hours < 48) {
+    return `Scanning jobs posted in the last ${hours} hour${hours === 1 ? "" : "s"} (since the previous search).`;
+  }
+
+  const days = Math.ceil(hours / 24);
+  return `Scanning jobs posted in the last ${days} days (since the previous search).`;
+}
 
 export function jobMatchesFreshnessFilter(
   postedAt: string | null | undefined,

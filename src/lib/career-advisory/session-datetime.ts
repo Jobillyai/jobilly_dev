@@ -52,17 +52,10 @@ export function formatSessionDateTimeForStaff(date: Date): string {
 }
 
 export function formatSessionDateTimeForStaffCompact(date: Date): string {
-  const us = formatInTimeZone(
-    date,
-    CAREER_ADVISORY_US_TIMEZONE,
-    SESSION_DATE_TIME_COMPACT,
-  );
-  const india = formatInTimeZone(
-    date,
-    CAREER_ADVISORY_INDIA_TIMEZONE,
-    SESSION_DATE_TIME_COMPACT,
-  );
-  return `${us} · ${india}`;
+  return formatInTimeZone(date, CAREER_ADVISORY_US_TIMEZONE, {
+    ...SESSION_DATE_TIME_COMPACT,
+    timeZoneName: undefined,
+  });
 }
 
 export function formatSessionDateTimeForStaffHtml(date: Date): string {

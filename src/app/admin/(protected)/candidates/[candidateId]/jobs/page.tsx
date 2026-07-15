@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CandidateJobsNav } from "@/components/admin/candidate-jobs-nav";
 import { CandidateJobsSheet } from "@/components/admin/candidate-jobs-sheet";
+import { CandidateTimeWidget } from "@/components/admin/candidate-time-widget";
 import {
   getAdminUser,
   staffCanAccessJobApplyPortal,
@@ -10,7 +11,6 @@ import {
 } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
-import { resolveCandidateUsJobLocation } from "@/server/services/candidate-job-search";
 import {
   getCandidateAppliedJobCount,
   getCandidateJobListings,
@@ -62,7 +62,6 @@ export default async function AdminCandidateJobsPage({
   const displayName = candidate.name
     ? formatDisplayName(candidate.name)
     : formatDisplayName(candidate.email.split("@")[0] ?? candidate.email);
-  const searchLocation = resolveCandidateUsJobLocation(candidate.location);
 
   return (
     <div className={styles.adminPage}>
@@ -71,15 +70,17 @@ export default async function AdminCandidateJobsPage({
           ← Back to candidates
         </Link>
 
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            {staffCanScrapeJobs(staff) ? "Apply for jobs" : "Job listings"} for{" "}
-            <em className={styles.titleEm}>{displayName}</em>
-          </h1>
-          <p className={styles.subtitle}>
-            Candidate location: {candidate.location || "Not provided"} · Searching jobs in{" "}
-            {searchLocation}. Jobilly job search currently supports US roles only.
-          </p>
+        <div className={styles.headerRow}>
+          <div className={styles.header}>
+            <h1 className={styles.title}>
+              {staffCanScrapeJobs(staff) ? "Apply for jobs" : "Job listings"} for{" "}
+              <em className={styles.titleEm}>{displayName}</em>
+            </h1>
+          </div>
+          <CandidateTimeWidget
+            location={candidate.location}
+            timezone={candidate.timezone}
+          />
         </div>
 
         <CandidateJobsNav
@@ -110,8 +111,6 @@ export default async function AdminCandidateJobsPage({
               graduationDetails: candidate.submission?.graduationDetails ?? null,
               interestedRole: defaultInterestedRole,
             }}
-            candidateResumeDownloadUrl={candidate.resumeDownloadUrl}
-            candidateResumeFileName={candidate.resumeFileName}
           />
         </div>
       </main>

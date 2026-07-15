@@ -33,7 +33,6 @@ function formatEventTime(value: string | null): string {
     hour: "numeric",
     minute: "2-digit",
     timeZone: CAREER_ADVISORY_US_TIMEZONE,
-    timeZoneName: "short",
   }).format(new Date(value));
 }
 

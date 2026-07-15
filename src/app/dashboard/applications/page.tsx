@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AppliedJobsList } from "@/components/dashboard/applied-jobs-list";
-import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import { getSessionUser } from "@/lib/auth/session";
 import { getCandidateAppliedJobs } from "@/server/services/candidate-jobs";
 import {
@@ -40,8 +39,6 @@ export default async function CandidateApplicationsPage() {
             </p>
           </div>
         </header>
-
-        <PortalDateLabel />
 
         {!hasManagedApplications ? (
           <div className={pageStyles.emptyCard}>

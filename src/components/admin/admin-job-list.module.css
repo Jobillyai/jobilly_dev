@@ -472,6 +472,93 @@
   background: var(--jb-admin-accent-soft);
 }
 
+.resumeAttachment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--jb-radius-md);
+  border: 1px solid rgba(81, 112, 255, 0.2);
+  background: linear-gradient(
+    135deg,
+    rgba(81, 112, 255, 0.07),
+    rgba(56, 182, 255, 0.07)
+  );
+}
+
+.resumeFile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--jb-admin-accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.resumeFile span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resumeFile:hover {
+  text-decoration: underline;
+}
+
+.resumeEmpty {
+  flex: 1;
+  min-width: 220px;
+  margin: 0;
+  color: var(--jb-ink-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.resumeUploadBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 9px 14px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #5170ff 0%, #38b6ff 100%);
+  box-shadow: 0 2px 8px rgba(81, 112, 255, 0.25);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resumeUploadBtn:has(input:disabled) {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.resumeUploadBtn input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.resumeError {
+  margin: 8px 0 0;
+  color: var(--jb-danger);
+  font-size: 12px;
+}
+
+.resumeHelp {
+  margin: 7px 0 0;
+  color: var(--jb-ink-muted);
+  font-size: 11px;
+}
+
 .freshnessBadge {
   margin-left: 8px;
   padding: 2px 7px;

@@ -312,13 +312,51 @@ export function isJobrightListing(
   }
 }
 
-function buildLinkedInSearchUrl(position: string, location: string): string {
+const DEFAULT_POSTED_WITHIN_SECONDS = 7 * 24 * 60 * 60;
+
+/** Time-window filter for a scrape (first scrape = 15 days, then since last run). */
+export type JobPostedWithin = {
+  seconds: number;
+  days: number;
+};
+
+function buildLinkedInSearchUrl(
+  position: string,
+  location: string,
+  postedWithinSeconds: number,
+): string {
   const params = new URLSearchParams({
     keywords: position,
     location,
-    f_TPR: "r604800",
+    f_TPR: `r${Math.max(3600, Math.floor(postedWithinSeconds))}`,
   });
   return `https://www.linkedin.com/jobs/search/?${params.toString()}`;
+}
+
+/** Indeed's `fromage` filter only accepts these lookback values (days). */
+const INDEED_FROMAGE_STEPS = [1, 3, 7, 14] as const;
+
+function indeedFromageDays(days: number): number {
+  for (const step of INDEED_FROMAGE_STEPS) {
+    if (days <= step) {
+      return step;
+    }
+  }
+  return 14;
+}
+
+function buildIndeedSearchUrl(
+  position: string,
+  location: string,
+  postedWithinDays: number,
+): string {
+  const params = new URLSearchParams({
+    q: position,
+    l: location,
+    fromage: String(indeedFromageDays(postedWithinDays)),
+    sort: "date",
+  });
+  return `https://www.indeed.com/jobs?${params.toString()}`;
 }
 
 async function runApifyActor<T>(
@@ -572,11 +610,21 @@ export async function searchIndeedJobs(input: {
   position: string;
   location?: string;
   maxItems?: number;
+  postedWithin?: JobPostedWithin;
 }): Promise<{ jobs: JobListing[] } | { error: string }> {
+  const postedWithinDays =
+    input.postedWithin?.days ??
+    Math.ceil(DEFAULT_POSTED_WITHIN_SECONDS / (24 * 60 * 60));
+  const searchUrl = buildIndeedSearchUrl(
+    input.position,
+    input.location ?? "United States",
+    postedWithinDays,
+  );
+
   const result = await runApifyActor<ApifyIndeedJob>(APIFY_INDEED_ACTOR_ID, {
     country: "US",
-    position: input.position,
-    location: input.location ?? "United States",
+    startUrls: [{ url: searchUrl }],
+    maxItemsPerSearch: input.maxItems ?? 20,
     maxItems: input.maxItems ?? 20,
     saveOnlyUniqueItems: true,
     parseCompanyDetails: true,
@@ -606,9 +654,14 @@ export async function searchLinkedInJobs(input: {
   position: string;
   location?: string;
   maxItems?: number;
+  postedWithin?: JobPostedWithin;
 }): Promise<{ jobs: JobListing[] } | { error: string }> {
   const location = input.location ?? "United States";
-  const searchUrl = buildLinkedInSearchUrl(input.position, location);
+  const searchUrl = buildLinkedInSearchUrl(
+    input.position,
+    location,
+    input.postedWithin?.seconds ?? DEFAULT_POSTED_WITHIN_SECONDS,
+  );
 
   const result = await runApifyActor<ApifyLinkedInJob>(
     APIFY_LINKEDIN_ACTOR_ID,
@@ -646,6 +699,7 @@ export async function searchJobsBySources(input: {
   location?: string;
   sources: JobMarketSource[];
   maxItemsPerSource?: number;
+  postedWithin?: JobPostedWithin;
 }): Promise<{ jobs: JobListing[]; errors: string[] }> {
   const maxItems = input.maxItemsPerSource ?? 20;
   const location = input.location ?? "United States";
@@ -661,6 +715,7 @@ export async function searchJobsBySources(input: {
           position: input.position,
           location,
           maxItems,
+          postedWithin: input.postedWithin,
         });
         if ("error" in linkedin) {
           return { jobs: [] as JobListing[], error: `LinkedIn: ${linkedin.error}` };
@@ -672,6 +727,7 @@ export async function searchJobsBySources(input: {
         position: input.position,
         location,
         maxItems,
+        postedWithin: input.postedWithin,
       });
       if ("error" in indeed) {
         return { jobs: [] as JobListing[], error: `Indeed: ${indeed.error}` };

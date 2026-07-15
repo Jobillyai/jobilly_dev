@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { JobillyLogo } from "@/components/brand/jobilly-logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   CANDIDATE_NAV_ITEMS,
@@ -19,11 +18,17 @@ export function CandidateSidebar({ unreadApplications = 0 }: CandidateSidebarPro
 
   return (
     <aside className={styles.sidebar}>
-      <JobillyLogo
-        href="/dashboard"
-        markSize={40}
-        className={styles.brand}
-      />
+      <Link href="/dashboard" className={styles.brand} aria-label="Jobilly.ai home">
+        {/* eslint-disable-next-line @next/next/no-img-element -- local brand PNG lockup */}
+        <img
+          src="/brand/jobilly-logo-arrow-name.png"
+          alt=""
+          className={styles.brandLockup}
+          draggable={false}
+          aria-hidden
+        />
+        <span className={styles.brandSub}>Candidate Portal</span>
+      </Link>
 
       <nav className={styles.nav} aria-label="Candidate navigation">
         {CANDIDATE_NAV_ITEMS.map((item) => {

@@ -13,6 +13,7 @@ import {
   type JobListing,
   type JobListingSource,
   type JobMarketSource,
+  type JobPostedWithin,
   JOB_MARKET_SOURCES,
 } from "@/server/services/job-market-search";
 
@@ -29,17 +30,8 @@ export type JobSearchResult = {
   postedAt: string | null;
 };
 
-/** Job search currently supports the US market only. */
-export function resolveCandidateUsJobLocation(
-  location: string | null | undefined,
-): string {
-  const trimmed = location?.trim() ?? "";
-  if (!trimmed || !/(?:,\s*USA|United States)$/i.test(trimmed)) {
-    return "United States";
-  }
-
-  return trimmed.replace(/,\s*USA$/i, ", United States");
-}
+/** Job search currently supports the US market only — always search nationwide. */
+export const JOB_SEARCH_LOCATION = "United States";
 
 function tokenize(value: string): string[] {
   return value
@@ -72,7 +64,7 @@ export function buildCandidateJobSearchQuery(
       experienceYears,
       searchKeywords: options?.searchKeywords,
     }),
-    location: resolveCandidateUsJobLocation(candidate.location),
+    location: JOB_SEARCH_LOCATION,
   };
 }
 
@@ -147,6 +139,7 @@ export async function scrapeJobsForCandidate(
   options?: {
     experienceYears?: number | null;
     searchKeywords?: string | null;
+    postedWithin?: JobPostedWithin;
   },
 ): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[] }> {
   const experienceYears = options?.experienceYears ?? candidate.experienceYears;
@@ -163,6 +156,7 @@ export async function scrapeJobsForCandidate(
     location,
     sources,
     maxItemsPerSource: 30,
+    postedWithin: options?.postedWithin,
   });
 
   const roleForFilter = interestedRole?.trim() || candidate.jobSearchRole?.trim() || position;

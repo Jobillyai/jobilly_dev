@@ -11,7 +11,6 @@ import {
   UserCircle,
   Users,
 } from "lucide-react";
-import { JobillyLogo } from "@/components/brand/jobilly-logo";
 import styles from "./admin-sidebar.module.css";
 
 const navItems = [
@@ -85,13 +84,17 @@ export function AdminSidebar({ showJobApplyNav = true }: AdminSidebarProps) {
 
   return (
     <aside className={styles.sidebar}>
-      <JobillyLogo
-        href="/admin"
-        markSize={40}
-        subtitle="Admin portal"
-        onDark
-        className={styles.brand}
-      />
+      <Link href="/admin" className={styles.brand} aria-label="Jobilly.ai home">
+        {/* eslint-disable-next-line @next/next/no-img-element -- local brand PNG lockup */}
+        <img
+          src="/brand/jobilly-logo-arrow-name.png"
+          alt=""
+          className={styles.brandLockup}
+          draggable={false}
+          aria-hidden
+        />
+        <span className={styles.brandSub}>Admin Portal</span>
+      </Link>
 
       <nav className={styles.nav} aria-label="Admin navigation">
         {visibleNavItems.map((item) => {

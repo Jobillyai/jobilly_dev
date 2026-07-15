@@ -20,7 +20,6 @@ import { FormField } from "@/components/auth/form-field";
 import { splitFullName } from "@/lib/format-person-name";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { SessionBookingPicker } from "@/components/career-advisory/session-booking-picker";
-import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import authStyles from "@/components/auth/auth-page.module.css";
 import dashboardStyles from "@/app/dashboard/dashboard.module.css";
 import styles from "./career-advisory-form.module.css";
@@ -227,8 +226,6 @@ export function CareerAdvisoryForm({
           </p>
         </div>
       </header>
-
-      <PortalDateLabel />
 
       {successMessage ? (
         <p role="status" className={authStyles.successAlert}>

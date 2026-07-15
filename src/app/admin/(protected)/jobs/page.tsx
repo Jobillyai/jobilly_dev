@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { CandidateLocalTime } from "@/components/admin/candidate-local-time";
 import {
   getAdminUser,
   staffCanAccessJobApplyPortal,
@@ -79,6 +80,7 @@ export default async function AdminJobsPage() {
                   <tr>
                     <th>Candidate</th>
                     <th>Email</th>
+                    <th>Local time</th>
                     <th>Target role</th>
                     <th>Years exp.</th>
                     <th>Advisory</th>
@@ -101,6 +103,13 @@ export default async function AdminJobsPage() {
                       <tr key={candidate.id}>
                         <td>{displayName}</td>
                         <td>{candidate.email}</td>
+                        <td>
+                          {candidate.timezone ? (
+                            <CandidateLocalTime timezone={candidate.timezone} />
+                          ) : (
+                            "—"
+                          )}
+                        </td>
                         <td>
                           {candidate.jobSearchRole ||
                             resolveCandidateJobRole(candidate) ||

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SessionMonthCalendar } from "@/components/calendar/session-month-calendar";
-import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import { getSessionUser } from "@/lib/auth/session";
 import {
   getCareerAdvisoryIntakeForCandidate,
@@ -37,8 +36,6 @@ export default async function CandidateCalendarPage() {
             </p>
           </div>
         </header>
-
-        <PortalDateLabel />
 
         {intake?.sessionScheduledAt && (
           <div className={pageStyles.nextSessionCard}>

@@ -8,7 +8,6 @@ import type { MentorOption } from "@/server/services/service-requests";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { formatExperienceYears } from "@/lib/format-experience-years";
 import { formatCandidateGender } from "@/lib/candidate-profile-options";
-import { formatTimezoneLabel } from "@/lib/candidate-location-options";
 import { getPremiumPlan } from "@/lib/candidate-services";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
@@ -260,12 +259,6 @@ function CandidateRow({
                 <>
                   <dt>Location</dt>
                   <dd>{candidate.location}</dd>
-                </>
-              ) : null}
-              {candidate.timezone ? (
-                <>
-                  <dt>Timezone</dt>
-                  <dd>{formatTimezoneLabel(candidate.timezone)}</dd>
                 </>
               ) : null}
               {candidate.profileEducation ? (

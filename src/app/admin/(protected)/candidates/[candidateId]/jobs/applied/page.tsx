@@ -112,8 +112,6 @@ export default async function AdminCandidateAppliedJobsPage({
               graduationDetails: candidate.submission?.graduationDetails ?? null,
               interestedRole: defaultInterestedRole,
             }}
-            candidateResumeDownloadUrl={candidate.resumeDownloadUrl}
-            candidateResumeFileName={candidate.resumeFileName}
           />
         </div>
       </main>

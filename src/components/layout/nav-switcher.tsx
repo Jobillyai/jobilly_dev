@@ -68,7 +68,7 @@ export function NavSwitcher({ user, adminUser }: NavSwitcherProps) {
   }
 
   if (usesPortalTopBar(pathname, user, adminUser) && user) {
-    return <PortalLogoutBar user={user} />;
+    return <PortalLogoutBar />;
   }
 
   const homeHref = getMarketingHomePath({

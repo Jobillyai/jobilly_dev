@@ -56,6 +56,8 @@ export function useScrapedJobsLiveUpdates({
   const fallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backoffIndexRef = useRef(0);
   const realtimeConnectedRef = useRef(false);
+  /** Once unmounted, no timer may be (re)scheduled — otherwise pollers leak. */
+  const disposedRef = useRef(false);
 
   const clearDebounce = useCallback(() => {
     if (debounceRef.current) {
@@ -80,14 +82,20 @@ export function useScrapedJobsLiveUpdates({
   }, []);
 
   const triggerRefresh = useCallback(() => {
+    if (disposedRef.current) {
+      return;
+    }
+
     clearDebounce();
     debounceRef.current = setTimeout(() => {
-      void onRefreshRef.current();
+      void Promise.resolve(onRefreshRef.current()).catch((error) => {
+        console.error("scraped jobs refresh failed:", error);
+      });
     }, REFRESH_DEBOUNCE_MS);
   }, [clearDebounce]);
 
   const scheduleBackoffPoll = useCallback(() => {
-    if (!scrapeActive || realtimeConnectedRef.current) {
+    if (disposedRef.current || !scrapeActive || realtimeConnectedRef.current) {
       return;
     }
 
@@ -102,22 +110,36 @@ export function useScrapedJobsLiveUpdates({
     );
 
     backoffRef.current = setTimeout(() => {
-      void Promise.resolve(onRefreshRef.current()).finally(() => {
-        scheduleBackoffPoll();
-      });
+      if (disposedRef.current) {
+        return;
+      }
+      void Promise.resolve(onRefreshRef.current())
+        .catch((error) => {
+          console.error("scraped jobs backoff poll failed:", error);
+        })
+        .finally(() => {
+          scheduleBackoffPoll();
+        });
     }, delay);
   }, [clearBackoff, scrapeActive]);
 
   const scheduleDisconnectedFallback = useCallback(() => {
-    if (realtimeConnectedRef.current) {
+    if (disposedRef.current || realtimeConnectedRef.current) {
       return;
     }
 
     clearFallback();
     fallbackRef.current = setTimeout(() => {
-      void Promise.resolve(onRefreshRef.current()).finally(() => {
-        scheduleDisconnectedFallback();
-      });
+      if (disposedRef.current) {
+        return;
+      }
+      void Promise.resolve(onRefreshRef.current())
+        .catch((error) => {
+          console.error("scraped jobs fallback poll failed:", error);
+        })
+        .finally(() => {
+          scheduleDisconnectedFallback();
+        });
     }, DISCONNECTED_FALLBACK_MS);
   }, [clearFallback]);
 
@@ -126,6 +148,7 @@ export function useScrapedJobsLiveUpdates({
       return;
     }
 
+    disposedRef.current = false;
     const supabase = createClient();
     const channelName = `scraped_jobs:${candidateId}:${normalizedRole ?? "all"}`;
 
@@ -175,6 +198,7 @@ export function useScrapedJobsLiveUpdates({
       });
 
     return () => {
+      disposedRef.current = true;
       clearDebounce();
       clearBackoff();
       clearFallback();

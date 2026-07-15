@@ -1,8 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type MouseEvent,
+} from "react";
 import { createPortal } from "react-dom";
-import { ExternalLink, MapPin, X } from "lucide-react";
+import { ExternalLink, FileText, MapPin, Upload, X } from "lucide-react";
 import {
   formatJobSourceLabel,
   getCleanJobListingUrl,
@@ -46,6 +52,13 @@ type AdminJobListProps = {
   viewMode: JobListingViewMode;
   onToggleSelected: (jobId: string, selected: boolean) => void;
   onToggleApplied: (jobId: string, applied: boolean) => void;
+  onUploadApplicationResume: (
+    jobId: string,
+    file: File,
+  ) => Promise<
+    | { success: true; fileName: string; downloadUrl: string | null }
+    | { error: string }
+  >;
 };
 
 type AdminJobDetailModalProps = {
@@ -54,6 +67,7 @@ type AdminJobDetailModalProps = {
   onClose: () => void;
   onToggleSelected: (jobId: string, selected: boolean) => void;
   onToggleApplied: (jobId: string, applied: boolean) => void;
+  onUploadApplicationResume: AdminJobListProps["onUploadApplicationResume"];
 };
 
 function AdminJobDetailModal({
@@ -62,9 +76,29 @@ function AdminJobDetailModal({
   onClose,
   onToggleSelected,
   onToggleApplied,
+  onUploadApplicationResume,
 }: AdminJobDetailModalProps) {
   const isAppliedView = viewMode === "applied";
   const listingUrl = getCleanJobListingUrl(job.jobUrl, job.source);
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+
+  async function handleResumeFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    setUploadingResume(true);
+    setResumeError(null);
+    const result = await onUploadApplicationResume(job.id, file);
+    setUploadingResume(false);
+
+    if ("error" in result) {
+      setResumeError(result.error);
+    }
+  }
 
   const handleBackdropClick = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -205,6 +239,50 @@ function AdminJobDetailModal({
             </div>
           </section>
 
+          {isAppliedView ? (
+            <section className={styles.modalSection}>
+              <h3 className={styles.sectionTitle}>Resume used for this application</h3>
+              <div className={styles.resumeAttachment}>
+                {job.applicationResumeDownloadUrl ? (
+                  <a
+                    href={job.applicationResumeDownloadUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.resumeFile}
+                    title={job.applicationResumeFileName ?? undefined}
+                  >
+                    <FileText size={18} aria-hidden />
+                    <span>{job.applicationResumeFileName ?? "View attached resume"}</span>
+                  </a>
+                ) : (
+                  <p className={styles.resumeEmpty}>
+                    No resume attached. Attach the exact resume used so the candidate
+                    can reference it later.
+                  </p>
+                )}
+
+                <label className={styles.resumeUploadBtn}>
+                  <Upload size={16} aria-hidden />
+                  <span>
+                    {uploadingResume
+                      ? "Uploading…"
+                      : job.applicationResumeFileName
+                        ? "Replace resume"
+                        : "Attach resume"}
+                  </span>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={(event) => void handleResumeFile(event)}
+                    disabled={uploadingResume}
+                  />
+                </label>
+              </div>
+              {resumeError ? <p className={styles.resumeError}>{resumeError}</p> : null}
+              <p className={styles.resumeHelp}>PDF or Word document, up to 5 MB.</p>
+            </section>
+          ) : null}
+
           <section className={styles.modalSection}>
             <h3 className={styles.sectionTitle}>Job description</h3>
             {job.jdText ? (
@@ -333,6 +411,7 @@ export function AdminJobList({
   viewMode,
   onToggleSelected,
   onToggleApplied,
+  onUploadApplicationResume,
 }: AdminJobListProps) {
   const [openJobId, setOpenJobId] = useState<string | null>(null);
   const openJob = jobs.find((job) => job.id === openJobId) ?? null;
@@ -357,6 +436,7 @@ export function AdminJobList({
           onClose={() => setOpenJobId(null)}
           onToggleSelected={onToggleSelected}
           onToggleApplied={onToggleApplied}
+          onUploadApplicationResume={onUploadApplicationResume}
         />
       ) : null}
     </>

@@ -11,6 +11,7 @@ import {
   sendCandidateApplicationsDigestAction,
   toggleCandidateJobAppliedAction,
   toggleCandidateJobSelectedAction,
+  uploadAppliedJobResumeAction,
   type JobSearchSourceMode,
 } from "@/server/actions/candidate-jobs";
 import {
@@ -58,8 +59,6 @@ type CandidateJobsSheetProps = {
   viewMode?: JobListingViewMode;
   appliedCount?: number;
   candidateResumeMatch?: CandidateResumeMatchInput;
-  candidateResumeDownloadUrl?: string | null;
-  candidateResumeFileName?: string | null;
 };
 
 type SourceFilter = JobListingSourceFilter;
@@ -158,8 +157,6 @@ export function CandidateJobsSheet({
   viewMode = "pipeline",
   appliedCount = 0,
   candidateResumeMatch,
-  candidateResumeDownloadUrl = null,
-  candidateResumeFileName = null,
 }: CandidateJobsSheetProps) {
   const isAppliedView = viewMode === "applied";
   const router = useRouter();
@@ -185,12 +182,6 @@ export function CandidateJobsSheet({
   const [selectedPreviousSearch, setSelectedPreviousSearch] = useState("");
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [isBackgroundScraping, setIsBackgroundScraping] = useState(false);
-  const [resumeDownloadUrl, setResumeDownloadUrl] = useState<string | null>(
-    candidateResumeDownloadUrl,
-  );
-  const [resumeFileName, setResumeFileName] = useState<string | null>(
-    candidateResumeFileName,
-  );
   const [sendingDigestEmail, setSendingDigestEmail] = useState(false);
   const skipRoleReloadRef = useRef(false);
   const lastSearchRoleRef = useRef<string | null>(null);
@@ -198,7 +189,7 @@ export function CandidateJobsSheet({
   const refreshJobsForRole = useCallback(async () => {
     if (isAppliedView) {
       const result = await loadCandidateAppliedJobsAction(candidateId);
-      if ("success" in result && result.success) {
+      if (result && "success" in result && result.success) {
         setJobs(result.jobs);
       }
       return;
@@ -210,7 +201,7 @@ export function CandidateJobsSheet({
     }
 
     const result = await loadCandidateJobsForRoleAction(candidateId, role, "pipeline");
-    if ("success" in result && result.success) {
+    if (result && "success" in result && result.success) {
       setJobs((current) => mergeJobListings(current, result.jobs));
     }
   }, [candidateId, interestedRole, isAppliedView]);
@@ -227,8 +218,6 @@ export function CandidateJobsSheet({
     setJobs(initialJobs);
     setPreviousSearches(initialPreviousSearches);
     setInterestedRole(defaultInterestedRole);
-    setResumeDownloadUrl(candidateResumeDownloadUrl);
-    setResumeFileName(candidateResumeFileName);
     setMessage(null);
     setSelectedPreviousSearch("");
     setSourceFilter("all");
@@ -242,8 +231,6 @@ export function CandidateJobsSheet({
     initialJobs,
     initialPreviousSearches,
     defaultInterestedRole,
-    candidateResumeDownloadUrl,
-    candidateResumeFileName,
   ]);
 
   useEffect(() => {
@@ -283,7 +270,7 @@ export function CandidateJobsSheet({
       setLoadingStored(true);
       try {
         const result = await loadCandidateJobsForRoleAction(candidateId, role, "pipeline");
-        if ("success" in result && result.success) {
+        if (result && "success" in result && result.success) {
           setJobs(result.jobs);
         }
       } finally {
@@ -296,7 +283,7 @@ export function CandidateJobsSheet({
 
   async function refreshPreviousSearchesList() {
     const result = await listCandidatePreviousSearchesAction(candidateId);
-    if ("success" in result && result.success) {
+    if (result && "success" in result && result.success) {
       setPreviousSearches(result.searches);
     }
   }
@@ -318,13 +305,13 @@ export function CandidateJobsSheet({
         viewMode,
       );
 
-      if ("error" in result && result.error) {
+      if (result && "error" in result && result.error) {
         setMessageKind("error");
         setMessage(result.error);
         return;
       }
 
-      if ("success" in result && result.success) {
+      if (result && "success" in result && result.success) {
         skipRoleReloadRef.current = true;
         lastSearchRoleRef.current = result.searchRole;
         setInterestedRole(result.label);
@@ -664,6 +651,34 @@ export function CandidateJobsSheet({
     });
   }
 
+  async function handleUploadApplicationResume(jobId: string, file: File) {
+    const formData = new FormData();
+    formData.set("resume", file);
+    const result = await uploadAppliedJobResumeAction(candidateId, jobId, formData);
+
+    if (result.error) {
+      return { error: result.error };
+    }
+
+    setJobs((current) =>
+      current.map((job) =>
+        job.id === jobId
+          ? {
+              ...job,
+              applicationResumeFileName: result.fileName ?? file.name,
+              applicationResumeDownloadUrl: result.downloadUrl ?? null,
+            }
+          : job,
+      ),
+    );
+
+    return {
+      success: true as const,
+      fileName: result.fileName ?? file.name,
+      downloadUrl: result.downloadUrl ?? null,
+    };
+  }
+
   async function handleSendApplicationsDigest() {
     setSendingDigestEmail(true);
     setMessage(null);
@@ -708,22 +723,6 @@ export function CandidateJobsSheet({
             {controlsHint ? <p className={styles.controlsHint}>{controlsHint}</p> : null}
           </div>
           <div className={styles.controlsActions}>
-            {resumeDownloadUrl ? (
-              <a
-                href={resumeDownloadUrl}
-                target="_blank"
-                rel="noreferrer"
-                className={styles.resumeViewLink}
-                title={resumeFileName ?? undefined}
-              >
-                {candidateName}&apos;s resume
-              </a>
-            ) : (
-              <span className={styles.resumeMissingLabel}>No resume on file for {candidateName}</span>
-            )}
-            {(scrapeInProgress || showMentorLoading) && (
-              <span className={styles.toolbarSpinner} aria-hidden />
-            )}
             {isAppliedView && canScrape ? (
               <button
                 type="button"
@@ -1038,6 +1037,7 @@ export function CandidateJobsSheet({
           viewMode={isAppliedView ? "applied" : "pipeline"}
           onToggleSelected={handleToggleSelected}
           onToggleApplied={handleToggleApplied}
+          onUploadApplicationResume={handleUploadApplicationResume}
         />
       )}
 

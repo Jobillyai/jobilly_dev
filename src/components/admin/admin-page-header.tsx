@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import styles from "@/app/admin/admin.module.css";
 
 type AdminPageHeaderProps = {
@@ -18,7 +17,6 @@ export function AdminPageHeader({ eyebrow, title, subtitle }: AdminPageHeaderPro
           {subtitle ? <p className={styles.pageSubtitle}>{subtitle}</p> : null}
         </div>
       </header>
-      <PortalDateLabel variant="admin" />
     </div>
   );
 }

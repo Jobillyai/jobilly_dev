@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import { getUserProfile } from "@/lib/auth/profile";
 import { ProfileForm } from "@/components/profile/profile-form";
 import dashboardStyles from "../dashboard.module.css";
@@ -23,7 +22,6 @@ export default async function ProfilePage() {
             </p>
           </div>
         </header>
-        <PortalDateLabel />
         <ProfileForm profile={profile} />
       </main>
     </div>

@@ -92,27 +92,43 @@
   color: var(--jb-ink-muted);
 }
 
-.expandBtn {
+.moreBtn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--jb-admin-card-border);
-  border-radius: 10px;
-  background: var(--jb-admin-elevated);
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
   color: var(--jb-ink-secondary);
+  background: var(--jb-admin-elevated);
+  border: 1px solid var(--jb-admin-card-border);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
 }
 
-.expandBtn:hover {
+.moreBtn:hover {
+  background: var(--jb-admin-accent-soft);
+  border-color: rgba(56, 182, 255, 0.3);
+  color: var(--jb-admin-accent);
+  box-shadow: 0 2px 8px rgba(56, 182, 255, 0.18);
+}
+
+.moreBtn[aria-expanded="true"] {
   background: var(--jb-admin-accent-soft);
   border-color: rgba(56, 182, 255, 0.3);
   color: var(--jb-admin-accent);
 }
 
-.expandIconOpen {
+.moreIcon,
+.moreIconOpen {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.moreIconOpen {
   transform: rotate(180deg);
 }
 

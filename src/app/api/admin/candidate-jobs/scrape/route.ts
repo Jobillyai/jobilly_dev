@@ -154,6 +154,10 @@ export async function POST(request: Request) {
     );
   }
 
+  const cacheInfo = describeCacheStatus(updatedCacheStatus, sources);
+  const info =
+    [scrapeResult.windowInfo, cacheInfo].filter(Boolean).join(" ") || undefined;
+
   return NextResponse.json({
     success: true,
     scrapeCalled: true,
@@ -161,7 +165,7 @@ export async function POST(request: Request) {
     count: jobs.length,
     cacheStatus: updatedCacheStatus,
     warning,
-    info: describeCacheStatus(updatedCacheStatus, sources) || undefined,
+    info,
     error: scrapeResult.fatalError,
   });
 }

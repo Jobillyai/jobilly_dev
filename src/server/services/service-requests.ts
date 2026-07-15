@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { createClient } from "@/server/db/supabase-server";
 import type { StaffContext } from "@/lib/auth/admin";
+import { sendCareerAdvisoryMeetInvite } from "@/server/services/send-career-advisory-invite";
 
 export type ServiceRequestType = "contact" | "new_candidate";
 
@@ -249,6 +250,12 @@ export async function assignServiceRequestToMentor(
     request.request_type === "new_candidate" &&
     request.candidate_user_id
   ) {
+    const { data: existingProfile } = await admin
+      .from("candidate_profiles")
+      .select("assigned_employee_id")
+      .eq("user_id", request.candidate_user_id)
+      .maybeSingle();
+
     const { error: profileError } = await admin
       .from("candidate_profiles")
       .upsert(
@@ -264,9 +271,95 @@ export async function assignServiceRequestToMentor(
       console.error("assignServiceRequestToMentor profile error:", profileError);
       return { error: "Mentor assigned to request but candidate link failed." };
     }
+
+    await sendAdvisoryInviteForMentorAssignment(
+      request.candidate_user_id,
+      mentorId,
+      {
+        mentorChanged: existingProfile?.assigned_employee_id !== mentorId,
+      },
+    );
   }
 
   return {};
+}
+
+/**
+ * After a mentor is assigned (or changed), email the meeting details and Meet
+ * link to both the candidate and the mentor — but only when the candidate has
+ * an upcoming career advisory session booked.
+ *
+ * If the same mentor is re-assigned and the invite already went out, nothing
+ * is re-sent.
+ */
+async function sendAdvisoryInviteForMentorAssignment(
+  candidateId: string,
+  mentorId: string,
+  options: { mentorChanged: boolean },
+): Promise<void> {
+  const admin = createAdminClient();
+
+  const { data: intake } = await admin
+    .from("career_advisory_intakes")
+    .select(
+      "name, email, phone, graduation_details, branch, interested_technology, session_scheduled_at, invite_sent_at",
+    )
+    .eq("candidate_id", candidateId)
+    .maybeSingle();
+
+  if (!intake?.session_scheduled_at) {
+    return;
+  }
+
+  if (!options.mentorChanged && intake.invite_sent_at) {
+    return;
+  }
+
+  const sessionStart = new Date(intake.session_scheduled_at);
+  if (Number.isNaN(sessionStart.getTime()) || sessionStart.getTime() <= Date.now()) {
+    return;
+  }
+
+  const { data: mentorUser } = await admin
+    .from("users")
+    .select("email, name")
+    .eq("id", mentorId)
+    .maybeSingle();
+
+  if (!mentorUser?.email) {
+    return;
+  }
+
+  const result = await sendCareerAdvisoryMeetInvite({
+    candidateId,
+    candidateName: intake.name,
+    candidateEmail: intake.email,
+    candidatePhone: intake.phone,
+    branch: intake.branch,
+    graduationDetails: intake.graduation_details,
+    interestedTechnology: intake.interested_technology,
+    sessionScheduledAt: intake.session_scheduled_at,
+    mentorEmail: mentorUser.email,
+    mentorName: mentorUser.name,
+    skipBookingWindowCheck: true,
+  });
+
+  if (result.sent) {
+    const now = new Date().toISOString();
+    await admin
+      .from("career_advisory_intakes")
+      .update({
+        google_meet_link: result.meetUrl,
+        invite_sent_at: now,
+        updated_at: now,
+      })
+      .eq("candidate_id", candidateId);
+  } else if ("error" in result) {
+    console.error(
+      "sendAdvisoryInviteForMentorAssignment email failed:",
+      result.error,
+    );
+  }
 }
 
 export async function assignCandidateToMentor(
@@ -301,6 +394,12 @@ export async function assignCandidateToMentor(
     return { error: "Only candidates can be assigned to a mentor." };
   }
 
+  const { data: existingProfile } = await admin
+    .from("candidate_profiles")
+    .select("assigned_employee_id")
+    .eq("user_id", candidateId)
+    .maybeSingle();
+
   const now = new Date().toISOString();
   const { error: profileError } = await admin.from("candidate_profiles").upsert(
     {
@@ -328,6 +427,10 @@ export async function assignCandidateToMentor(
     .eq("candidate_user_id", candidateId)
     .eq("request_type", "new_candidate")
     .eq("status", "open");
+
+  await sendAdvisoryInviteForMentorAssignment(candidateId, mentorId, {
+    mentorChanged: existingProfile?.assigned_employee_id !== mentorId,
+  });
 
   return {};
 }

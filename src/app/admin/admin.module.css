@@ -25,6 +25,19 @@
   margin-bottom: 32px;
 }
 
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+
+.headerRow .header {
+  margin-bottom: 0;
+}
+
 .eyebrow {
   display: inline-flex;
   align-items: center;

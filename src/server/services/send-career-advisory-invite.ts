@@ -24,6 +24,11 @@ export type SendMeetInviteInput = {
   /** Assigned mentor — when set, the booking notification goes to them. */
   mentorEmail?: string | null;
   mentorName?: string | null;
+  /**
+   * Skip the 1h/2d booking-window validation. Used when re-sending an invite
+   * for an already-booked session (e.g. after a mentor is assigned later).
+   */
+  skipBookingWindowCheck?: boolean;
 };
 
 export type SendMeetInviteResult =
@@ -160,12 +165,18 @@ export async function sendCareerAdvisoryMeetInvite(
   const meetLink = meetUrl;
 
   const sessionStart = new Date(input.sessionScheduledAt);
-  const bookingValidation = validateSessionBookingTime(sessionStart);
-  if (!bookingValidation.valid) {
-    return {
-      sent: false,
-      error: bookingValidation.message,
-    };
+  if (Number.isNaN(sessionStart.getTime())) {
+    return { sent: false, error: "Invalid session date and time." };
+  }
+
+  if (!input.skipBookingWindowCheck) {
+    const bookingValidation = validateSessionBookingTime(sessionStart);
+    if (!bookingValidation.valid) {
+      return {
+        sent: false,
+        error: bookingValidation.message,
+      };
+    }
   }
 
   const sessionEnd = getSessionEndTime(sessionStart);

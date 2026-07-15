@@ -30,18 +30,39 @@
 .brand {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 0 12px 32px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 12px 28px;
   margin-bottom: 8px;
   text-decoration: none;
+  transition: opacity 0.2s;
 }
 
-.brand :global([class*="subtitle"]) {
-  color: var(--jb-admin-sidebar-text) !important;
+.brand:hover {
+  opacity: 0.85;
 }
 
-.brand :global([class*="wordmarkOnDark"]) {
-  color: #f8fafc;
+.brandLockup {
+  height: 64px;
+  width: auto;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+}
+
+.brandSub {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  background: linear-gradient(135deg, #5170ff 0%, #38b6ff 100%);
+  box-shadow: 0 2px 8px rgba(81, 112, 255, 0.3);
+  white-space: nowrap;
 }
 
 .nav {
@@ -101,20 +122,17 @@
     padding: 20px 10px;
   }
 
-  .brand :global([class*="wordmarkBlock"]) {
-    display: none;
-  }
-
-  .brand :global([class*="subtitle"]) {
-    display: none;
-  }
-
+  .brandSub,
   .navLabel {
     display: none;
   }
 
+  .brandLockup {
+    height: 44px;
+  }
+
   .brand {
-    justify-content: center;
+    align-items: center;
     padding: 0 0 20px;
   }
 
