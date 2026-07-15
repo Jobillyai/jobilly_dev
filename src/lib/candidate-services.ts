@@ -87,8 +87,6 @@ export const productTrustPoints = [
 
 export const freeIncludedServices = [
   "Career Advisory sessions",
-  "Session calendar",
-  "Profile & resume hub",
 ] as const;
 
 export function formatPlanPrice(amount: number): string {
@@ -140,42 +138,6 @@ export const candidateServices: CandidateService[] = [
     phase: "discover",
     dashboardHref: "/dashboard/career-advisory",
     featured: true,
-  },
-  {
-    id: "profile",
-    title: "Profile & Resume Hub",
-    tagline: "One place for your materials",
-    description:
-      "Keep contact details and your latest resume in sync. Our team uses this when tailoring applications and preparing you for interviews.",
-    highlights: [
-      "Resume upload & storage",
-      "Contact details management",
-      "Shared with your Jobilly team",
-      "Education & experience fields",
-      "LinkedIn profile link",
-    ],
-    status: "live",
-    tier: "free",
-    phase: "prepare",
-    dashboardHref: "/dashboard/profile",
-  },
-  {
-    id: "calendar",
-    title: "Session Calendar",
-    tagline: "Never miss a milestone",
-    description:
-      "See upcoming advisory sessions, invites, and past appointments in one calendar view — with direct links to join when it's time.",
-    highlights: [
-      "Advisory session tracking",
-      "Google Meet links",
-      "Upcoming & past sessions",
-      "One calendar view",
-      "Never miss a milestone",
-    ],
-    status: "live",
-    tier: "free",
-    phase: "discover",
-    dashboardHref: "/dashboard/calendar",
   },
   {
     id: "growth-school",

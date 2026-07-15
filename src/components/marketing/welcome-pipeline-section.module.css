@@ -185,11 +185,13 @@
   border-radius: var(--jb-radius-lg);
   background: var(--jb-surface);
   border: 1px solid var(--jb-border);
+  /* Stack all panes in one grid cell so the panel sizes to the tallest stage
+     and taller stages never clip. */
+  display: grid;
 }
 
 .copyPane {
-  position: absolute;
-  inset: 32px;
+  grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
   opacity: 0;
@@ -271,11 +273,11 @@
   border: 1px solid var(--jb-border);
   box-shadow: var(--jb-shadow-md);
   overflow: hidden;
+  display: grid;
 }
 
 .previewPane {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
   padding: 24px;
   opacity: 0;
   visibility: hidden;
@@ -313,7 +315,7 @@
 }
 
 .terminalLine:last-of-type {
-  color: #22d3ee;
+  color: #5ec5ff;
 }
 
 .terminalCursor {
@@ -321,7 +323,7 @@
   width: 8px;
   height: 14px;
   margin-top: 4px;
-  background: #22d3ee;
+  background: #5ec5ff;
   animation: blink 1s step-end infinite;
 }
 
@@ -638,8 +640,9 @@
     grid-template-columns: 1fr;
   }
 
-  .stagePreview {
-    min-height: 340px;
+  .stagePreview,
+  .stageCopy {
+    min-height: 0;
   }
 }
 
@@ -650,10 +653,6 @@
 
   .stageCopy {
     padding: 24px;
-  }
-
-  .trackerStats {
-    grid-template-columns: 1fr;
   }
 }
 

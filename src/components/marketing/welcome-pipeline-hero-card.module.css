@@ -21,8 +21,8 @@
   border-radius: 50%;
   background: radial-gradient(
     ellipse at center,
-    rgba(99, 102, 241, 0.22) 0%,
-    rgba(167, 139, 250, 0.1) 45%,
+    rgba(81, 112, 255, 0.22) 0%,
+    rgba(56, 182, 255, 0.1) 45%,
     transparent 72%
   );
   pointer-events: none;
@@ -263,7 +263,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--jb-brand) 0%, #a78bfa 100%);
+  background: linear-gradient(90deg, var(--jb-brand) 0%, #38b6ff 100%);
   transition-property: width;
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   will-change: width;

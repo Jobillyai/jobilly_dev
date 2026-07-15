@@ -15,7 +15,7 @@ const CANDIDATE_ROLES = [
 ] as const;
 
 const CANDIDATE_PROFILE_SELECT =
-  "user_id, education, career_goals, linkedin_url, resume_url, analyzed_resume_text, assigned_employee_id, job_search_role, experience_years, gender, graduation_college, graduation_year, specialization, work_experience";
+  "user_id, education, career_goals, linkedin_url, resume_url, analyzed_resume_text, assigned_employee_id, job_search_role, experience_years, gender, graduation_college, graduation_year, specialization, work_experience, location, timezone";
 
 export type CareerAdvisorySubmission = {
   id: string;
@@ -55,6 +55,8 @@ export type AdminCandidate = {
   graduationYear: number | null;
   specialization: string | null;
   workExperience: string | null;
+  location: string | null;
+  timezone: string | null;
   submission: CareerAdvisorySubmission | null;
 };
 
@@ -536,6 +538,8 @@ function mapUserToCandidate(
         graduation_year: number | null;
         specialization: string | null;
         work_experience: string | null;
+        location: string | null;
+        timezone: string | null;
         analyzed_resume_text: string | null;
       }
     | undefined,
@@ -563,6 +567,8 @@ function mapUserToCandidate(
     graduationYear: profile?.graduation_year ?? null,
     specialization: profile?.specialization ?? null,
     workExperience: profile?.work_experience ?? null,
+    location: profile?.location ?? null,
+    timezone: profile?.timezone ?? null,
     submission,
   };
 }

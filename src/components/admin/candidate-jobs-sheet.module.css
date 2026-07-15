@@ -132,8 +132,8 @@
 .fieldInput:focus,
 .fieldSelect:focus {
   outline: none;
-  border-color: rgba(6, 182, 212, 0.45);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.16);
+  border-color: rgba(56, 182, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(56, 182, 255, 0.16);
   background: var(--jb-input-bg-focus);
 }
 
@@ -162,7 +162,7 @@
   align-items: center;
   padding: 7px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(6, 182, 212, 0.28);
+  border: 1px solid rgba(56, 182, 255, 0.28);
   background: var(--jb-admin-accent-soft);
   font-size: 12px;
   font-weight: 600;
@@ -202,7 +202,7 @@
   line-height: 1.5;
   color: #92400e;
   background: var(--jb-warning-soft);
-  border: 1px solid rgba(6, 182, 212, 0.28);
+  border: 1px solid rgba(56, 182, 255, 0.28);
   border-radius: var(--jb-radius-sm);
   padding: 10px 12px;
 }
@@ -211,7 +211,7 @@
   display: inline-flex;
   align-items: center;
   padding: 10px 16px;
-  border: 1px solid rgba(6, 182, 212, 0.28);
+  border: 1px solid rgba(56, 182, 255, 0.28);
   border-radius: var(--jb-radius-sm);
   background: var(--jb-admin-elevated-strong);
   color: var(--jb-admin-accent);
@@ -238,7 +238,7 @@
   display: inline-flex;
   align-items: center;
   padding: 10px 16px;
-  border: 1px dashed rgba(6, 182, 212, 0.28);
+  border: 1px dashed rgba(56, 182, 255, 0.28);
   border-radius: var(--jb-radius-sm);
   background: var(--jb-admin-elevated-strong);
   color: var(--jb-admin-accent);
@@ -324,7 +324,7 @@
   border: 1px solid var(--jb-admin-card-border);
   border-radius: 20px;
   background:
-    radial-gradient(circle at top right, rgba(6, 182, 212, 0.06), transparent 42%),
+    radial-gradient(circle at top right, rgba(56, 182, 255, 0.06), transparent 42%),
     var(--jb-admin-elevated-mid);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
@@ -362,7 +362,7 @@
 .toolbarSpinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(6, 182, 212, 0.28);
+  border: 3px solid rgba(56, 182, 255, 0.28);
   border-top-color: var(--jb-admin-accent);
   border-radius: 50%;
   animation: jobSearchSpin 0.8s linear infinite;
@@ -386,7 +386,7 @@
   gap: 12px;
   padding: 12px 16px;
   background: var(--jb-admin-accent-soft);
-  border-bottom: 1px solid rgba(6, 182, 212, 0.28);
+  border-bottom: 1px solid rgba(56, 182, 255, 0.28);
   font-size: 13px;
   color: var(--jb-ink-secondary);
 }
@@ -427,7 +427,7 @@
 .messageInfo {
   color: var(--jb-admin-accent-bright);
   background: var(--jb-admin-accent-soft);
-  border-color: rgba(6, 182, 212, 0.28);
+  border-color: rgba(56, 182, 255, 0.28);
 }
 
 .empty {

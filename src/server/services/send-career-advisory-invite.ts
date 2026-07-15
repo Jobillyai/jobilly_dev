@@ -21,6 +21,9 @@ export type SendMeetInviteInput = {
   graduationDetails: string;
   interestedTechnology: string;
   sessionScheduledAt: string;
+  /** Assigned mentor — when set, the booking notification goes to them. */
+  mentorEmail?: string | null;
+  mentorName?: string | null;
 };
 
 export type SendMeetInviteResult =
@@ -93,7 +96,7 @@ function buildOrganizerBookingHtml(input: {
         <li><strong>Email:</strong> ${input.candidateEmail}</li>
         <li><strong>Phone:</strong> ${input.candidatePhone}</li>
         <li><strong>Branch:</strong> ${input.branch}</li>
-        <li><strong>Graduation:</strong> ${input.graduationDetails}</li>
+        <li><strong>Highest degree:</strong> ${input.graduationDetails}</li>
         <li><strong>Technology:</strong> ${input.interestedTechnology}</li>
       </ul>
       <div style="font-size: 14px; line-height: 1.7; color: #374151; margin: 0 0 20px; padding-left: 20px;">
@@ -168,9 +171,13 @@ export async function sendCareerAdvisoryMeetInvite(
   const sessionEnd = getSessionEndTime(sessionStart);
   const fromEmail =
     process.env.RESEND_FROM_EMAIL?.trim() ?? "Jobilly <onboarding@resend.dev>";
+  const mentorEmail = input.mentorEmail?.trim() || null;
   const organizerEmail =
+    mentorEmail ??
     process.env.CAREER_ADVISORY_ORGANIZER_EMAIL?.trim() ??
     "avinashprince812@gmail.com";
+  const organizerName =
+    input.mentorName?.trim() || organizerDisplayName(organizerEmail);
   const resendApiKey = process.env.RESEND_API_KEY?.trim();
 
   const icsContent = buildCareerAdvisoryIcsInvite({
@@ -247,7 +254,7 @@ export async function sendCareerAdvisoryMeetInvite(
       to: [organizerEmail],
       subject: `Career advisory booked — ${input.candidateName}`,
       html: buildOrganizerBookingHtml({
-        organizerName: organizerDisplayName(organizerEmail),
+        organizerName,
         candidateName: input.candidateName,
         candidateEmail: input.candidateEmail,
         candidatePhone: input.candidatePhone,

@@ -15,6 +15,8 @@ export type UserProfile = SessionUser & {
   graduationYear: number | null;
   specialization: string;
   workExperience: string;
+  location: string;
+  timezone: string;
   hasResume: boolean;
   resumePreviewUrl: string | null;
   resumeFileName: string | null;
@@ -39,7 +41,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
   const { data: candidateProfile } = await supabase
     .from("candidate_profiles")
     .select(
-      "education, career_goals, linkedin_url, experience_years, gender, graduation_college, graduation_year, specialization, work_experience, resume_url",
+      "education, career_goals, linkedin_url, experience_years, gender, graduation_college, graduation_year, specialization, work_experience, location, timezone, resume_url",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -73,6 +75,8 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     graduationYear: candidateProfile?.graduation_year ?? null,
     specialization: candidateProfile?.specialization ?? "",
     workExperience: candidateProfile?.work_experience ?? "",
+    location: candidateProfile?.location ?? "",
+    timezone: candidateProfile?.timezone ?? "",
     hasResume: Boolean(candidateProfile?.resume_url) || Boolean(freshResume),
     resumePreviewUrl: freshResume?.resumeUrl ?? null,
     resumeFileName: freshResume?.fileName ?? null,

@@ -97,7 +97,7 @@
   border-bottom: none;
   background: transparent;
   flex-shrink: 0;
-  max-width: min(1040px, 94vw);
+  max-width: min(1280px, 96vw);
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -193,7 +193,7 @@
 }
 
 .panel[data-joben-theme="dark"] .themeToggle:hover {
-  border-color: rgba(196, 181, 253, 0.35);
+  border-color: rgba(157, 177, 255, 0.35);
 }
 
 .newChatBtn {
@@ -297,7 +297,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  max-width: min(1040px, 94vw);
+  max-width: min(1280px, 96vw);
   width: 100%;
   margin: 0 auto;
 }
@@ -380,7 +380,7 @@
 .messageUser {
   display: flex;
   gap: 10px;
-  max-width: min(820px, 92%);
+  max-width: min(1020px, 92%);
 }
 
 @keyframes messageIn {
@@ -419,6 +419,8 @@
   border-radius: 16px;
   font-size: 15px;
   line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   box-shadow: var(--jb-shadow-sm);
   animation: messageIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   transition: transform 0.22s ease, box-shadow 0.22s ease;
@@ -564,7 +566,7 @@
 
 .prompts {
   padding: 14px 32px 0;
-  max-width: min(1040px, 94vw);
+  max-width: min(1280px, 96vw);
   width: 100%;
   margin: 0 auto;
 }
@@ -585,6 +587,23 @@
   padding-bottom: 14px;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+/* Compact single-row suggestions once the conversation has started */
+.promptsCompact {
+  padding-top: 8px;
+}
+
+.promptListScroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.promptListScroll .promptBtn {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  font-size: 12px;
 }
 
 .promptList::-webkit-scrollbar {
@@ -670,7 +689,7 @@
 
 .composerShell {
   padding: 14px 32px 20px;
-  max-width: min(1040px, 94vw);
+  max-width: min(1280px, 96vw);
   width: 100%;
   margin: 0 auto;
 }
@@ -776,13 +795,13 @@
 }
 
 .root[data-joben-theme="dark"] .launcher {
-  background: #0a0a0a;
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .root[data-joben-theme="dark"] .launcher:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  box-shadow: none;
 }
 
 .sendBtn:disabled {
@@ -798,24 +817,30 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 76px;
+  height: 76px;
   padding: 0;
-  border: 1px solid var(--jb-border);
+  border: none;
   border-radius: 50%;
-  background: var(--jb-surface);
-  box-shadow: var(--jb-shadow-md);
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .launcherAvatar {
   flex-shrink: 0;
 }
 
+@media (min-width: 961px) {
+  .launcher {
+    width: 104px;
+    height: 104px;
+  }
+}
+
 .launcher:hover {
   transform: translateY(-2px);
-  box-shadow: var(--jb-shadow-lg);
 }
 
 .inlineLink {
@@ -887,7 +912,7 @@
     padding-right: 16px;
   }
 
-  .promptList {
+  .promptList:not(.promptListScroll) {
     flex-wrap: wrap;
     overflow-x: visible;
     padding-bottom: 12px;

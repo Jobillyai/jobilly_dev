@@ -15,12 +15,44 @@
 }
 
 .launcher {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
+}
+
+@media (min-width: 961px) {
+  .launcher {
+    width: 88px;
+    height: 88px;
+  }
+
+  .launcher .onlineDot {
+    width: 14px;
+    height: 14px;
+    right: 4px;
+    bottom: 4px;
+  }
 }
 
 .launcher .image {
-  filter: drop-shadow(0 6px 12px rgba(17, 17, 17, 0.12));
+  filter: drop-shadow(0 10px 16px rgba(81, 112, 255, 0.22));
+  animation: jobenFloat 3s ease-in-out infinite;
+}
+
+@keyframes jobenFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launcher .image {
+    animation: none;
+  }
 }
 
 .launcher .onlineDot {
@@ -36,23 +68,23 @@
 }
 
 .sm {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
 }
 
 .md {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
 }
 
 .lg {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
 }
 
 .xl {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
 }
 
 .onlineDot {

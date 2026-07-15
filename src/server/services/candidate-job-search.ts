@@ -29,6 +29,18 @@ export type JobSearchResult = {
   postedAt: string | null;
 };
 
+/** Job search currently supports the US market only. */
+export function resolveCandidateUsJobLocation(
+  location: string | null | undefined,
+): string {
+  const trimmed = location?.trim() ?? "";
+  if (!trimmed || !/(?:,\s*USA|United States)$/i.test(trimmed)) {
+    return "United States";
+  }
+
+  return trimmed.replace(/,\s*USA$/i, ", United States");
+}
+
 function tokenize(value: string): string[] {
   return value
     .toLowerCase()
@@ -60,7 +72,7 @@ export function buildCandidateJobSearchQuery(
       experienceYears,
       searchKeywords: options?.searchKeywords,
     }),
-    location: "United States",
+    location: resolveCandidateUsJobLocation(candidate.location),
   };
 }
 

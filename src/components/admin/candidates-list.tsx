@@ -8,6 +8,7 @@ import type { MentorOption } from "@/server/services/service-requests";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { formatExperienceYears } from "@/lib/format-experience-years";
 import { formatCandidateGender } from "@/lib/candidate-profile-options";
+import { formatTimezoneLabel } from "@/lib/candidate-location-options";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
@@ -245,6 +246,18 @@ function CandidateRow({
                   <dd>{candidate.specialization}</dd>
                 </>
               ) : null}
+              {candidate.location ? (
+                <>
+                  <dt>Location</dt>
+                  <dd>{candidate.location}</dd>
+                </>
+              ) : null}
+              {candidate.timezone ? (
+                <>
+                  <dt>Timezone</dt>
+                  <dd>{formatTimezoneLabel(candidate.timezone)}</dd>
+                </>
+              ) : null}
               {candidate.profileEducation ? (
                 <>
                   <dt>Education summary</dt>
@@ -308,7 +321,7 @@ function CandidateRow({
             <section className={styles.section}>
               <h4 className={styles.sectionTitle}>Education & advisory details</h4>
               <dl className={styles.detailGrid}>
-                <dt>Graduation details</dt>
+                <dt>Highest degree</dt>
                 <dd>{submission.graduationDetails}</dd>
                 <dt>Branch</dt>
                 <dd>{submission.branch}</dd>

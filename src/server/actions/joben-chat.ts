@@ -1,7 +1,11 @@
 "use server";
 
 import type { JobenChatTurn } from "@/lib/joben/joben-prompt";
-import { enrichJobenReply, respondToJobenQuery } from "@/lib/joben/public-knowledge";
+import {
+  enrichJobenReply,
+  respondToJobenQuery,
+  respondToJobMarketingRequest,
+} from "@/lib/joben/public-knowledge";
 import { runGeminiJobenChat } from "@/server/services/gemini-joben-chat";
 
 export async function askJobenAction(
@@ -16,6 +20,11 @@ export async function askJobenAction(
 
   if (trimmed.length > 1000) {
     return { error: "Keep your message under 1,000 characters." };
+  }
+
+  const marketingReply = respondToJobMarketingRequest(trimmed);
+  if (marketingReply) {
+    return { content: marketingReply.content };
   }
 
   const sanitizedHistory = history

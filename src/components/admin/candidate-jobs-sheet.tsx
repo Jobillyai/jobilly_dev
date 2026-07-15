@@ -63,6 +63,13 @@ type CandidateJobsSheetProps = {
 };
 
 type SourceFilter = JobListingSourceFilter;
+type JobSort = "best_match" | "newest_posted" | "recently_scraped";
+
+function timestamp(value: string | null | undefined): number {
+  if (!value) return 0;
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -164,6 +171,7 @@ export function CandidateJobsSheet({
   const [, startTransition] = useTransition();
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [freshnessFilter, setFreshnessFilter] = useState<JobFreshnessFilter>("all");
+  const [jobSort, setJobSort] = useState<JobSort>("best_match");
   const [searchSourceMode, setSearchSourceMode] = useState<JobSearchSourceMode>("all");
   const [pendingSource, setPendingSource] = useState<JobSearchSourceMode | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -225,6 +233,7 @@ export function CandidateJobsSheet({
     setSelectedPreviousSearch("");
     setSourceFilter("all");
     setFreshnessFilter("all");
+    setJobSort("best_match");
     setKeywordsInput("");
     skipRoleReloadRef.current = false;
     lastSearchRoleRef.current = null;
@@ -370,14 +379,24 @@ export function CandidateJobsSheet({
         )
         .sort((a, b) => {
           if (isAppliedView) {
-            const aTime = a.appliedAt ? new Date(a.appliedAt).getTime() : 0;
-            const bTime = b.appliedAt ? new Date(b.appliedAt).getTime() : 0;
-            return bTime - aTime;
+            return timestamp(b.appliedAt) - timestamp(a.appliedAt);
           }
 
-          return b.relevanceScore - a.relevanceScore;
+          if (jobSort === "newest_posted") {
+            const postedCompare = timestamp(b.postedAt) - timestamp(a.postedAt);
+            return postedCompare || timestamp(b.scrapedAt) - timestamp(a.scrapedAt);
+          }
+
+          if (jobSort === "recently_scraped") {
+            return timestamp(b.scrapedAt) - timestamp(a.scrapedAt);
+          }
+
+          return (
+            b.relevanceScore - a.relevanceScore ||
+            timestamp(b.postedAt) - timestamp(a.postedAt)
+          );
         }),
-    [jobsWithMatch, sourceFilter, freshnessFilter, keywordsInput, isAppliedView],
+    [jobsWithMatch, sourceFilter, freshnessFilter, keywordsInput, isAppliedView, jobSort],
   );
 
   const sourceCounts = useMemo(() => countJobsBySource(jobs), [jobs]);
@@ -900,6 +919,24 @@ export function CandidateJobsSheet({
                   <option value="last_3d">Posted last 3 days ({freshnessCounts.last_3d})</option>
                   <option value="last_7d">Posted last 7 days ({freshnessCounts.last_7d})</option>
                   <option value="older">Posted 7+ days ago ({freshnessCounts.older})</option>
+                </select>
+              </div>
+            ) : null}
+            {!isAppliedView ? (
+              <div className={styles.filterGroup}>
+                <label htmlFor="jobSort" className={styles.fieldLabel}>
+                  Sort by
+                </label>
+                <select
+                  id="jobSort"
+                  value={jobSort}
+                  onChange={(event) => setJobSort(event.target.value as JobSort)}
+                  className={styles.fieldSelect}
+                  disabled={loadingPreviousSearch}
+                >
+                  <option value="best_match">Best match</option>
+                  <option value="newest_posted">Most recent posted</option>
+                  <option value="recently_scraped">Most recently scraped</option>
                 </select>
               </div>
             ) : null}

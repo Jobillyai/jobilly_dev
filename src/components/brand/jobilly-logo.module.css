@@ -1,7 +1,9 @@
 .logo {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 2px;
   text-decoration: none;
   transition: opacity 0.2s;
 }
@@ -14,34 +16,9 @@
   flex-shrink: 0;
   display: block;
   line-height: 0;
-}
-
-.wordmarkBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.wordmark {
-  font-family: var(--jb-font-sans);
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--jb-brand);
-  line-height: 1.1;
-}
-
-.wordmarkAccent {
-  color: var(--jb-ink);
-}
-
-.wordmarkOnDark {
-  color: #c4b5fd;
-}
-
-.wordmarkAccentOnDark {
-  color: #ffffff;
+  object-fit: contain;
+  max-width: 100%;
+  height: auto;
 }
 
 .subtitle {
@@ -49,12 +26,9 @@
   font-weight: 500;
   color: var(--jb-ink-muted);
   line-height: 1.2;
+  text-align: center;
 }
 
 .subtitleOnDark {
   color: rgba(255, 255, 255, 0.55);
-}
-
-.logoCompact .wordmark {
-  font-size: 16px;
 }

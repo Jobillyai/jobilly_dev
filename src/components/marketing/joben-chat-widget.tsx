@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import type { Route } from "next";
@@ -68,16 +76,48 @@ function stripRedirectPaths(content: string): string {
     text = text.split(link.path).join("");
   }
   return text
-    .replace(/\s{2,}/g, " ")
-    .replace(/\s+([.!?])/g, "$1")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+([.!?])/g, "$1")
     .trim();
+}
+
+function formatMarkdownLite(text: string): string {
+  return (
+    text
+      // "* item" / "- item" bullets at line start -> "• item"
+      .replace(/^[ \t]*[*-][ \t]+/gm, "• ")
+      // markdown headings "### Title" -> "Title"
+      .replace(/^[ \t]*#{1,4}[ \t]+/gm, "")
+  );
 }
 
 function renderAssistantContent(content: string) {
   const redirects = getJobenLinksInContent(content);
   const displayText = redirects.length > 0 ? stripRedirectPaths(content) : content;
 
-  return displayText;
+  return formatMarkdownLite(displayText);
+}
+
+function renderBoldText(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const boldPattern = /\*{2,3}([^*]+?)\*{2,3}/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = boldPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+
+    nodes.push(<strong key={`${match.index}-${match[1]}`}>{match[1]}</strong>);
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes;
 }
 
 function AssistantMessageBody({
@@ -92,7 +132,7 @@ function AssistantMessageBody({
 
   return (
     <div className={styles.messageBody}>
-      <p className={styles.messageBubble}>{displayText}</p>
+      <p className={styles.messageBubble}>{renderBoldText(displayText)}</p>
       {redirects.length > 0 ? (
         <div className={styles.redirectRow}>
           {redirects.map((link) => (
@@ -325,22 +365,40 @@ export function JobenChatWidget() {
           </div>
 
           <footer className={styles.footer}>
-            <div className={styles.prompts}>
-              <p className={styles.promptsLabel}>Suggestions</p>
-              <div className={styles.promptList}>
-                {JOBEN_SUGGESTED_PROMPTS.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    className={styles.promptBtn}
-                    onClick={() => void sendMessage(prompt)}
-                    disabled={pending}
-                  >
-                    {prompt}
-                  </button>
-                ))}
+            {showWelcomeHero ? (
+              <div className={styles.prompts}>
+                <p className={styles.promptsLabel}>Suggestions</p>
+                <div className={styles.promptList}>
+                  {JOBEN_SUGGESTED_PROMPTS.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      className={styles.promptBtn}
+                      onClick={() => void sendMessage(prompt)}
+                      disabled={pending}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className={`${styles.prompts} ${styles.promptsCompact}`}>
+                <div className={`${styles.promptList} ${styles.promptListScroll}`}>
+                  {JOBEN_SUGGESTED_PROMPTS.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      className={styles.promptBtn}
+                      onClick={() => void sendMessage(prompt)}
+                      disabled={pending}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className={styles.composerShell}>
               <form className={styles.composer} onSubmit={handleSubmit}>

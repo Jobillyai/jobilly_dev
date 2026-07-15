@@ -502,7 +502,7 @@
 .waveBar {
   width: 4px;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--jb-brand) 0%, #a78bfa 100%);
+  background: linear-gradient(180deg, var(--jb-brand) 0%, #38b6ff 100%);
   transition: height 0.18s ease;
   will-change: height;
 }
@@ -570,7 +570,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--jb-brand) 0%, #a78bfa 100%);
+  background: linear-gradient(90deg, var(--jb-brand) 0%, #38b6ff 100%);
 }
 
 .pathMeta {
@@ -676,16 +676,10 @@
     padding: 12px;
   }
 
+  /* Keep the desktop-style overlap, just pulled inside the viewport edge. */
   .floatCard {
-    position: relative;
-    right: auto;
-    bottom: auto;
-    width: 100%;
-    margin-top: 12px;
-  }
-
-  .previewWrapWithFloat {
-    padding-bottom: 0;
+    right: 0;
+    width: min(240px, 80%);
   }
 
   .statsRow {

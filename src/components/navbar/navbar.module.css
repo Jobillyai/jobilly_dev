@@ -9,7 +9,9 @@
   justify-content: space-between;
   padding: 0 32px;
   height: 72px;
-  background: var(--jb-nav-bg);
+  background: var(--jb-nav-glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
   border-bottom: 1px solid var(--jb-border);
   transition: box-shadow 0.2s, background 0.2s;
   font-family: var(--jb-font-sans);
@@ -17,7 +19,7 @@
 
 .navScrolled {
   box-shadow: var(--jb-shadow-md);
-  background: var(--jb-nav-bg);
+  background: var(--jb-nav-glass-strong);
 }
 
 .navLogo {
@@ -26,8 +28,10 @@
   letter-spacing: -0.03em;
   color: var(--jb-brand);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 2px;
   text-decoration: none;
   transition: opacity 0.2s;
 }
@@ -109,7 +113,7 @@
 
 .navBtnGhost {
   color: var(--jb-ink);
-  background: var(--jb-nav-bg);
+  background: var(--jb-glass-surface);
   border: 1px solid var(--jb-border);
   box-shadow: var(--jb-shadow-sm);
 }
@@ -155,7 +159,7 @@
   padding: 6px 12px 6px 8px;
   border: 1px solid var(--jb-border);
   border-radius: 100px;
-  background: var(--jb-nav-bg);
+  background: var(--jb-glass-surface);
   cursor: pointer;
   font-family: var(--jb-font-sans);
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -284,7 +288,7 @@
   margin-left: 4px;
   border: 1px solid var(--jb-border);
   border-radius: 12px;
-  background: var(--jb-nav-bg);
+  background: var(--jb-glass-surface);
   color: var(--jb-ink);
   cursor: pointer;
   flex-shrink: 0;
@@ -315,7 +319,9 @@
   flex-direction: column;
   gap: 8px;
   padding: 16px 20px 24px;
-  background: var(--jb-nav-bg);
+  background: var(--jb-nav-glass-strong);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
   border-bottom: 1px solid var(--jb-border);
   box-shadow: var(--jb-shadow-lg);
 }

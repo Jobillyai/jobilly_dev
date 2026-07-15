@@ -13,6 +13,7 @@
 
 .brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
   padding: 0 10px 24px;
   margin-bottom: 8px;
@@ -163,6 +164,14 @@
   .navLabel,
   .brandSub,
   .userMeta {
+    display: none;
+  }
+
+  .brand :global([class*="wordmarkBlock"]) {
+    display: none;
+  }
+
+  .brand :global([class*="subtitle"]) {
     display: none;
   }
 

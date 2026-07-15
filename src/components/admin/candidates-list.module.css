@@ -21,7 +21,7 @@
 }
 
 .itemExpanded {
-  border-color: rgba(6, 182, 212, 0.28);
+  border-color: rgba(56, 182, 255, 0.28);
   box-shadow: var(--jb-admin-shadow-hover);
 }
 
@@ -108,7 +108,7 @@
 
 .expandBtn:hover {
   background: var(--jb-admin-accent-soft);
-  border-color: rgba(6, 182, 212, 0.3);
+  border-color: rgba(56, 182, 255, 0.3);
   color: var(--jb-admin-accent);
 }
 

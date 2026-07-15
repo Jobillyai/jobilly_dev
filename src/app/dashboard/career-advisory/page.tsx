@@ -23,6 +23,8 @@ export default async function CareerAdvisoryPage() {
           defaultLastName={profile.lastName}
           defaultEmail={profile.email}
           existingIntake={existingIntake}
+          initialResumeFileName={profile.resumeFileName}
+          initialResumePreviewUrl={profile.resumePreviewUrl}
         />
       </main>
     </div>

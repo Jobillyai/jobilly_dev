@@ -108,7 +108,7 @@
 
 .calendarDayCellToday {
   border-color: var(--blue-500);
-  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(81, 112, 255, 0.15);
 }
 
 .calendarDayHeader {

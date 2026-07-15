@@ -102,8 +102,7 @@ export function WelcomePage() {
                 This is not a typical job board. Jobilly is built for people at the start
                 of their career — when every application matters and good guidance is hard
                 to find. We combine free career advisory with tools that grow with you:
-                profile and resume hub, session calendar, practice, and managed
-                applications when you want hands-on help.
+                guided practice and managed applications when you want hands-on help.
               </p>
               <p>
                 As a team, we believe in clear paths over chaos. No spray-and-pray

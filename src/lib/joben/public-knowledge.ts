@@ -9,11 +9,9 @@ import {
 
 /** Candidate-facing areas visible on the public site and portal nav. */
 export const JOBEN_VISIBLE_CANDIDATE_OPTIONS = [
-  "Dashboard — track applications and upcoming sessions",
+  "Dashboard — track your progress",
   "Career Advisory — free Google Meet sessions with our career team",
   "Applications — roles applied on your behalf (premium plan)",
-  "Calendar — advisory sessions and meet links",
-  "Profile — resume and contact details",
 ] as const;
 
 export type JobenTopicId =
@@ -23,8 +21,6 @@ export type JobenTopicId =
   | "candidate_portal"
   | "pricing"
   | "career_advisory"
-  | "profile"
-  | "calendar"
   | "applications"
   | "mock_interviews"
   | "free_vs_premium"
@@ -80,7 +76,7 @@ const CANDIDATE_ONLY_TOPICS: JobenTopic[] = [
     ],
     minScore: 2,
     answer:
-      "Jobilly.ai helps fresh graduates land their first job. As a candidate you get a free portal for career advisory, profile, and calendar — plus optional paid plans for AI mock interviews and a team that applies to matched roles for you.",
+      "Jobilly.ai helps fresh graduates land their first job. Candidates get free career advisory, plus optional premium plans for AI mock interviews and a team that applies to matched roles for them.",
   },
   {
     id: "how_it_works",
@@ -98,7 +94,7 @@ const CANDIDATE_ONLY_TOPICS: JobenTopic[] = [
       "help graduates",
     ],
     minScore: 2,
-    answer: `For candidates, Jobilly follows four steps: ${phaseSummary}. Sign up free, book career advisory, keep your profile updated, and upgrade only if you want mock interviews or managed applications.`,
+    answer: `For candidates, Jobilly follows four steps: ${phaseSummary}. Sign up free, book career advisory, and upgrade only if you want mock interviews or managed applications.`,
   },
   {
     id: "candidate_portal",
@@ -162,35 +158,6 @@ const CANDIDATE_ONLY_TOPICS: JobenTopic[] = [
     minScore: 2,
     answer:
       "Career Advisory is free for candidates. Fill in your background and target role, pick a session time, and join via Google Meet. You'll get guidance on skills, timeline, and next steps.",
-  },
-  {
-    id: "profile",
-    label: "Profile",
-    keywords: [
-      "profile page",
-      "resume hub",
-      "upload resume",
-      "update profile",
-      "my resume",
-      "linkedin profile",
-    ],
-    minScore: 2,
-    answer:
-      "In Profile you upload your resume and keep contact details current. That information is used when our team prepares applications and interview prep for you.",
-  },
-  {
-    id: "calendar",
-    label: "Calendar",
-    keywords: [
-      "session calendar",
-      "my calendar",
-      "upcoming session",
-      "scheduled session",
-      "meet link",
-    ],
-    minScore: 2,
-    answer:
-      "Calendar shows your upcoming and past career advisory sessions, with Google Meet links when it's time to join.",
   },
   {
     id: "mock_interviews",
@@ -306,6 +273,65 @@ function normalizeQuery(message: string): string {
   return message.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+function asksForExactPrice(message: string): boolean {
+  return /\b(price|pricing|cost|costs|fee|fees|how much|what.*charge|monthly rate|subscription amount)\b/i.test(
+    message,
+  );
+}
+
+/**
+ * Candidate phrasing such as "do marketing for data engineering" means they
+ * want Jobilly to market their profile and apply to relevant roles. Handle it
+ * deterministically so this high-intent request always gets a useful CTA.
+ */
+export function respondToJobMarketingRequest(message: string): JobenReply | null {
+  const query = normalizeQuery(message);
+  const asksForMarketingHelp =
+    /\b(?:can|could|will|would)\s+(?:you|jobilly)\s+(?:do|handle|help(?:\s+me)?\s+with)\s+(?:job\s+)?marketing\b/i.test(
+      query,
+    ) ||
+    /\b(?:do|handle|help(?:\s+me)?\s+with)\s+(?:job\s+)?marketing\s+(?:for\s+me|for)\b/i.test(
+      query,
+    ) ||
+    /\bmarket\s+(?:me|my\s+(?:profile|resume|résumé))\b/i.test(query);
+
+  if (!asksForMarketingHelp) {
+    return null;
+  }
+
+  const roleMatch = query.match(/\bmarketing\s+for\s+(.+?)(?:\?|$)/i);
+  const role = roleMatch?.[1]?.trim();
+  const roleText = role ? ` for ${role}` : "";
+
+  return {
+    topicId: "applications",
+    content:
+      `Yes — Jobilly can help market your profile${roleText} through our Managed Applications service. ` +
+      "Our team finds matching US roles, prepares role-aligned application materials, and applies on your behalf. " +
+      "Please select one of the available plans and we can start from there. /products",
+  };
+}
+
+function hideUnrequestedPrices(content: string, userMessage: string): string {
+  if (asksForExactPrice(userMessage)) {
+    return content;
+  }
+
+  return content
+    .replace(
+      /(?:US\s*)?\$\s*\d+(?:\.\d{1,2})?(?:\s*(?:\/|per\s+)(?:month|mo|year|yr))?/gi,
+      "premium",
+    )
+    .replace(
+      /\bUSD\s*\d+(?:\.\d{1,2})?(?:\s*(?:\/|per\s+)(?:month|mo|year|yr))?/gi,
+      "premium",
+    )
+    .replace(/\(\s*premium\s*\)/gi, "(premium)")
+    .replace(/\bpremium(?:\s*[,;])?\s+premium\b/gi, "premium")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
 function scoreTopic(query: string, topic: JobenTopic): number {
   let score = 0;
   for (const keyword of topic.keywords) {
@@ -344,8 +370,6 @@ const TOPIC_REDIRECT_PATHS: Partial<Record<JobenTopicId, string[]>> = {
   pricing: ["/products"],
   free_vs_premium: ["/products"],
   career_advisory: ["/signup"],
-  profile: ["/dashboard/profile"],
-  calendar: ["/dashboard/calendar"],
   mock_interviews: ["/products"],
   applications: ["/products"],
   signup: ["/signup"],
@@ -370,7 +394,7 @@ function appendCandidateLink(topicId: JobenTopicId, content: string): string {
 }
 
 export function enrichJobenReply(content: string, userMessage: string): string {
-  const trimmed = content.trim();
+  const trimmed = hideUnrequestedPrices(content.trim(), userMessage);
   if (!trimmed) {
     return trimmed;
   }
@@ -454,7 +478,10 @@ export function respondToJobenQuery(message: string): JobenReply {
   if (best) {
     return {
       topicId: best.id,
-      content: appendCandidateLink(best.id, best.answer),
+      content: appendCandidateLink(
+        best.id,
+        hideUnrequestedPrices(best.answer, message),
+      ),
     };
   }
 
@@ -471,7 +498,9 @@ export function respondToJobenQuery(message: string): JobenReply {
     const tier =
       serviceMatch.tier === "free"
         ? "Free for candidates."
-        : `Premium (${serviceMatch.priceUsd ? formatPlanPriceMonthly(serviceMatch.priceUsd) : "see products page"}).`;
+        : asksForExactPrice(message) && serviceMatch.priceUsd
+          ? `Premium (${formatPlanPriceMonthly(serviceMatch.priceUsd)}).`
+          : "Premium.";
     return {
       topicId: "overview",
       content: appendCandidateLink(

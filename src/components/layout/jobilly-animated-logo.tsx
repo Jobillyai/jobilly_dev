@@ -46,7 +46,7 @@ export function JobillyAnimatedLogo({
             <stop offset="100%" stopColor="#1a4bdb" />
           </linearGradient>
           <linearGradient id={`${scope}-grad-accent`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#22d3ee" />
+            <stop offset="0%" stopColor="#5ec5ff" />
             <stop offset="100%" stopColor="#00b4d8" />
           </linearGradient>
           <filter id={`${scope}-glow`}>
@@ -76,7 +76,7 @@ export function JobillyAnimatedLogo({
             <rect x="36" y="58" width="22" height="5" rx="3" fill={`url(#${scope}-grad-accent)`} opacity="0.28" />
           </g>
 
-          <circle className={styles.dropletLeft} cx="48" cy="66" r="4.5" fill="#22d3ee" />
+          <circle className={styles.dropletLeft} cx="48" cy="66" r="4.5" fill="#5ec5ff" />
           <circle className={styles.dropletSmall} cx="58" cy="72" r="2.5" fill="#00b4d8" />
 
           <g className={styles.arrowHead}>

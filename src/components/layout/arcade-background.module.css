@@ -20,7 +20,7 @@
 .dots {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(109, 40, 217, 0.12) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(81, 112, 255, 0.12) 1px, transparent 1px);
   background-size: 20px 20px;
   opacity: 0.45;
 }
@@ -44,7 +44,7 @@
   height: 520px;
   top: -160px;
   right: -120px;
-  background: rgba(167, 139, 250, 0.38);
+  background: rgba(56, 182, 255, 0.38);
 }
 
 .orbTwo {
@@ -52,7 +52,7 @@
   height: 440px;
   bottom: -120px;
   left: -80px;
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(81, 112, 255, 0.3);
 }
 
 .orbThree {
@@ -60,7 +60,7 @@
   height: 320px;
   top: 38%;
   left: 42%;
-  background: rgba(124, 58, 237, 0.18);
+  background: rgba(81, 112, 255, 0.18);
 }
 
 @media (max-width: 900px) {

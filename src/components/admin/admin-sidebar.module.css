@@ -21,7 +21,7 @@
   background: linear-gradient(
     180deg,
     transparent,
-    rgba(6, 182, 212, 0.35),
+    rgba(56, 182, 255, 0.35),
     transparent
   );
   pointer-events: none;
@@ -29,6 +29,7 @@
 
 .brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
   padding: 0 12px 32px;
   margin-bottom: 8px;
@@ -75,10 +76,10 @@
 }
 
 .navLinkActive {
-  background: rgba(6, 182, 212, 0.1);
+  background: rgba(56, 182, 255, 0.1);
   color: #f8fafc;
   font-weight: 600;
-  border-color: rgba(6, 182, 212, 0.28);
+  border-color: rgba(56, 182, 255, 0.28);
   box-shadow: inset 3px 0 0 var(--jb-admin-accent);
 }
 
@@ -104,6 +105,10 @@
     display: none;
   }
 
+  .brand :global([class*="subtitle"]) {
+    display: none;
+  }
+
   .navLabel {
     display: none;
   }
@@ -120,6 +125,6 @@
 
   .navLinkActive {
     box-shadow: none;
-    border-color: rgba(6, 182, 212, 0.35);
+    border-color: rgba(56, 182, 255, 0.35);
   }
 }

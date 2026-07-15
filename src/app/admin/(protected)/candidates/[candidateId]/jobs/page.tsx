@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
+import { resolveCandidateUsJobLocation } from "@/server/services/candidate-job-search";
 import {
   getCandidateAppliedJobCount,
   getCandidateJobListings,
@@ -57,6 +58,7 @@ export default async function AdminCandidateJobsPage({
   const displayName = candidate.name
     ? formatDisplayName(candidate.name)
     : formatDisplayName(candidate.email.split("@")[0] ?? candidate.email);
+  const searchLocation = resolveCandidateUsJobLocation(candidate.location);
 
   return (
     <div className={styles.adminPage}>
@@ -70,6 +72,10 @@ export default async function AdminCandidateJobsPage({
             {staffCanScrapeJobs(staff) ? "Apply for jobs" : "Job listings"} for{" "}
             <em className={styles.titleEm}>{displayName}</em>
           </h1>
+          <p className={styles.subtitle}>
+            Candidate location: {candidate.location || "Not provided"} · Searching jobs in{" "}
+            {searchLocation}. Jobilly job search currently supports US roles only.
+          </p>
         </div>
 
         <CandidateJobsNav

@@ -8,11 +8,11 @@ type JobenAvatarProps = {
 };
 
 const SIZE_PX = {
-  sm: 28,
-  md: 40,
-  lg: 52,
-  xl: 64,
-  launcher: 52,
+  sm: 34,
+  md: 48,
+  lg: 64,
+  xl: 80,
+  launcher: 64,
 } as const;
 
 export function JobenAvatar({

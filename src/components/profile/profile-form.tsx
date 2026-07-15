@@ -11,6 +11,10 @@ import {
 import { PersonNameFields } from "@/components/auth/person-name-fields";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import { CANDIDATE_GENDER_OPTIONS } from "@/lib/candidate-profile-options";
+import {
+  CANDIDATE_LOCATION_OPTIONS,
+  resolveTimezoneForLocation,
+} from "@/lib/candidate-location-options";
 import type { UserProfile } from "@/lib/auth/profile";
 import { combineFirstLastName } from "@/lib/format-person-name";
 import styles from "./profile-form.module.css";
@@ -71,6 +75,8 @@ export function ProfileForm({
   );
   const [specialization, setSpecialization] = useState(profile.specialization);
   const [workExperience, setWorkExperience] = useState(profile.workExperience);
+  const [location, setLocation] = useState(profile.location);
+  const [timezone, setTimezone] = useState(profile.timezone);
   const [careerGoals, setCareerGoals] = useState(profile.careerGoals);
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedinUrl);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? "");
@@ -94,6 +100,8 @@ export function ProfileForm({
     setGraduationYear(profile.graduationYear?.toString() ?? "");
     setSpecialization(profile.specialization);
     setWorkExperience(profile.workExperience);
+    setLocation(profile.location);
+    setTimezone(profile.timezone);
     setCareerGoals(profile.careerGoals);
     setLinkedinUrl(profile.linkedinUrl);
     setAvatarUrl(profile.avatarUrl ?? "");
@@ -102,6 +110,15 @@ export function ProfileForm({
     setState(initialState);
     setPhotoError(null);
     setResumeError(null);
+  }
+
+  function handleLocationChange(nextLocation: string) {
+    setLocation(nextLocation);
+    if (!nextLocation) {
+      setTimezone("");
+      return;
+    }
+    setTimezone(resolveTimezoneForLocation(nextLocation) ?? "");
   }
 
   function handleCancel() {
@@ -329,6 +346,35 @@ export function ProfileForm({
               />
               {state.fieldErrors?.specialization ? (
                 <p className={styles.fieldError}>{state.fieldErrors.specialization}</p>
+              ) : null}
+            </div>
+
+            <div className={styles.field}>
+              <label htmlFor="location" className={styles.label}>
+                Location
+              </label>
+              <select
+                id="location"
+                name="location"
+                value={location}
+                onChange={(event) => handleLocationChange(event.target.value)}
+                disabled={!isEditing}
+                className={`${styles.select} ${readOnlyClass} ${
+                  state.fieldErrors?.location ? styles.selectError : ""
+                }`}
+              >
+                {CANDIDATE_LOCATION_OPTIONS.map((option) => (
+                  <option key={option.value || "unset"} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <input type="hidden" name="timezone" value={timezone} />
+              {state.fieldErrors?.location ? (
+                <p className={styles.fieldError}>{state.fieldErrors.location}</p>
+              ) : null}
+              {state.fieldErrors?.timezone ? (
+                <p className={styles.fieldError}>{state.fieldErrors.timezone}</p>
               ) : null}
             </div>
           </div>

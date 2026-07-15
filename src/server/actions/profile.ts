@@ -8,6 +8,11 @@ import {
   CANDIDATE_GENDER_OPTIONS,
   parseGraduationYear,
 } from "@/lib/candidate-profile-options";
+import {
+  CANDIDATE_LOCATION_OPTIONS,
+  getTimezoneForLocation,
+  isValidIanaTimezone,
+} from "@/lib/candidate-location-options";
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { saveCandidateResumeFile } from "@/server/services/resume-storage";
@@ -81,6 +86,24 @@ const profileSchema = z.object({
     .transform((value) => (value ? parseGraduationYear(value) : null)),
   specialization: z.string().max(200).optional(),
   workExperience: z.string().max(2000).optional(),
+  location: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() ?? "")
+    .refine(
+      (value) =>
+        !value ||
+        CANDIDATE_LOCATION_OPTIONS.some((option) => option.value === value),
+      "Select a valid location",
+    ),
+  timezone: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() ?? "")
+    .refine(
+      (value) => !value || isValidIanaTimezone(value),
+      "Timezone could not be determined for this location",
+    ),
   linkedinUrl: z
     .string()
     .max(300)
@@ -113,6 +136,8 @@ export type ProfileState = {
       | "graduationYear"
       | "specialization"
       | "workExperience"
+      | "location"
+      | "timezone"
       | "linkedinUrl",
       string
     >
@@ -214,6 +239,7 @@ export async function uploadProfileResumeAction(
     });
 
     revalidatePath("/dashboard/profile");
+    revalidatePath("/dashboard/career-advisory");
     revalidatePath("/admin/candidates");
 
     return { resumeUrl: saved.resumeUrl, fileName: file.name };
@@ -238,6 +264,8 @@ export async function updateProfileAction(
     graduationYear: formData.get("graduationYear")?.toString() || undefined,
     specialization: formData.get("specialization") || undefined,
     workExperience: formData.get("workExperience") || undefined,
+    location: formData.get("location")?.toString() ?? "",
+    timezone: formData.get("timezone")?.toString() ?? "",
     linkedinUrl: formData.get("linkedinUrl") || undefined,
     avatarUrl: formData.get("avatarUrl") || undefined,
   });
@@ -254,6 +282,8 @@ export async function updateProfileAction(
       "graduationYear",
       "specialization",
       "workExperience",
+      "location",
+      "timezone",
       "linkedinUrl",
     ] as const);
 
@@ -284,6 +314,8 @@ export async function updateProfileAction(
     graduationYear,
     specialization,
     workExperience,
+    location,
+    timezone: submittedTimezone,
     linkedinUrl,
     avatarUrl,
   } = parsed.data;
@@ -293,6 +325,21 @@ export async function updateProfileAction(
     graduationYear,
   });
   const name = combineFirstLastName(firstName, lastName);
+  const mappedTimezone = location ? getTimezoneForLocation(location) : null;
+  const derivedTimezone = location
+    ? mappedTimezone ||
+      (submittedTimezone && isValidIanaTimezone(submittedTimezone)
+        ? submittedTimezone
+        : null)
+    : null;
+
+  if (location && !derivedTimezone) {
+    return {
+      fieldErrors: {
+        location: "Could not determine timezone for this location.",
+      },
+    };
+  }
 
   const existingAvatar =
     typeof authData.user.user_metadata?.avatar_url === "string"
@@ -336,6 +383,8 @@ export async function updateProfileAction(
       graduation_year: graduationYear,
       specialization: specialization || null,
       work_experience: workExperience || null,
+      location: location || null,
+      timezone: derivedTimezone,
       linkedin_url: linkedinUrl || null,
     },
     { onConflict: "user_id" },

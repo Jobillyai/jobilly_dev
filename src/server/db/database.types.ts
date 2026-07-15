@@ -62,6 +62,8 @@ export type Database = {
           graduation_year: number | null;
           specialization: string | null;
           work_experience: string | null;
+          location: string | null;
+          timezone: string | null;
           analyzed_resume_text: string | null;
           last_applications_digest_date: string | null;
           welcome_email_sent_at: string | null;
@@ -84,6 +86,8 @@ export type Database = {
           graduation_year?: number | null;
           specialization?: string | null;
           work_experience?: string | null;
+          location?: string | null;
+          timezone?: string | null;
           analyzed_resume_text?: string | null;
           last_applications_digest_date?: string | null;
           welcome_email_sent_at?: string | null;

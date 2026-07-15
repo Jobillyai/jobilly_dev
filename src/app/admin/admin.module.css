@@ -176,7 +176,7 @@
 
 .heroCardCta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 8px 24px rgba(56, 182, 255, 0.35);
 }
 
 .heroMiniStats {
@@ -297,7 +297,7 @@
 .quickCard:hover {
   transform: translateY(-2px);
   box-shadow: var(--jb-admin-shadow-hover);
-  border-color: rgba(6, 182, 212, 0.25);
+  border-color: rgba(56, 182, 255, 0.25);
 }
 
 .quickIcon {
@@ -615,14 +615,14 @@
   text-transform: uppercase;
   text-decoration: none;
   transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 4px 16px rgba(56, 182, 255, 0.3);
   white-space: nowrap;
 }
 
 .jobsBtn:hover {
   background: var(--jb-admin-accent-bright);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 8px 24px rgba(56, 182, 255, 0.4);
 }
 
 .backLink {
@@ -799,7 +799,7 @@
 .meetLinkBtn:hover {
   background: var(--jb-admin-accent-bright);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 6px 20px rgba(56, 182, 255, 0.35);
 }
 
 .tablePrimary {
@@ -880,7 +880,7 @@
 
 .calendarNavBtn:hover,
 .calendarTodayBtn:hover {
-  border-color: rgba(6, 182, 212, 0.35);
+  border-color: rgba(56, 182, 255, 0.35);
   background: var(--jb-admin-accent-soft);
   color: var(--jb-admin-accent);
 }
@@ -925,8 +925,8 @@
 }
 
 .calendarDayCellToday {
-  border-color: rgba(6, 182, 212, 0.45);
-  box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.15);
+  border-color: rgba(56, 182, 255, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(56, 182, 255, 0.15);
 }
 
 .calendarDayHeader {
@@ -1115,7 +1115,7 @@
 }
 
 .taskItem:hover {
-  border-color: rgba(6, 182, 212, 0.22);
+  border-color: rgba(56, 182, 255, 0.22);
   box-shadow: var(--jb-admin-shadow);
 }
 

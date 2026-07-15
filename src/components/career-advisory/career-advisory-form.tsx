@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   submitCareerAdvisoryAction,
   type CareerAdvisoryState,
 } from "@/server/actions/career-advisory";
+import { uploadProfileResumeAction } from "@/server/actions/profile";
 import type { CandidateCareerAdvisoryIntake } from "@/server/services/career-advisory-intake";
 import {
   CAREER_ADVISORY_US_TIMEZONE,
@@ -24,11 +25,27 @@ import authStyles from "@/components/auth/auth-page.module.css";
 import dashboardStyles from "@/app/dashboard/dashboard.module.css";
 import styles from "./career-advisory-form.module.css";
 
+const HIGHEST_DEGREE_OPTIONS = [
+  "PhD / Doctorate",
+  "MS (Master of Science)",
+  "MBA",
+  "M.Tech",
+  "MCA",
+  "MA / M.Com",
+  "B.Tech / B.E.",
+  "BSc / BCA",
+  "BBA / B.Com / BA",
+  "Diploma",
+  "Other",
+] as const;
+
 type CareerAdvisoryFormProps = {
   defaultFirstName?: string;
   defaultLastName?: string;
   defaultEmail?: string;
   existingIntake?: CandidateCareerAdvisoryIntake | null;
+  initialResumeFileName?: string | null;
+  initialResumePreviewUrl?: string | null;
 };
 
 function formatSessionLabel(value: string | null | undefined) {
@@ -103,18 +120,56 @@ export function CareerAdvisoryForm({
   defaultLastName = "",
   defaultEmail = "",
   existingIntake = null,
+  initialResumeFileName = null,
+  initialResumePreviewUrl = null,
 }: CareerAdvisoryFormProps) {
   const router = useRouter();
+  const resumeInputRef = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<CareerAdvisoryState>({});
   const [latestSubmission, setLatestSubmission] =
     useState<CandidateCareerAdvisoryIntake | null>(existingIntake);
   const [pending, startTransition] = useTransition();
+  const [resumePending, setResumePending] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  const [resumeFileName, setResumeFileName] = useState(initialResumeFileName ?? "");
+  const [resumePreviewUrl, setResumePreviewUrl] = useState(
+    initialResumePreviewUrl ?? "",
+  );
 
   useEffect(() => {
     if (existingIntake) {
       setLatestSubmission(existingIntake);
     }
   }, [existingIntake]);
+
+  useEffect(() => {
+    setResumeFileName(initialResumeFileName ?? "");
+    setResumePreviewUrl(initialResumePreviewUrl ?? "");
+  }, [initialResumeFileName, initialResumePreviewUrl]);
+
+  async function handleResumeSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setResumePending(true);
+    setResumeError(null);
+
+    const uploadData = new FormData();
+    uploadData.append("resume", file);
+    const result = await uploadProfileResumeAction(uploadData);
+
+    if (result.error) {
+      setResumeError(result.error);
+    } else {
+      setResumeFileName(result.fileName ?? file.name);
+      if (result.resumeUrl) {
+        setResumePreviewUrl(result.resumeUrl);
+      }
+    }
+
+    setResumePending(false);
+    event.target.value = "";
+  }
 
   const previousSubmission = latestSubmission;
   const formDefaults = previousSubmission ?? null;
@@ -134,8 +189,14 @@ export function CareerAdvisoryForm({
         : "Submitted. A Google Meet invite was sent to your email.";
     }
 
+    if (state.ackEmailSent) {
+      return sessionLabel
+        ? `Submitted. One of our mentors will talk to you at ${sessionLabel} — check your email for confirmation.`
+        : "Submitted. One of our mentors will talk to you at your chosen time — check your email for confirmation.";
+    }
+
     return "Submitted. Your career advisory details were saved.";
-  }, [state.success, state.inviteEmailSent, state.sessionScheduledAt]);
+  }, [state.success, state.inviteEmailSent, state.ackEmailSent, state.sessionScheduledAt]);
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -221,14 +282,40 @@ export function CareerAdvisoryForm({
             placeholder="555 123 4567"
           />
 
-          <FormField
-            id="graduationDetails"
-            name="graduationDetails"
-            label="Graduation details"
-            placeholder="e.g. B.Tech Computer Science, 2024"
-            defaultValue={formDefaults?.graduationDetails}
-            error={state.fieldErrors?.graduationDetails}
-          />
+          <div className={authStyles.field}>
+            <label htmlFor="graduationDetails" className={authStyles.label}>
+              Highest degree
+            </label>
+            <select
+              id="graduationDetails"
+              name="graduationDetails"
+              defaultValue={
+                HIGHEST_DEGREE_OPTIONS.includes(
+                  formDefaults?.graduationDetails as (typeof HIGHEST_DEGREE_OPTIONS)[number],
+                )
+                  ? formDefaults?.graduationDetails
+                  : ""
+              }
+              className={`${styles.select} ${
+                state.fieldErrors?.graduationDetails ? styles.selectError : ""
+              }`}
+              aria-invalid={!!state.fieldErrors?.graduationDetails}
+            >
+              <option value="" disabled>
+                Select your highest degree
+              </option>
+              {HIGHEST_DEGREE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            {state.fieldErrors?.graduationDetails ? (
+              <p className={authStyles.fieldError}>
+                {state.fieldErrors.graduationDetails}
+              </p>
+            ) : null}
+          </div>
 
           <FormField
             id="branch"
@@ -257,6 +344,58 @@ export function CareerAdvisoryForm({
               <p className={authStyles.fieldError}>
                 {state.fieldErrors.interestedTechnology}
               </p>
+            ) : null}
+          </div>
+
+          <div className={styles.uploadZone}>
+            <p className={styles.uploadTitle}>Resume</p>
+            <p className={styles.uploadHint}>
+              PDF or Word, up to 5 MB. Saved to your profile for mentors.
+            </p>
+            {resumeFileName ? (
+              <p className={styles.uploadMeta}>
+                Current file: <strong>{resumeFileName}</strong>
+                {resumePreviewUrl ? (
+                  <>
+                    {" · "}
+                    <a
+                      href={resumePreviewUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.uploadLink}
+                    >
+                      View
+                    </a>
+                  </>
+                ) : null}
+              </p>
+            ) : (
+              <p className={styles.uploadMeta}>No resume uploaded yet.</p>
+            )}
+            <div className={styles.uploadActions}>
+              <input
+                ref={resumeInputRef}
+                id="resume"
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className={styles.hiddenInput}
+                onChange={handleResumeSelect}
+                disabled={resumePending}
+              />
+              <button
+                type="button"
+                className={styles.chooseFileBtn}
+                onClick={() => resumeInputRef.current?.click()}
+                disabled={resumePending}
+              >
+                {resumeFileName ? "Replace resume" : "Upload resume"}
+              </button>
+              {resumePending ? (
+                <span className={styles.uploadingLabel}>Uploading…</span>
+              ) : null}
+            </div>
+            {resumeError ? (
+              <p className={authStyles.fieldError}>{resumeError}</p>
             ) : null}
           </div>
 

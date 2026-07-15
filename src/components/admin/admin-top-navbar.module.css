@@ -15,8 +15,9 @@
 
 .logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 2px;
   text-decoration: none;
   color: inherit;
 }
@@ -82,7 +83,7 @@
 }
 
 .logoutBtn:hover {
-  border-color: rgba(109, 40, 217, 0.25);
+  border-color: rgba(81, 112, 255, 0.25);
   color: var(--jb-brand);
-  background: rgba(109, 40, 217, 0.04);
+  background: rgba(81, 112, 255, 0.04);
 }

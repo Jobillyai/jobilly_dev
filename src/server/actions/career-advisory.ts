@@ -7,6 +7,7 @@ import { formatPhoneNumber, type PhoneCountry } from "@/lib/format-phone";
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { sendCareerAdvisoryMeetInvite } from "@/server/services/send-career-advisory-invite";
+import { sendCareerAdvisorySubmissionAck } from "@/server/services/send-career-advisory-ack";
 import { ensurePublicUserRecord } from "@/server/services/ensure-public-user";
 import type { CandidateCareerAdvisoryIntake } from "@/server/services/career-advisory-intake";
 import {
@@ -28,7 +29,7 @@ const intakeSchema = z.object({
     .regex(/^[0-9\s()-]+$/, "Enter a valid phone number"),
   graduationDetails: z
     .string()
-    .min(1, "Enter your graduation details")
+    .min(1, "Select your highest degree")
     .max(300),
   branch: z.string().min(1, "Enter your branch").max(200),
   interestedTechnology: z
@@ -43,6 +44,8 @@ const intakeSchema = z.object({
 export type CareerAdvisoryState = {
   success?: boolean;
   inviteEmailSent?: boolean;
+  /** True when no mentor is assigned yet: candidate got a "we received it" email instead of a Meet invite. */
+  ackEmailSent?: boolean;
   sessionScheduledAt?: string;
   submittedIntake?: CandidateCareerAdvisoryIntake;
   error?: string;
@@ -236,6 +239,75 @@ export async function submitCareerAdvisoryAction(
     googleMeetLink = data.google_meet_link;
   }
 
+  // Mentor assignment decides which email the candidate receives: an assigned
+  // mentor means the normal Meet invite (mentor is notified too); otherwise the
+  // candidate gets a submission acknowledgment and managers are asked to assign.
+  const { data: candidateProfile } = await admin
+    .from("candidate_profiles")
+    .select("assigned_employee_id")
+    .eq("user_id", authData.user.id)
+    .maybeSingle();
+
+  let mentor: { email: string; name: string | null } | null = null;
+  if (candidateProfile?.assigned_employee_id) {
+    const { data: mentorUser } = await admin
+      .from("users")
+      .select("email, name")
+      .eq("id", candidateProfile.assigned_employee_id)
+      .maybeSingle();
+
+    if (mentorUser?.email) {
+      mentor = { email: mentorUser.email, name: mentorUser.name };
+    }
+  }
+
+  if (!mentor) {
+    const ackResult = await sendCareerAdvisorySubmissionAck({
+      candidateId: authData.user.id,
+      candidateName: fullName,
+      candidateEmail: parsed.data.email,
+      candidatePhone: formattedPhone,
+      branch: parsed.data.branch,
+      graduationDetails: parsed.data.graduationDetails,
+      interestedTechnology: parsed.data.interestedTechnology,
+      sessionScheduledAt: sessionStart.toISOString(),
+    });
+
+    const submittedIntake = buildSubmittedIntake({
+      fullName,
+      email: parsed.data.email,
+      phone: formattedPhone,
+      graduationDetails: parsed.data.graduationDetails,
+      branch: parsed.data.branch,
+      isVeteran: data.is_veteran,
+      interestedTechnology: parsed.data.interestedTechnology,
+      sessionScheduledAt,
+      inviteSentAt,
+      googleMeetLink,
+      bookedAt,
+      updatedAt,
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/candidates");
+    revalidatePath("/admin/calendar");
+    revalidatePath("/admin/tasks");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/calendar");
+    revalidatePath("/dashboard/career-advisory");
+
+    return {
+      success: true,
+      inviteEmailSent: false,
+      ackEmailSent: ackResult.sent,
+      sessionScheduledAt,
+      submittedIntake,
+      error: ackResult.sent
+        ? undefined
+        : "Your details were saved, but we could not send the confirmation email.",
+    };
+  }
+
   const inviteResult = await sendCareerAdvisoryMeetInvite({
     candidateId: authData.user.id,
     candidateName: fullName,
@@ -245,6 +317,8 @@ export async function submitCareerAdvisoryAction(
     graduationDetails: parsed.data.graduationDetails,
     interestedTechnology: parsed.data.interestedTechnology,
     sessionScheduledAt: sessionStart.toISOString(),
+    mentorEmail: mentor.email,
+    mentorName: mentor.name,
   });
 
   if (inviteResult.sent) {

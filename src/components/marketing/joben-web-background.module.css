@@ -12,8 +12,8 @@
 }
 
 .root[data-joben-theme="dark"] {
-  --joben-mesh: #c4b5fd;
-  --joben-grid: rgba(196, 181, 253, 0.1);
+  --joben-mesh: #9db1ff;
+  --joben-grid: rgba(157, 177, 255, 0.1);
 }
 
 @keyframes webRecede {
