@@ -9,6 +9,14 @@ export type UserRole =
 
 export type AdminPortalRole = "admin" | "manager";
 
+export function isCandidateRole(role: string | null | undefined): boolean {
+  return (
+    role === "free_candidate" ||
+    role === "subscribed_candidate" ||
+    role === "institution_candidate"
+  );
+}
+
 /** Mentor admins who apply on behalf of assigned candidates. */
 export function isMentorAdminRole(role: string | null | undefined): boolean {
   return role === "admin";

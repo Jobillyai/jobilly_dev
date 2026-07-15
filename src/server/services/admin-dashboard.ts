@@ -1,4 +1,9 @@
 import { createClient } from "@/server/db/supabase-server";
+import type { PremiumPlanId } from "@/lib/candidate-services";
+import {
+  entitlementsForPlan,
+  getCandidateSubscription,
+} from "@/server/services/candidate-subscriptions";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { getFreshCandidateResumeUrl } from "@/server/services/resume-storage";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -57,6 +62,8 @@ export type AdminCandidate = {
   workExperience: string | null;
   location: string | null;
   timezone: string | null;
+  subscriptionPlan: PremiumPlanId | null;
+  hasManagedApplications: boolean;
   submission: CareerAdvisorySubmission | null;
 };
 
@@ -495,10 +502,12 @@ export async function getAdminCandidates(
   return Promise.all(
     usersResult.data.map(async (user) => {
       const profile = profilesByUser.get(user.id);
+      const subscription = await getCandidateSubscription(user.id);
       const candidate = mapUserToCandidate(
         user,
         profile,
         submissionsByCandidate.get(user.id) ?? null,
+        subscription?.plan ?? null,
       );
 
       if (!candidate.resumeUrl) {
@@ -544,6 +553,7 @@ function mapUserToCandidate(
       }
     | undefined,
   submission: CareerAdvisorySubmission | null,
+  subscriptionPlan: PremiumPlanId | null = null,
 ): AdminCandidate {
   return {
     id: user.id,
@@ -569,6 +579,9 @@ function mapUserToCandidate(
     workExperience: profile?.work_experience ?? null,
     location: profile?.location ?? null,
     timezone: profile?.timezone ?? null,
+    subscriptionPlan,
+    hasManagedApplications:
+      entitlementsForPlan(subscriptionPlan).hasManagedApplications,
     submission,
   };
 }
@@ -607,10 +620,12 @@ export async function getAdminCandidateById(
       .maybeSingle(),
   ]);
 
+  const subscription = await getCandidateSubscription(candidateId);
   const candidate = mapUserToCandidate(
     user,
     profileResult.data ?? undefined,
     submissionResult.data ? mapSubmissionRow(submissionResult.data) : null,
+    subscription?.plan ?? null,
   );
 
   if (candidate.resumeUrl) {
@@ -627,6 +642,15 @@ export async function getAdminCandidateById(
   }
 
   return candidate;
+}
+
+/** Candidate lookup for managed-application operations. */
+export async function getManagedApplicationsCandidateById(
+  candidateId: string,
+  staff?: StaffContext,
+): Promise<AdminCandidate | null> {
+  const candidate = await getAdminCandidateById(candidateId, staff);
+  return candidate?.hasManagedApplications ? candidate : null;
 }
 
 async function getAssignedCandidateIds(employeeId: string): Promise<string[]> {

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getRequestAppOrigin } from "@/lib/auth/app-origin";
 import { isAdminPortalRole } from "@/lib/auth/roles";
+import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
 import { combineFirstLastName } from "@/lib/format-person-name";
 import {
   enforceLoginRateLimits,
@@ -85,6 +86,10 @@ export async function signupAction(
 
   const { firstName, lastName, email, password } = parsed.data;
   const userMetadata = buildUserMetadata(firstName, lastName);
+  const next = sanitizeCandidateRedirectPath(
+    typeof formData.get("next") === "string" ? String(formData.get("next")) : null,
+  );
+  const loginDestination = `/login?signup=success&next=${encodeURIComponent(next)}`;
 
   if (shouldAutoConfirmSignup()) {
     const admin = createAdminClient();
@@ -103,7 +108,7 @@ export async function signupAction(
       await ensurePublicUserRecord(created.user);
     }
 
-    redirect("/login?signup=success");
+    redirect(loginDestination);
   }
 
   const supabase = await createClient();
@@ -114,7 +119,7 @@ export async function signupAction(
     password,
     options: {
       data: userMetadata,
-      emailRedirectTo: `${appOrigin}/auth/callback`,
+      emailRedirectTo: `${appOrigin}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
@@ -126,7 +131,7 @@ export async function signupAction(
     await ensurePublicUserRecord(data.user);
   }
 
-  redirect("/login?signup=success");
+  redirect(loginDestination);
 }
 
 export type LoginState = {
@@ -160,6 +165,9 @@ export async function loginAction(
   }
 
   const supabase = await createClient();
+  const next = sanitizeCandidateRedirectPath(
+    typeof formData.get("next") === "string" ? String(formData.get("next")) : null,
+  );
   const { data: authData, error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
@@ -183,7 +191,7 @@ export async function loginAction(
     }
   }
 
-  redirect("/dashboard");
+  redirect(next);
 }
 
 export async function logoutAction() {

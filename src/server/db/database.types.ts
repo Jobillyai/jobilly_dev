@@ -98,6 +98,56 @@ export type Database = {
         >;
         Relationships: [];
       };
+      job_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan: "mock-interviews" | "job-applications" | "mock-and-job";
+          start_date: string;
+          end_date: string | null;
+          recruiter_id: string | null;
+          status: "active" | "past_due" | "cancelled";
+          billing_name: string | null;
+          billing_email: string | null;
+          billing_phone: string | null;
+          billing_address_line1: string | null;
+          billing_address_line2: string | null;
+          billing_city: string | null;
+          billing_state: string | null;
+          billing_postal_code: string | null;
+          billing_country: string;
+          source: string;
+          paid_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          plan: Database["public"]["Tables"]["job_subscriptions"]["Row"]["plan"];
+          start_date?: string;
+          end_date?: string | null;
+          recruiter_id?: string | null;
+          status?: Database["public"]["Tables"]["job_subscriptions"]["Row"]["status"];
+          billing_name?: string | null;
+          billing_email?: string | null;
+          billing_phone?: string | null;
+          billing_address_line1?: string | null;
+          billing_address_line2?: string | null;
+          billing_city?: string | null;
+          billing_state?: string | null;
+          billing_postal_code?: string | null;
+          billing_country?: string;
+          source?: string;
+          paid_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["job_subscriptions"]["Insert"]
+        >;
+        Relationships: [];
+      };
       employee_profiles: {
         Row: {
           user_id: string;

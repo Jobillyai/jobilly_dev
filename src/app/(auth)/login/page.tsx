@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
 import { loginAction, type LoginState } from "@/server/actions/auth";
 import { lookupMemberIdByEmailAction } from "@/server/actions/member-id";
 import { LoginMemberIdPreview } from "@/components/auth/login-member-id-preview";
@@ -16,6 +17,7 @@ const initialState: LoginState = {};
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
+  const next = sanitizeCandidateRedirectPath(searchParams.get("next"));
   const confirmationError =
     searchParams.get("error") === "confirmation_failed"
       ? "Email confirmation failed. Open the link in the same browser you signed up with, or sign up again."
@@ -80,10 +82,11 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <GoogleAuthButton label="Sign in with Google" />
+      <GoogleAuthButton label="Sign in with Google" next={next} />
       <AuthDivider />
 
       <form action={handleSubmit} className={styles.form}>
+        <input type="hidden" name="next" value={next} />
         <FormField
           id="email"
           name="email"
@@ -143,7 +146,10 @@ export default function LoginPage() {
 
       <p className={styles.footer}>
         Don&#x2019;t have an account?{" "}
-        <Link href="/signup" className={styles.footerLink}>
+        <Link
+          href={{ pathname: "/signup", query: { next } }}
+          className={styles.footerLink}
+        >
           Sign up
         </Link>
         {" · "}

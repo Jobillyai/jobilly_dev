@@ -45,6 +45,10 @@ export default async function AdminCandidateAppliedJobsPage({
     notFound();
   }
 
+  if (!candidate.hasManagedApplications) {
+    redirect("/admin/jobs");
+  }
+
   const defaultInterestedRole = resolveCandidateJobRole(candidate) ?? "";
   const [jobs, previousSearches, appliedCount] = await Promise.all([
     getCandidateAppliedJobListings(

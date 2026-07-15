@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
 import { isAdminPortalRole } from "@/lib/auth/roles";
+import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
 
 function routeNeedsAuthValidation(pathname: string): boolean {
   if (pathname.startsWith("/dashboard")) {
@@ -109,11 +110,20 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isProtectedPage && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const requestedPath = `${pathname}${request.nextUrl.search}`;
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set(
+      "next",
+      sanitizeCandidateRedirectPath(requestedPath),
+    );
+    return NextResponse.redirect(loginUrl);
   }
 
   if (isAuthEntryPage && isLoggedIn) {
-    const redirectUrl = new URL(isAdmin ? "/admin" : "/dashboard", request.url);
+    const candidateNext = sanitizeCandidateRedirectPath(
+      request.nextUrl.searchParams.get("next"),
+    );
+    const redirectUrl = new URL(isAdmin ? "/admin" : candidateNext, request.url);
     return NextResponse.redirect(redirectUrl);
   }
 

@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
 import { signupAction, type SignupState } from "@/server/actions/auth";
 import { PersonNameFields } from "@/components/auth/person-name-fields";
 import { FormField } from "@/components/auth/form-field";
@@ -13,6 +15,8 @@ import styles from "@/components/auth/auth-page.module.css";
 const initialState: SignupState = {};
 
 export default function SignupPage() {
+  const searchParams = useSearchParams();
+  const next = sanitizeCandidateRedirectPath(searchParams.get("next"));
   const [state, setState] = useState<SignupState>(initialState);
   const [pending, startTransition] = useTransition();
 
@@ -47,10 +51,11 @@ export default function SignupPage() {
         </p>
       </div>
 
-      <GoogleAuthButton label="Sign up with Google" />
+      <GoogleAuthButton label="Sign up with Google" next={next} />
       <AuthDivider />
 
       <form action={handleSubmit} className={styles.form}>
+        <input type="hidden" name="next" value={next} />
         <PersonNameFields
           firstName={{ error: state?.fieldErrors?.firstName }}
           lastName={{ error: state?.fieldErrors?.lastName }}
@@ -86,7 +91,10 @@ export default function SignupPage() {
 
       <p className={styles.footer}>
         Already have an account?{" "}
-        <Link href="/login" className={styles.footerLink}>
+        <Link
+          href={`/login?next=${encodeURIComponent(next)}`}
+          className={styles.footerLink}
+        >
           Log in
         </Link>
       </p>

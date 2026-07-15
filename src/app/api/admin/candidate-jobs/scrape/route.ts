@@ -7,7 +7,7 @@ import {
   staffCanScrapeJobs,
   toStaffContext,
 } from "@/lib/auth/admin";
-import { getAdminCandidateById } from "@/server/services/admin-dashboard";
+import { getManagedApplicationsCandidateById } from "@/server/services/admin-dashboard";
 import {
   getCandidateJobListings,
   runCandidateJobScrapeForSources,
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
   const sources = sourcesFromMode(sourceMode);
   const searchRole = normalizeSearchRole(interestedRole);
 
-  const candidate = await getAdminCandidateById(candidateId, staff);
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
   }

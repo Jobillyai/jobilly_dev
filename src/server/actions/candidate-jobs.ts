@@ -8,7 +8,7 @@ import {
   toStaffContext,
 } from "@/lib/auth/admin";
 import { parseExperienceYears } from "@/lib/format-experience-years";
-import { getAdminCandidateById } from "@/server/services/admin-dashboard";
+import { getManagedApplicationsCandidateById } from "@/server/services/admin-dashboard";
 import {
   scrapeSingleCandidateJobs,
   updateCandidateJobSearchRole,
@@ -98,7 +98,7 @@ export async function listCandidatePreviousSearchesAction(
     return { error: portalError };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, staff);
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -132,7 +132,7 @@ export async function loadPreviousSearchJobsAction(
     return { error: portalError };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, staff);
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -180,7 +180,7 @@ export async function loadCandidateJobsForRoleAction(
     return { error: portalError };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, staff);
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -229,7 +229,7 @@ export async function prepareCandidateJobSearchAction(
     return { error: portalError };
   }
 
-  let candidate = await getAdminCandidateById(candidateId, staff);
+  let candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -261,7 +261,7 @@ export async function prepareCandidateJobSearchAction(
       }
     }
 
-    const refreshed = await getAdminCandidateById(candidateId, staff);
+    const refreshed = await getManagedApplicationsCandidateById(candidateId, staff);
     if (refreshed) {
       candidate = refreshed;
     }
@@ -321,7 +321,7 @@ export async function loadCandidateAppliedJobsAction(
     return { error: portalError };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, staff);
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -351,7 +351,7 @@ export async function refreshCandidateJobsAction(
     return { error: portalError };
   }
 
-  let candidate = await getAdminCandidateById(candidateId, staff);
+  let candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -381,7 +381,7 @@ export async function refreshCandidateJobsAction(
       }
     }
 
-    const refreshed = await getAdminCandidateById(candidateId, staff);
+    const refreshed = await getManagedApplicationsCandidateById(candidateId, staff);
     if (refreshed) {
       candidate = refreshed;
     }
@@ -436,7 +436,10 @@ export async function updateCandidateJobRoleAction(
     return { error: "Only assigned admins can edit candidate job roles." };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const candidate = await getManagedApplicationsCandidateById(
+    candidateId,
+    toStaffContext(admin),
+  );
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -465,7 +468,10 @@ export async function updateCandidateExperienceYearsAction(
     return { error: "Only assigned admins can edit candidate experience." };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const candidate = await getManagedApplicationsCandidateById(
+    candidateId,
+    toStaffContext(admin),
+  );
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -496,7 +502,10 @@ export async function scrapeSingleCandidateJobsAction(
     return { error: "Only assigned admins can run job searches." };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, toStaffContext(admin));
+  const candidate = await getManagedApplicationsCandidateById(
+    candidateId,
+    toStaffContext(admin),
+  );
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -572,7 +581,7 @@ export async function toggleCandidateJobSelectedAction(
     return { error: portalError };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, staff);
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -602,7 +611,7 @@ export async function toggleCandidateJobAppliedAction(
     return { error: portalError };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, staff);
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -641,7 +650,7 @@ export async function uploadAppliedJobResumeAction(
     return { error: portalError };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, staff);
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" };
   }
@@ -711,7 +720,9 @@ async function authorizeCandidateAccess(
   | { error: string }
   | {
       admin: NonNullable<Awaited<ReturnType<typeof getAdminUser>>>;
-      candidate: NonNullable<Awaited<ReturnType<typeof getAdminCandidateById>>>;
+      candidate: NonNullable<
+        Awaited<ReturnType<typeof getManagedApplicationsCandidateById>>
+      >;
     }
 > {
   const admin = await getAdminUser();
@@ -725,7 +736,7 @@ async function authorizeCandidateAccess(
     return { error: portalError };
   }
 
-  const candidate = await getAdminCandidateById(candidateId, staff);
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return { error: "Candidate not found" as const };
   }

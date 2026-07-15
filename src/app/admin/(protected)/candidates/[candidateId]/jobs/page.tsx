@@ -47,6 +47,10 @@ export default async function AdminCandidateJobsPage({
     notFound();
   }
 
+  if (!candidate.hasManagedApplications) {
+    redirect("/admin/jobs");
+  }
+
   const defaultInterestedRole = resolveCandidateJobRole(candidate) ?? "";
 
   const jobs = await getCandidateJobListings(candidate.id, defaultInterestedRole);

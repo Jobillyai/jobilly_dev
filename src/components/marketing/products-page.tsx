@@ -92,6 +92,12 @@ function ServiceCard({ service }: { service: CandidateService }) {
   const Icon = serviceIcons[service.id] ?? Sparkles;
   const isComingSoon = service.status === "coming_soon";
   const phase = servicePhases.find((item) => item.id === service.phase);
+  const premiumPlanId =
+    service.id === "mock-interviews" ? "mock-interviews" : "job-applications";
+  const checkoutHref = {
+    pathname: "/signup",
+    query: { next: `/dashboard/plans?plan=${premiumPlanId}` },
+  };
 
   return (
     <article
@@ -127,13 +133,13 @@ function ServiceCard({ service }: { service: CandidateService }) {
         </ul>
       </div>
 
-      {service.dashboardHref && !isComingSoon ? (
+      {service.tier === "premium" ? (
+        <Link href={checkoutHref} className={styles.cardLink}>
+          Select plan <ArrowRight size={14} aria-hidden />
+        </Link>
+      ) : service.dashboardHref && !isComingSoon ? (
         <Link href={service.dashboardHref} className={styles.cardLink}>
           Open in portal <ArrowRight size={14} aria-hidden />
-        </Link>
-      ) : service.tier === "premium" ? (
-        <Link href="/signup" className={styles.cardLink}>
-          Subscribe <ArrowRight size={14} aria-hidden />
         </Link>
       ) : (
         <span className={styles.cardLinkMuted}>
@@ -273,7 +279,13 @@ export function ProductsPage() {
               </ul>
             </div>
 
-            <Link href="/signup" className={`${shell.btnPrimary} ${styles.planCta}`}>
+            <Link
+              href={{
+                pathname: "/signup",
+                query: { next: `/dashboard/plans?plan=${activePlan.id}` },
+              }}
+              className={`${shell.btnPrimary} ${styles.planCta}`}
+            >
               {activePlan.ctaLabel}
               <ArrowRight size={16} aria-hidden />
             </Link>

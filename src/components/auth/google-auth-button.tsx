@@ -5,6 +5,7 @@ import styles from "./auth-page.module.css";
 
 type GoogleAuthButtonProps = {
   label: string;
+  next?: string;
 };
 
 function GoogleIcon() {
@@ -30,10 +31,13 @@ function GoogleIcon() {
   );
 }
 
-export function GoogleAuthButton({ label }: GoogleAuthButtonProps) {
+export function GoogleAuthButton({ label, next }: GoogleAuthButtonProps) {
+  const href = next
+    ? { pathname: "/auth/google", query: { next } }
+    : { pathname: "/auth/google" };
   return (
     <div className={styles.googleAuthBlock}>
-      <Link href="/auth/google" className={styles.googleBtn}>
+      <Link href={href} className={styles.googleBtn}>
         <GoogleIcon />
         {label}
       </Link>

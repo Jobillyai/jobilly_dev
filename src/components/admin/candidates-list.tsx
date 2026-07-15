@@ -9,6 +9,7 @@ import { formatDisplayName } from "@/lib/format-display-name";
 import { formatExperienceYears } from "@/lib/format-experience-years";
 import { formatCandidateGender } from "@/lib/candidate-profile-options";
 import { formatTimezoneLabel } from "@/lib/candidate-location-options";
+import { getPremiumPlan } from "@/lib/candidate-services";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
@@ -75,6 +76,9 @@ function CandidateRow({
   const submission = candidate.submission;
   const detailsId = `candidate-details-${candidate.id}`;
   const assignedMentor = mentors.find((mentor) => mentor.id === assignedMentorId);
+  const planLabel = candidate.subscriptionPlan
+    ? getPremiumPlan(candidate.subscriptionPlan)?.shortLabel
+    : "No paid plan";
 
   function handleAssign() {
     if (!selectedMentorId) {
@@ -119,6 +123,12 @@ function CandidateRow({
             Target role: {resolveCandidateJobRole(candidate) || "—"}
             {" · "}
             Years exp.: {formatExperienceYears(candidate.experienceYears) || "—"}
+          </p>
+          <p className={styles.roleMeta}>
+            Candidate plan: <strong>{planLabel}</strong>
+            {" · "}
+            Managed applications:{" "}
+            <strong>{candidate.hasManagedApplications ? "Eligible" : "Not included"}</strong>
           </p>
           {isManager ? (
             <p className={styles.mentorMeta}>

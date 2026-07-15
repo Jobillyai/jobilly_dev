@@ -17,3 +17,13 @@ export function sanitizeInternalRedirectPath(
 
   return path;
 }
+
+export function sanitizeCandidateRedirectPath(
+  path: string | null | undefined,
+  fallback = "/dashboard",
+): string {
+  const sanitized = sanitizeInternalRedirectPath(path ?? fallback, fallback);
+  return sanitized === "/dashboard" || sanitized.startsWith("/dashboard/")
+    ? sanitized
+    : fallback;
+}

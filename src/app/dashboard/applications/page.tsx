@@ -1,10 +1,15 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { AppliedJobsList } from "@/components/dashboard/applied-jobs-list";
 import { PortalDateLabel } from "@/components/layout/portal-date-label";
 import { getSessionUser } from "@/lib/auth/session";
 import { getCandidateAppliedJobs } from "@/server/services/candidate-jobs";
+import {
+  entitlementsForPlan,
+  getCandidateSubscription,
+} from "@/server/services/candidate-subscriptions";
 import styles from "../dashboard.module.css";
 import pageStyles from "./applications.module.css";
 
@@ -15,7 +20,12 @@ export default async function CandidateApplicationsPage() {
     redirect("/login");
   }
 
-  const applications = await getCandidateAppliedJobs(user.id);
+  const subscription = await getCandidateSubscription(user.id);
+  const hasManagedApplications =
+    entitlementsForPlan(subscription?.plan).hasManagedApplications;
+  const applications = hasManagedApplications
+    ? await getCandidateAppliedJobs(user.id)
+    : [];
 
   return (
     <div className={styles.page}>
@@ -33,7 +43,21 @@ export default async function CandidateApplicationsPage() {
 
         <PortalDateLabel />
 
-        {applications.length === 0 ? (
+        {!hasManagedApplications ? (
+          <div className={pageStyles.emptyCard}>
+            <p className={pageStyles.emptyTitle}>Managed Applications is not in your plan</p>
+            <p className={pageStyles.emptyText}>
+              Upgrade to the Full Bundle to add role matching, tailored resumes, and
+              applications submitted by the Jobilly team.
+            </p>
+            <Link
+              href="/dashboard/plans?plan=mock-and-job"
+              className={pageStyles.upgradeButton}
+            >
+              Upgrade plan
+            </Link>
+          </div>
+        ) : applications.length === 0 ? (
           <div className={pageStyles.emptyCard}>
             <p className={pageStyles.emptyTitle}>No applications yet</p>
             <p className={pageStyles.emptyText}>

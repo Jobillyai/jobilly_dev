@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth/admin";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { formatExperienceYears } from "@/lib/format-experience-years";
+import { getPremiumPlan } from "@/lib/candidate-services";
 import { getAdminCandidates } from "@/server/services/admin-dashboard";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import { createClient } from "@/server/db/supabase-server";
@@ -81,6 +82,7 @@ export default async function AdminJobsPage() {
                     <th>Target role</th>
                     <th>Years exp.</th>
                     <th>Advisory</th>
+                    <th>Plan</th>
                     <th>Jobs found</th>
                     <th>Shortlisted</th>
                     <th>Applied</th>
@@ -118,16 +120,27 @@ export default async function AdminJobsPage() {
                             {candidate.submission ? "Submitted" : "None"}
                           </span>
                         </td>
+                        <td>
+                          {candidate.subscriptionPlan
+                            ? getPremiumPlan(candidate.subscriptionPlan)?.shortLabel
+                            : "No paid plan"}
+                        </td>
                         <td>{totalJobs}</td>
                         <td>{selectedJobs}</td>
                         <td>{appliedJobs}</td>
                         <td>
-                          <Link
-                            href={`/admin/candidates/${candidate.id}/jobs`}
-                            className={styles.jobsBtn}
-                          >
-                            Apply for jobs
-                          </Link>
+                          {candidate.hasManagedApplications ? (
+                            <Link
+                              href={`/admin/candidates/${candidate.id}/jobs`}
+                              className={styles.jobsBtn}
+                            >
+                              Apply for jobs
+                            </Link>
+                          ) : (
+                            <span className={`${styles.badge} ${styles.badgePending}`}>
+                              Plan not eligible
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );

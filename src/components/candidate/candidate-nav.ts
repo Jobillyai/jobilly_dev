@@ -2,6 +2,7 @@ import {
   Briefcase,
   Calendar,
   Compass,
+  CreditCard,
   LayoutDashboard,
   UserCircle,
   type LucideIcon,
@@ -11,6 +12,7 @@ type CandidateNavHref =
   | "/dashboard"
   | "/dashboard/career-advisory"
   | "/dashboard/applications"
+  | "/dashboard/plans"
   | "/dashboard/calendar"
   | "/dashboard/profile";
 
@@ -42,6 +44,13 @@ export const CANDIDATE_NAV_ITEMS = [
     label: "Applications",
     mobileLabel: "Jobs",
     icon: Briefcase,
+    exact: false,
+  },
+  {
+    href: "/dashboard/plans",
+    label: "Plans",
+    mobileLabel: "Plans",
+    icon: CreditCard,
     exact: false,
   },
   {

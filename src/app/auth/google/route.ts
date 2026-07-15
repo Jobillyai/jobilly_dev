@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getOriginFromRequest } from "@/lib/auth/app-origin";
+import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
 import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
 
 /**
@@ -9,6 +10,7 @@ import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
  */
 export async function GET(request: NextRequest) {
   const origin = getOriginFromRequest(request);
+  const next = sanitizeCandidateRedirectPath(request.nextUrl.searchParams.get("next"));
   let cookieResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
       queryParams: {
         prompt: "select_account",
       },
