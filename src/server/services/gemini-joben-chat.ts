@@ -5,6 +5,15 @@ import {
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 
+/** Tried in order when the previous model is rate-limited or unavailable.
+ *  Each model has its own free-tier quota bucket, so falling back keeps
+ *  conversational answers flowing instead of canned one-liners. */
+const FALLBACK_MODELS = [
+  "gemini-3-flash-preview",
+  "gemini-3.1-flash-lite",
+  "gemini-flash-lite-latest",
+];
+
 function getGeminiApiKey(): string | null {
   return (
     process.env.GEMINI_API_KEY?.trim() ||
@@ -46,7 +55,9 @@ export async function runGeminiJobenChat(input: {
     };
   }
 
-  const history = (input.history ?? []).slice(-10);
+  // Preserve enough recent turns for natural follow-ups without letting an
+  // unusually long conversation crowd out the current request.
+  const history = (input.history ?? []).slice(-16);
   const contents = [
     ...history.map((turn) => ({
       role: turn.role === "assistant" ? ("model" as const) : ("user" as const),
@@ -55,48 +66,68 @@ export async function runGeminiJobenChat(input: {
     { role: "user" as const, parts: [{ text: input.message }] },
   ];
 
-  const model = getJobenModel();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const models = [...new Set([getJobenModel(), ...FALLBACK_MODELS])];
+  let lastErrorStatus = 500;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: buildJobenSystemPrompt() }],
-      },
-      contents,
-      generationConfig: {
-        maxOutputTokens: 1024,
-        temperature: 0.7,
-        // Disable hidden "thinking" tokens on 2.5-flash so the full budget
-        // goes to the visible reply and answers don't cut off mid-sentence.
-        thinkingConfig: { thinkingBudget: 0 },
-      },
-    }),
-  });
+  for (const model of models) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    console.error(`Joben Gemini error ${response.status}:`, errorBody.slice(0, 500));
-    return { error: friendlyGeminiError(response.status) };
+    // Generous budget: on Gemini 3 models thinking tokens also count
+    // against maxOutputTokens, so leave headroom for the visible reply.
+    const generationConfig: Record<string, unknown> = {
+      maxOutputTokens: 2048,
+      temperature: 0.75,
+    };
+    if (model.startsWith("gemini-2.5")) {
+      // Disable hidden "thinking" tokens on 2.5 models so the full budget
+      // goes to the visible reply and answers don't cut off mid-sentence.
+      // Older models reject thinkingConfig, so only send it where supported.
+      generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: buildJobenSystemPrompt() }],
+        },
+        contents,
+        generationConfig,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`Joben Gemini error ${response.status} (${model}):`, errorBody.slice(0, 500));
+      lastErrorStatus = response.status;
+      // Rate limit / overload / unknown model: try the next model in line.
+      if (response.status === 429 || response.status >= 500 || response.status === 404) {
+        continue;
+      }
+      return { error: friendlyGeminiError(response.status) };
+    }
+
+    const payload = (await response.json()) as GeminiResponse;
+
+    if (payload.error?.message) {
+      console.error(`Joben Gemini payload error (${model}):`, payload.error);
+      lastErrorStatus = payload.error.code ?? 500;
+      continue;
+    }
+
+    const text = payload.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? "")
+      .join("\n")
+      .trim();
+
+    if (!text) {
+      lastErrorStatus = 500;
+      continue;
+    }
+
+    return { content: text };
   }
 
-  const payload = (await response.json()) as GeminiResponse;
-
-  if (payload.error?.message) {
-    console.error("Joben Gemini payload error:", payload.error);
-    return { error: friendlyGeminiError(payload.error.code ?? 500) };
-  }
-
-  const text = payload.candidates?.[0]?.content?.parts
-    ?.map((part) => part.text ?? "")
-    .join("\n")
-    .trim();
-
-  if (!text) {
-    return { error: "Joben received an empty response. Try again." };
-  }
-
-  return { content: text };
+  return { error: friendlyGeminiError(lastErrorStatus) };
 }

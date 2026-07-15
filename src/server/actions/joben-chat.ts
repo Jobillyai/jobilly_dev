@@ -22,11 +22,6 @@ export async function askJobenAction(
     return { error: "Keep your message under 1,000 characters." };
   }
 
-  const marketingReply = respondToJobMarketingRequest(trimmed);
-  if (marketingReply) {
-    return { content: marketingReply.content };
-  }
-
   const sanitizedHistory = history
     .filter(
       (turn) =>
@@ -34,7 +29,7 @@ export async function askJobenAction(
         typeof turn.content === "string" &&
         turn.content.trim(),
     )
-    .slice(-10)
+    .slice(-16)
     .map((turn) => ({
       role: turn.role,
       content: turn.content.trim().slice(0, 2000),
@@ -47,6 +42,13 @@ export async function askJobenAction(
 
   if ("content" in aiResult) {
     return { content: enrichJobenReply(aiResult.content, trimmed) };
+  }
+
+  // Keep high-intent marketing requests useful even when Gemini is unavailable.
+  // Normally Gemini handles them so the reply can use context and sound natural.
+  const marketingReply = respondToJobMarketingRequest(trimmed);
+  if (marketingReply) {
+    return { content: marketingReply.content };
   }
 
   const fallback = respondToJobenQuery(trimmed);
