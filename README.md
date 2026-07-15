@@ -1,4 +1,4 @@
-# Jobilly.ai
+# Jobilly.AI
 
 **From Graduation to First Job — Guided by AI.**
 
