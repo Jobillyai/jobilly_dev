@@ -23,6 +23,7 @@ export default async function CareerAdvisoryPage() {
           defaultLastName={profile.lastName}
           defaultEmail={profile.email}
           existingIntake={existingIntake}
+          serverNowMs={Date.now()}
           initialResumeFileName={profile.resumeFileName}
           initialResumePreviewUrl={profile.resumePreviewUrl}
         />

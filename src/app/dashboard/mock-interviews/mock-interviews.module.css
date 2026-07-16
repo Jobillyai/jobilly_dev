@@ -1,0 +1,465 @@
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 152px;
+}
+
+.previewBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--jb-brand-border);
+  border-radius: 999px;
+  background: var(--jb-brand-soft);
+  color: var(--jb-brand);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.startButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--jb-portal-gradient);
+  box-shadow: 0 10px 22px var(--jb-brand-glow);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.startButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 13px 28px var(--jb-brand-glow);
+}
+
+.startButton span {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  border: 1px solid var(--jb-brand-border);
+  border-radius: 14px;
+  background: var(--jb-brand-soft);
+  color: var(--jb-ink-secondary);
+}
+
+.notice svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--jb-brand);
+}
+
+.notice p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.lockedCard {
+  padding: 46px 34px;
+  border: 1px solid var(--jb-portal-panel-border);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 85% 10%, var(--jb-brand-soft), transparent 38%),
+    var(--jb-portal-card);
+  box-shadow: var(--jb-portal-shadow);
+  text-align: center;
+}
+
+.lockedIcon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--jb-portal-gradient);
+  color: #fff;
+  box-shadow: 0 10px 24px var(--jb-brand-glow);
+}
+
+.lockedEyebrow,
+.sectionEyebrow {
+  margin: 0 0 6px;
+  color: var(--jb-brand);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.lockedTitle {
+  margin: 0 0 10px;
+  color: var(--jb-ink);
+  font-size: clamp(22px, 3vw, 29px);
+  letter-spacing: -0.03em;
+}
+
+.lockedText {
+  max-width: 650px;
+  margin: 0 auto;
+  color: var(--jb-ink-secondary);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.upgradeActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 17px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.primaryButton {
+  background: var(--jb-portal-gradient);
+  color: #fff;
+  box-shadow: 0 10px 22px var(--jb-brand-glow);
+}
+
+.secondaryButton {
+  border: 1px solid var(--jb-brand-border);
+  background: var(--jb-portal-card);
+  color: var(--jb-brand);
+}
+
+.primaryButton:hover,
+.secondaryButton:hover {
+  transform: translateY(-1px);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.summaryCard {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--jb-portal-panel-border);
+  border-radius: 18px;
+  background: var(--jb-portal-card);
+  box-shadow: var(--jb-portal-shadow);
+}
+
+.summaryIcon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--jb-brand-soft);
+  color: var(--jb-brand);
+}
+
+.summaryCard div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.summaryCard strong {
+  color: var(--jb-ink);
+  font-size: 21px;
+  line-height: 1;
+}
+
+.summaryCard div span {
+  overflow: hidden;
+  color: var(--jb-ink-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel {
+  margin-bottom: 18px;
+  padding: 24px;
+  border: 1px solid var(--jb-portal-panel-border);
+  border-radius: 22px;
+  background: var(--jb-portal-card);
+  box-shadow: var(--jb-portal-shadow);
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+  color: var(--jb-ink);
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+
+.sectionHeading > span {
+  color: var(--jb-ink-muted);
+  font-size: 12px;
+}
+
+.scoreGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.scoreCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--jb-border);
+  border-radius: 18px;
+  background: var(--jb-surface-subtle);
+}
+
+.donut {
+  width: 112px;
+  height: 112px;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.donutTrack,
+.donutValue {
+  fill: none;
+  stroke-width: 12;
+}
+
+.donutTrack {
+  stroke: var(--jb-border);
+}
+
+.donutValue {
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.donutScore {
+  fill: var(--jb-ink);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.donutUnit {
+  fill: var(--jb-ink-muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.scoreLabel {
+  margin: 0 0 5px;
+  color: var(--jb-ink);
+  font-size: 14px;
+}
+
+.scoreHint {
+  margin: 0;
+  color: var(--jb-ink-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.sessionList {
+  display: grid;
+}
+
+.sessionRow {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(160px, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 2px;
+  border-top: 1px solid var(--jb-border);
+}
+
+.sessionRow:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.sessionRole {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sessionMark {
+  display: grid;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--jb-portal-gradient);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.sessionRole h3 {
+  margin: 0 0 3px;
+  overflow: hidden;
+  color: var(--jb-ink);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionRole p,
+.sessionMeta span,
+.sessionResult span {
+  margin: 0;
+  color: var(--jb-ink-muted);
+  font-size: 12px;
+}
+
+.sessionMeta {
+  display: flex;
+  gap: 16px;
+}
+
+.sessionResult {
+  display: grid;
+  min-width: 74px;
+  justify-items: end;
+  gap: 2px;
+}
+
+.sessionResult strong {
+  color: var(--jb-brand);
+  font-size: 20px;
+}
+
+@media (max-width: 980px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scoreGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .scoreCard {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .headerActions {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .headerActions {
+    width: 100%;
+  }
+
+  .previewBadge {
+    display: none;
+  }
+
+  .startButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lockedCard {
+    padding: 34px 20px;
+  }
+
+  .upgradeActions,
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .summaryCard {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 15px;
+  }
+
+  .panel {
+    padding: 18px 15px;
+    border-radius: 18px;
+  }
+
+  .scoreCard {
+    justify-content: flex-start;
+    padding: 14px;
+  }
+
+  .donut {
+    width: 96px;
+    height: 96px;
+  }
+
+  .sessionRow {
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+  }
+
+  .sessionMeta {
+    grid-column: 1 / -1;
+    padding-left: 52px;
+  }
+}
+
+@media (max-width: 390px) {
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}

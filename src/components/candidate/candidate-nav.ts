@@ -4,6 +4,7 @@ import {
   Compass,
   CreditCard,
   LayoutDashboard,
+  Mic,
   UserCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -12,6 +13,7 @@ type CandidateNavHref =
   | "/dashboard"
   | "/dashboard/career-advisory"
   | "/dashboard/applications"
+  | "/dashboard/mock-interviews"
   | "/dashboard/plans"
   | "/dashboard/calendar"
   | "/dashboard/profile";
@@ -44,6 +46,13 @@ export const CANDIDATE_NAV_ITEMS = [
     label: "Applications",
     mobileLabel: "Jobs",
     icon: Briefcase,
+    exact: false,
+  },
+  {
+    href: "/dashboard/mock-interviews",
+    label: "Mock Interviews",
+    mobileLabel: "Mocks",
+    icon: Mic,
     exact: false,
   },
   {

@@ -14,20 +14,18 @@ export function SiteFooter({ user = null }: SiteFooterProps) {
   const pathname = usePathname();
   const isAdminRoute = pathname.startsWith("/admin");
 
-  if (isAdminRoute || isAuthRoute(pathname)) {
+  if (user || isAdminRoute || isAuthRoute(pathname)) {
     return null;
   }
 
-  const homeHref = user ? "/dashboard" : "/";
-
   return (
     <footer className={styles.footer}>
-      <JobillyLogo href={homeHref} onDark className={styles.footerLogo} />
+      <JobillyLogo href="/" onDark className={styles.footerLogo} />
       <div className={styles.footerLinks}>
         <Link href="/privacy">Privacy</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/contact">Contact</Link>
-        {!user ? <Link href="/admin/login">Admin</Link> : null}
+        <Link href="/admin/login">Admin</Link>
       </div>
       <div className={styles.footerCopy}>
         &#xA9; 2026 Jobilly.ai &#x2014; Built for graduates.

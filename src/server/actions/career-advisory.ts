@@ -15,6 +15,8 @@ import {
   validateSessionBookingTime,
 } from "@/lib/career-advisory/booking-window";
 
+const CAREER_ADVISORY_COOLDOWN_MS = 60 * 60 * 1000;
+
 const intakeSchema = z.object({
   firstName: z.string().min(1, "Enter your first name").max(100),
   lastName: z.string().min(1, "Enter your last name").max(100),
@@ -47,6 +49,7 @@ export type CareerAdvisoryState = {
   /** True when no mentor is assigned yet: candidate got a "we received it" email instead of a Meet invite. */
   ackEmailSent?: boolean;
   sessionScheduledAt?: string;
+  cooldownUntil?: string;
   submittedIntake?: CandidateCareerAdvisoryIntake;
   error?: string;
   fieldErrors?: Partial<
@@ -76,6 +79,7 @@ function buildSubmittedIntake(input: {
   sessionScheduledAt: string;
   inviteSentAt: string | null;
   googleMeetLink: string | null;
+  candidateSubmittedAt: string;
   bookedAt: string;
   updatedAt: string;
 }): CandidateCareerAdvisoryIntake {
@@ -90,6 +94,7 @@ function buildSubmittedIntake(input: {
     sessionScheduledAt: input.sessionScheduledAt,
     inviteSentAt: input.inviteSentAt,
     googleMeetLink: input.googleMeetLink,
+    candidateSubmittedAt: input.candidateSubmittedAt,
     bookedAt: input.bookedAt,
     updatedAt: input.updatedAt,
   };
@@ -178,6 +183,29 @@ export async function submitCareerAdvisoryAction(
     return { error: "You must be logged in to submit this form." };
   }
 
+  const admin = createAdminClient();
+  const { data: existingIntake, error: existingIntakeError } = await admin
+    .from("career_advisory_intakes")
+    .select("candidate_submitted_at")
+    .eq("candidate_id", authData.user.id)
+    .maybeSingle();
+
+  if (existingIntakeError) {
+    return { error: "Could not verify your booking status. Please try again." };
+  }
+
+  if (existingIntake?.candidate_submitted_at) {
+    const cooldownUntilMs =
+      new Date(existingIntake.candidate_submitted_at).getTime() +
+      CAREER_ADVISORY_COOLDOWN_MS;
+    if (Number.isFinite(cooldownUntilMs) && cooldownUntilMs > Date.now()) {
+      return {
+        error: "Your career advisory form is locked for one hour after booking.",
+        cooldownUntil: new Date(cooldownUntilMs).toISOString(),
+      };
+    }
+  }
+
   const userReady = await ensurePublicUserRecord(authData.user);
   if (userReady.error) {
     console.error("ensurePublicUserRecord failed:", userReady.error);
@@ -187,8 +215,8 @@ export async function submitCareerAdvisoryAction(
     };
   }
 
-  const admin = createAdminClient();
   const fullName = combineFirstLastName(parsed.data.firstName, parsed.data.lastName);
+  const candidateSubmittedAt = new Date().toISOString();
   const intakePayload = {
     candidate_id: authData.user.id,
     name: fullName,
@@ -199,14 +227,15 @@ export async function submitCareerAdvisoryAction(
     is_veteran: false,
     interested_technology: parsed.data.interestedTechnology,
     session_scheduled_at: sessionStart.toISOString(),
-    updated_at: new Date().toISOString(),
+    candidate_submitted_at: candidateSubmittedAt,
+    updated_at: candidateSubmittedAt,
   };
 
   const { data, error } = await admin
     .from("career_advisory_intakes")
     .upsert(intakePayload, { onConflict: "candidate_id" })
     .select(
-      "name, email, phone, graduation_details, branch, is_veteran, interested_technology, invite_sent_at, session_scheduled_at, google_meet_link, created_at, updated_at",
+      "name, email, phone, graduation_details, branch, is_veteran, interested_technology, invite_sent_at, session_scheduled_at, google_meet_link, candidate_submitted_at, created_at, updated_at",
     )
     .single();
 
@@ -230,6 +259,7 @@ export async function submitCareerAdvisoryAction(
   let googleMeetLink: string | null = null;
   let bookedAt = new Date().toISOString();
   let updatedAt = bookedAt;
+  let submittedAt = candidateSubmittedAt;
 
   if (data) {
     bookedAt = data.created_at;
@@ -237,6 +267,7 @@ export async function submitCareerAdvisoryAction(
     sessionScheduledAt = data.session_scheduled_at ?? sessionScheduledAt;
     inviteSentAt = data.invite_sent_at;
     googleMeetLink = data.google_meet_link;
+    submittedAt = data.candidate_submitted_at ?? candidateSubmittedAt;
   }
 
   // Mentor assignment decides which email the candidate receives: an assigned
@@ -284,6 +315,7 @@ export async function submitCareerAdvisoryAction(
       sessionScheduledAt,
       inviteSentAt,
       googleMeetLink,
+      candidateSubmittedAt: submittedAt,
       bookedAt,
       updatedAt,
     });
@@ -349,6 +381,7 @@ export async function submitCareerAdvisoryAction(
     sessionScheduledAt,
     inviteSentAt,
     googleMeetLink,
+    candidateSubmittedAt: submittedAt,
     bookedAt,
     updatedAt,
   });

@@ -188,6 +188,7 @@ export type Database = {
           google_meet_link: string | null;
           session_scheduled_at: string | null;
           invite_sent_at: string | null;
+          candidate_submitted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -204,6 +205,7 @@ export type Database = {
           google_meet_link?: string | null;
           session_scheduled_at?: string | null;
           invite_sent_at?: string | null;
+          candidate_submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
