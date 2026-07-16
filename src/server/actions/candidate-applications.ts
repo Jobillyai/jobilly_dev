@@ -2,14 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth/session";
+import { isCandidateRole } from "@/lib/auth/roles";
 import { markAppliedJobsAsViewed } from "@/server/services/candidate-jobs";
+import { getCandidateEntitlements } from "@/server/services/candidate-subscriptions";
 import { createClient } from "@/server/db/supabase-server";
 import { createSignedResumeUrl } from "@/server/services/resume-storage";
 
 export async function markApplicationsViewedAction(): Promise<{ success: true } | { error: string }> {
   const user = await getSessionUser();
-  if (!user) {
+  if (!user || !isCandidateRole(user.role)) {
     return { error: "Unauthorized" };
+  }
+
+  const entitlements = await getCandidateEntitlements(user.id);
+  if (!entitlements.hasManagedApplications) {
+    return { error: "Managed Applications is not included in your plan." };
   }
 
   await markAppliedJobsAsViewed(user.id);
@@ -24,8 +31,13 @@ export async function getApplicationResumeDownloadAction(jobId: string): Promise
   | { error: string }
 > {
   const user = await getSessionUser();
-  if (!user) {
+  if (!user || !isCandidateRole(user.role)) {
     return { error: "Unauthorized" };
+  }
+
+  const entitlements = await getCandidateEntitlements(user.id);
+  if (!entitlements.hasManagedApplications) {
+    return { error: "Managed Applications is not included in your plan." };
   }
 
   const supabase = await createClient();

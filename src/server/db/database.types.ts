@@ -118,6 +118,11 @@ export type Database = {
           billing_country: string;
           source: string;
           paid_at: string | null;
+          transaction_reference: string | null;
+          receipt_number: string | null;
+          amount_usd: number | null;
+          currency: string;
+          receipt_emailed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -140,6 +145,11 @@ export type Database = {
           billing_country?: string;
           source?: string;
           paid_at?: string | null;
+          transaction_reference?: string | null;
+          receipt_number?: string | null;
+          amount_usd?: number | null;
+          currency?: string;
+          receipt_emailed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -412,6 +422,30 @@ export type Database = {
       is_manager: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      has_managed_applications_plan: {
+        Args: { target_candidate_id: string };
+        Returns: boolean;
+      };
+      complete_mock_checkout_transaction: {
+        Args: {
+          p_user_id: string;
+          p_plan: string;
+          p_billing_name: string;
+          p_billing_email: string;
+          p_billing_phone: string;
+          p_billing_address_line1: string;
+          p_billing_address_line2: string;
+          p_billing_city: string;
+          p_billing_state: string;
+          p_billing_postal_code: string;
+          p_billing_country: string;
+          p_transaction_reference: string;
+          p_receipt_number: string;
+          p_amount_usd: number;
+          p_paid_at: string;
+        };
+        Returns: string;
       };
     };
     Enums: {

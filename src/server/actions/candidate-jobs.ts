@@ -204,7 +204,7 @@ export async function prepareCandidateJobSearchAction(
   sourceMode: JobSearchSourceMode = "all",
   interestedRole?: string,
   experienceYearsInput?: string | number | null,
-  searchKeywords?: string | null,
+  _searchKeywords?: string | null,
 ): Promise<
   | { error: string }
   | {

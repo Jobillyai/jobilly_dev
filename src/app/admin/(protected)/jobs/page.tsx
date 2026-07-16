@@ -28,6 +28,9 @@ export default async function AdminJobsPage() {
   }
 
   const candidates = await getAdminCandidates(staff);
+  const eligibleCandidates = candidates.filter(
+    (candidate) => candidate.hasManagedApplications,
+  );
 
   const supabase = await createClient();
   const { data: scrapedRows } = await supabase
@@ -51,7 +54,7 @@ export default async function AdminJobsPage() {
     counts.set(row.candidate_id, current);
   }
 
-  const jobCounts = candidates.map((candidate) => ({
+  const jobCounts = eligibleCandidates.map((candidate) => ({
     candidate,
     totalJobs: counts.get(candidate.id)?.total ?? 0,
     selectedJobs: counts.get(candidate.id)?.selected ?? 0,
@@ -69,10 +72,13 @@ export default async function AdminJobsPage() {
 
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>
-            Your assigned candidates ({candidates.length})
+            Managed Applications candidates ({eligibleCandidates.length})
           </h2>
-          {candidates.length === 0 ? (
-            <div className={styles.emptyState}>No candidates assigned to you yet.</div>
+          {eligibleCandidates.length === 0 ? (
+            <div className={styles.emptyState}>
+              No assigned candidates currently have the Job Applications or Full Bundle plan.
+              Job sheets are hidden for Free and Mock Interviews-only candidates.
+            </div>
           ) : (
             <div className={styles.tableWrap}>
               <table className={styles.table}>
@@ -138,18 +144,12 @@ export default async function AdminJobsPage() {
                         <td>{selectedJobs}</td>
                         <td>{appliedJobs}</td>
                         <td>
-                          {candidate.hasManagedApplications ? (
-                            <Link
-                              href={`/admin/candidates/${candidate.id}/jobs`}
-                              className={styles.jobsBtn}
-                            >
-                              Apply for jobs
-                            </Link>
-                          ) : (
-                            <span className={`${styles.badge} ${styles.badgePending}`}>
-                              Plan not eligible
-                            </span>
-                          )}
+                          <Link
+                            href={`/admin/candidates/${candidate.id}/jobs`}
+                            className={styles.jobsBtn}
+                          >
+                            Apply for jobs
+                          </Link>
                         </td>
                       </tr>
                     );

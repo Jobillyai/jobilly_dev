@@ -5,6 +5,7 @@ import shellStyles from "@/components/admin/admin-shell.module.css";
 import portalStyles from "@/components/candidate/portal-content.module.css";
 import { getSessionUser } from "@/lib/auth/session";
 import { getUnreadAppliedJobCount } from "@/server/services/candidate-jobs";
+import { getCandidateEntitlements } from "@/server/services/candidate-subscriptions";
 
 export default async function DashboardLayout({
   children,
@@ -17,7 +18,10 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const unreadApplications = await getUnreadAppliedJobCount(user.id);
+  const entitlements = await getCandidateEntitlements(user.id);
+  const unreadApplications = entitlements.hasManagedApplications
+    ? await getUnreadAppliedJobCount(user.id)
+    : 0;
 
   return (
     <div className={shellStyles.adminShell}>

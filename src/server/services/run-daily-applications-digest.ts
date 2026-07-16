@@ -10,6 +10,7 @@ import {
   type DailyApplicationsDigestJob,
 } from "@/server/services/daily-applications-digest-email";
 import { isJobrightListing } from "@/server/services/job-market-search";
+import { getCandidateEntitlements } from "@/server/services/candidate-subscriptions";
 
 type AppliedJobRow = {
   candidate_id: string;
@@ -92,6 +93,11 @@ export async function sendCandidateApplicationsDigest(
     skipDuplicateCheck?: boolean;
   },
 ): Promise<SendCandidateApplicationsDigestResult> {
+  const entitlements = await getCandidateEntitlements(candidateId);
+  if (!entitlements.hasManagedApplications) {
+    return { error: "Managed Applications is not included in this candidate's plan." };
+  }
+
   const onlyToday = options?.onlyToday ?? false;
   const skipDuplicateCheck = options?.skipDuplicateCheck ?? false;
   const timezone = getApplicationsDigestTimezone();
@@ -233,7 +239,10 @@ export async function runDailyApplicationsDigest(
     }
 
     if ("error" in result) {
-      if (result.error.includes("already emailed")) {
+      if (
+        result.error.includes("already emailed") ||
+        result.error.includes("not included in this candidate's plan")
+      ) {
         candidatesSkipped += 1;
         continue;
       }

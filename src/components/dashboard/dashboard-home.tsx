@@ -8,6 +8,10 @@ import {
   UserCircle,
 } from "lucide-react";
 import { formatDisplayName } from "@/lib/format-display-name";
+import {
+  getPremiumPlan,
+  type PremiumPlanId,
+} from "@/lib/candidate-services";
 import styles from "./dashboard-home.module.css";
 
 const workspaceLinks = [
@@ -43,6 +47,7 @@ const workspaceLinks = [
 
 type DashboardHomeProps = {
   userName?: string;
+  currentPlanId: PremiumPlanId | null;
   applicationCount: number;
   unreadApplicationCount: number;
   latestApplicationLabel: string | null;
@@ -89,12 +94,16 @@ function ProgressRing({ count }: { count: number }) {
 
 export function DashboardHome({
   userName,
+  currentPlanId,
   applicationCount,
   unreadApplicationCount,
   latestApplicationLabel,
   nextSessionLabel,
 }: DashboardHomeProps) {
   const displayName = userName ? formatDisplayName(userName) : "there";
+  const currentPlan = currentPlanId ? getPremiumPlan(currentPlanId) : null;
+  const needsApplicationUpgrade =
+    !currentPlanId || currentPlanId === "mock-interviews";
 
   return (
     <div className={styles.home}>
@@ -104,6 +113,32 @@ export function DashboardHome({
           <h1 className={styles.title}>Hello, {displayName}</h1>
         </div>
       </header>
+
+      <div className={styles.planBanner}>
+        <div>
+          <strong>
+            {currentPlan ? `${currentPlan.shortLabel} plan active` : "Free tier — no paid plan"}
+          </strong>
+          <span>
+            {currentPlan
+              ? needsApplicationUpgrade
+                ? " Upgrade to the Full Bundle to add managed job applications."
+                : " Your paid services are available in this portal."
+              : " Career Advisory and core candidate tools are included. Upgrade for mock interviews or managed applications."}
+          </span>
+        </div>
+        {needsApplicationUpgrade ? (
+          <Link href="/dashboard/plans" className={styles.planUpgrade}>
+            View upgrades
+            <ArrowRight size={14} aria-hidden />
+          </Link>
+        ) : (
+          <Link href="/dashboard/plans" className={styles.planUpgrade}>
+            View plan
+            <ArrowRight size={14} aria-hidden />
+          </Link>
+        )}
+      </div>
 
       <section className={styles.heroCard}>
         <div className={styles.heroContent}>

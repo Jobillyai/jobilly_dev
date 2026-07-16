@@ -1,6 +1,13 @@
 import "server-only";
-import type { PremiumPlanId } from "@/lib/candidate-services";
+import {
+  getPremiumPlan,
+  type PremiumPlanId,
+} from "@/lib/candidate-services";
 import { createAdminClient } from "@/server/db/supabase-admin";
+import {
+  sendPaymentReceiptEmail,
+  type PaymentReceiptData,
+} from "@/server/services/payment-receipt";
 
 export type CandidateSubscription = {
   id: string;
@@ -68,6 +75,8 @@ export async function getCandidateEntitlements(
 
 export async function completeMockCheckout(input: {
   userId: string;
+  candidateName: string;
+  candidateEmail: string;
   plan: PremiumPlanId;
   billingName: string;
   billingEmail: string;
@@ -78,58 +87,91 @@ export async function completeMockCheckout(input: {
   state: string;
   postalCode: string;
   country: string;
-}): Promise<{ subscriptionId?: string; error?: string }> {
+}): Promise<{
+  subscriptionId?: string;
+  receiptNumber?: string;
+  receiptEmailSent?: boolean;
+  warning?: string;
+  error?: string;
+}> {
   const admin = createAdminClient();
   const now = new Date().toISOString();
-
-  const { error: cancelError } = await admin
-    .from("job_subscriptions")
-    .update({ status: "cancelled", end_date: now.slice(0, 10), updated_at: now })
-    .eq("user_id", input.userId)
-    .eq("status", "active");
-
-  if (cancelError) {
-    return { error: cancelError.message };
+  const plan = getPremiumPlan(input.plan);
+  if (!plan) {
+    return { error: "Unknown candidate plan." };
   }
 
-  const { data: subscription, error: insertError } = await admin
-    .from("job_subscriptions")
-    .insert({
-      user_id: input.userId,
-      plan: input.plan,
-      status: "active",
-      billing_name: input.billingName,
-      billing_email: input.billingEmail,
-      billing_phone: input.billingPhone,
-      billing_address_line1: input.addressLine1,
-      billing_address_line2: input.addressLine2 || null,
-      billing_city: input.city,
-      billing_state: input.state,
-      billing_postal_code: input.postalCode,
-      billing_country: input.country,
-      source: "mock_checkout",
-      paid_at: now,
-      updated_at: now,
-    })
-    .select("id")
-    .single();
+  const unique = crypto.randomUUID().replaceAll("-", "").toUpperCase();
+  const datePart = now.slice(0, 10).replaceAll("-", "");
+  const transactionReference = `MOCK-${unique.slice(0, 16)}`;
+  const receiptNumber = `JB-${datePart}-${unique.slice(-8)}`;
 
-  if (insertError || !subscription) {
-    return { error: insertError?.message ?? "Could not create the subscription." };
+  const { data: subscriptionId, error: checkoutError } = await admin.rpc(
+    "complete_mock_checkout_transaction",
+    {
+      p_user_id: input.userId,
+      p_plan: input.plan,
+      p_billing_name: input.billingName,
+      p_billing_email: input.billingEmail,
+      p_billing_phone: input.billingPhone,
+      p_billing_address_line1: input.addressLine1,
+      p_billing_address_line2: input.addressLine2 ?? "",
+      p_billing_city: input.city,
+      p_billing_state: input.state,
+      p_billing_postal_code: input.postalCode,
+      p_billing_country: input.country,
+      p_transaction_reference: transactionReference,
+      p_receipt_number: receiptNumber,
+      p_amount_usd: plan.priceUsd,
+      p_paid_at: now,
+    },
+  );
+
+  if (checkoutError || !subscriptionId) {
+    return {
+      error: checkoutError?.message ?? "Could not complete the mock checkout.",
+    };
   }
 
-  await Promise.all([
-    admin
-      .from("candidate_profiles")
-      .upsert(
-        { user_id: input.userId, subscription_status: "active", updated_at: now },
-        { onConflict: "user_id" },
-      ),
-    admin
-      .from("users")
-      .update({ role: "subscribed_candidate" })
-      .eq("id", input.userId),
-  ]);
+  const billingAddress = [
+    input.addressLine1,
+    input.addressLine2,
+    input.city,
+    input.state,
+    input.postalCode,
+    input.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const receipt: PaymentReceiptData = {
+    subscriptionId,
+    transactionReference,
+    receiptNumber,
+    candidateName: input.candidateName,
+    candidateEmail: input.candidateEmail,
+    billingPhone: input.billingPhone,
+    billingAddress,
+    planId: input.plan,
+    planTitle: plan.title,
+    amountUsd: plan.priceUsd,
+    currency: "USD",
+    paidAt: now,
+  };
+  const emailResult = await sendPaymentReceiptEmail(receipt);
 
-  return { subscriptionId: subscription.id };
+  if (emailResult.sent) {
+    await admin
+      .from("job_subscriptions")
+      .update({ receipt_emailed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("id", subscriptionId);
+  }
+
+  return {
+    subscriptionId,
+    receiptNumber,
+    receiptEmailSent: emailResult.sent,
+    warning: emailResult.sent
+      ? undefined
+      : "Plan activated, but the payment acknowledgement email could not be sent.",
+  };
 }

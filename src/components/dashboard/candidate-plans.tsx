@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Check, CreditCard, ShieldCheck, Sparkles, X } from "lucide-react";
 import {
   formatPlanPriceMonthly,
+  freeIncludedServices,
   getPremiumPlan,
   premiumPlans,
   type PremiumPlanId,
@@ -90,7 +91,23 @@ export function CandidatePlans({
             ))}
           </ul>
         </section>
-      ) : null}
+      ) : (
+        <section className={styles.freeSection}>
+          <div className={styles.freeBadge}>Free tier</div>
+          <h2>You are not on a paid plan</h2>
+          <p>
+            Your free candidate account includes the essentials below. Upgrade
+            when you want mock interviews, managed job applications, or both.
+          </p>
+          <ul>
+            {freeIncludedServices.map((item) => (
+              <li key={item}>
+                <Check size={15} /> {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {availablePlans.length > 0 ? (
         <section>
@@ -159,6 +176,16 @@ export function CandidatePlans({
                 <p>
                   Your mock payment was approved and the{" "}
                   <strong>{selectedPlan.title}</strong> plan is now active.
+                </p>
+                {state.receiptNumber ? (
+                  <p className={styles.receiptNumber}>
+                    Receipt: <strong>{state.receiptNumber}</strong>
+                  </p>
+                ) : null}
+                <p className={styles.receiptDelivery}>
+                  {state.receiptEmailSent
+                    ? "A PDF payment acknowledgement was emailed to you."
+                    : state.warning ?? "Your payment acknowledgement is available in QA records."}
                 </p>
                 <button type="button" onClick={() => setCheckoutOpen(false)}>
                   View my plan

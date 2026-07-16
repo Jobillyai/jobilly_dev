@@ -86,7 +86,10 @@ export const productTrustPoints = [
 ] as const;
 
 export const freeIncludedServices = [
-  "Career Advisory sessions",
+  "Career Advisory intake and mentor session",
+  "Candidate profile and resume management",
+  "Advisory meeting calendar",
+  "Access to Joben career guidance",
 ] as const;
 
 export function formatPlanPrice(amount: number): string {

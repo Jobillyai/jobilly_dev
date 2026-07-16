@@ -1,6 +1,7 @@
 import { getSessionUser } from "@/lib/auth/session";
 import { formatSessionDateTimeForCandidateShort } from "@/lib/career-advisory/session-datetime";
 import { DashboardHome } from "@/components/dashboard/dashboard-home";
+import { entitlementsForPlan, getCandidateSubscription } from "@/server/services/candidate-subscriptions";
 import { getCareerAdvisoryIntakeForCandidate } from "@/server/services/career-advisory-intake";
 import { getCandidateAppliedJobs } from "@/server/services/candidate-jobs";
 import styles from "./dashboard.module.css";
@@ -28,10 +29,14 @@ function formatSessionLabel(
 export default async function DashboardPage() {
   const user = await getSessionUser();
 
-  const [applications, advisory] = await Promise.all([
-    user ? getCandidateAppliedJobs(user.id) : Promise.resolve([]),
+  const [subscription, advisory] = await Promise.all([
+    user ? getCandidateSubscription(user.id) : Promise.resolve(null),
     user ? getCareerAdvisoryIntakeForCandidate(user.id) : Promise.resolve(null),
   ]);
+  const hasManagedApplications =
+    entitlementsForPlan(subscription?.plan).hasManagedApplications;
+  const applications =
+    user && hasManagedApplications ? await getCandidateAppliedJobs(user.id) : [];
 
   const latestApplication = applications[0];
   const unreadApplicationCount = applications.filter((job) => job.isNew).length;
@@ -43,6 +48,7 @@ export default async function DashboardPage() {
     <div className={styles.page}>
       <DashboardHome
         userName={user?.name}
+        currentPlanId={subscription?.plan ?? null}
         applicationCount={applications.length}
         unreadApplicationCount={unreadApplicationCount}
         latestApplicationLabel={latestApplicationLabel}

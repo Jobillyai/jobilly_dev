@@ -5,7 +5,10 @@ import { z } from "zod";
 import { premiumPlans } from "@/lib/candidate-services";
 import { getSessionUser } from "@/lib/auth/session";
 import { isCandidateRole } from "@/lib/auth/roles";
-import { completeMockCheckout } from "@/server/services/candidate-subscriptions";
+import {
+  completeMockCheckout,
+  getCandidateSubscription,
+} from "@/server/services/candidate-subscriptions";
 
 const planIds = premiumPlans.map((plan) => plan.id) as [
   (typeof premiumPlans)[number]["id"],
@@ -28,6 +31,9 @@ const checkoutSchema = z.object({
 export type MockCheckoutState = {
   success?: boolean;
   plan?: (typeof premiumPlans)[number]["id"];
+  receiptNumber?: string;
+  receiptEmailSent?: boolean;
+  warning?: string;
   error?: string;
   fieldErrors?: Record<string, string>;
 };
@@ -65,8 +71,21 @@ export async function completeMockCheckoutAction(
     return { error: "Complete all billing details.", fieldErrors };
   }
 
+  const currentSubscription = await getCandidateSubscription(user.id);
+  if (currentSubscription?.plan === "mock-and-job") {
+    return { error: "You already have the complete Full Bundle." };
+  }
+  if (currentSubscription && parsed.data.plan !== "mock-and-job") {
+    return {
+      error:
+        "Partial paid plans can only be upgraded to the Full Bundle so existing access is not lost.",
+    };
+  }
+
   const result = await completeMockCheckout({
     userId: user.id,
+    candidateName: user.name ?? parsed.data.billingName,
+    candidateEmail: user.email,
     ...parsed.data,
   });
 
@@ -80,5 +99,11 @@ export async function completeMockCheckoutAction(
   revalidatePath("/admin/candidates");
   revalidatePath("/admin/jobs");
 
-  return { success: true, plan: parsed.data.plan };
+  return {
+    success: true,
+    plan: parsed.data.plan,
+    receiptNumber: result.receiptNumber,
+    receiptEmailSent: result.receiptEmailSent,
+    warning: result.warning,
+  };
 }

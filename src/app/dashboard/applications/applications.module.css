@@ -39,14 +39,30 @@
   color: var(--jb-ink-muted);
 }
 
-.upgradeButton {
-  display: inline-flex;
+.upgradeActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 18px;
+}
+
+.upgradeButton,
+.upgradeButtonSecondary {
+  display: inline-flex;
   padding: 11px 18px;
   border-radius: 999px;
-  color: white;
-  background: var(--jb-brand);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
+}
+
+.upgradeButton {
+  color: white;
+  background: var(--jb-brand);
+}
+
+.upgradeButtonSecondary {
+  color: var(--jb-brand);
+  background: var(--jb-brand-soft);
+  border: 1px solid var(--jb-brand-border);
 }

@@ -2,6 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import {
+  formatPlanPriceMonthly,
+  getPremiumPlan,
+} from "@/lib/candidate-services";
 import { AppliedJobsList } from "@/components/dashboard/applied-jobs-list";
 import { getSessionUser } from "@/lib/auth/session";
 import { getCandidateAppliedJobs } from "@/server/services/candidate-jobs";
@@ -25,6 +29,9 @@ export default async function CandidateApplicationsPage() {
   const applications = hasManagedApplications
     ? await getCandidateAppliedJobs(user.id)
     : [];
+  const jobApplicationsPlan = getPremiumPlan("job-applications")!;
+  const fullBundlePlan = getPremiumPlan("mock-and-job")!;
+  const hasMockOnly = subscription?.plan === "mock-interviews";
 
   return (
     <div className={styles.page}>
@@ -42,17 +49,32 @@ export default async function CandidateApplicationsPage() {
 
         {!hasManagedApplications ? (
           <div className={pageStyles.emptyCard}>
-            <p className={pageStyles.emptyTitle}>Managed Applications is not in your plan</p>
-            <p className={pageStyles.emptyText}>
-              Upgrade to the Full Bundle to add role matching, tailored resumes, and
-              applications submitted by the Jobilly team.
+            <p className={pageStyles.emptyTitle}>
+              {hasMockOnly
+                ? "Upgrade your Mock Interviews plan for job application access"
+                : "You are not on a paid Managed Applications plan"}
             </p>
-            <Link
-              href="/dashboard/plans?plan=mock-and-job"
-              className={pageStyles.upgradeButton}
-            >
-              Upgrade plan
-            </Link>
+            <p className={pageStyles.emptyText}>
+              {hasMockOnly
+                ? "Your current plan includes mock interviews only. Upgrade to the Full Bundle to keep mock interviews and add role matching, tailored resumes, and applications by the Jobilly team."
+                : "The free tier includes Career Advisory and candidate tools. Choose Job Applications or the Full Bundle to unlock managed applications."}
+            </p>
+            <div className={pageStyles.upgradeActions}>
+              {!hasMockOnly ? (
+                <Link
+                  href="/dashboard/plans?plan=job-applications"
+                  className={pageStyles.upgradeButton}
+                >
+                  Job Applications — {formatPlanPriceMonthly(jobApplicationsPlan.priceUsd)}
+                </Link>
+              ) : null}
+              <Link
+                href="/dashboard/plans?plan=mock-and-job"
+                className={pageStyles.upgradeButtonSecondary}
+              >
+                Full Bundle — {formatPlanPriceMonthly(fullBundlePlan.priceUsd)}
+              </Link>
+            </div>
           </div>
         ) : applications.length === 0 ? (
           <div className={pageStyles.emptyCard}>

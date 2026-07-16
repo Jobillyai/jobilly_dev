@@ -69,7 +69,7 @@ export function AdminRecentActivity({
                     <Link href="/admin/candidates" className={styles.recentLink}>
                       Profile
                     </Link>
-                    {showJobApplyLinks ? (
+                    {showJobApplyLinks && candidate.hasManagedApplications ? (
                       <Link
                         href={`/admin/candidates/${candidate.id}/jobs`}
                         className={styles.recentLinkPrimary}

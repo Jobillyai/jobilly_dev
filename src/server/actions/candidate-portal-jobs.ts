@@ -1,6 +1,7 @@
 "use server";
 
 import { getSessionUser } from "@/lib/auth/session";
+import { isCandidateRole } from "@/lib/auth/roles";
 import { formatExperienceYears } from "@/lib/format-experience-years";
 import { getAdminCandidateById } from "@/server/services/admin-dashboard";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
@@ -8,6 +9,7 @@ import {
   getCandidateJobListings,
   type CandidateJobListing,
 } from "@/server/services/candidate-jobs";
+import { getCandidateEntitlements } from "@/server/services/candidate-subscriptions";
 
 export type CandidatePortalJobsPayload = {
   jobs: CandidateJobListing[];
@@ -20,8 +22,13 @@ export async function loadMyMatchedJobsAction(): Promise<
   { error: string } | { success: true; data: CandidatePortalJobsPayload }
 > {
   const user = await getSessionUser();
-  if (!user) {
+  if (!user || !isCandidateRole(user.role)) {
     return { error: "Unauthorized" };
+  }
+
+  const entitlements = await getCandidateEntitlements(user.id);
+  if (!entitlements.hasManagedApplications) {
+    return { error: "Managed Applications is not included in your plan." };
   }
 
   const candidate = await getAdminCandidateById(user.id);

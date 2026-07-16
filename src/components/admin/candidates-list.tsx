@@ -77,7 +77,7 @@ function CandidateRow({
   const assignedMentor = mentors.find((mentor) => mentor.id === assignedMentorId);
   const planLabel = candidate.subscriptionPlan
     ? getPremiumPlan(candidate.subscriptionPlan)?.shortLabel
-    : "No paid plan";
+    : "Free tier";
 
   function handleAssign() {
     if (!selectedMentorId) {

@@ -21,7 +21,10 @@ export default async function ProtectedAdminLayout({
 
   return (
     <div className={shellStyles.adminShell}>
-      <AdminSidebar showJobApplyNav={!staffIsManager(staff)} />
+      <AdminSidebar
+        showJobApplyNav={!staffIsManager(staff)}
+        showManagerNav={staffIsManager(staff)}
+      />
       <div className={`${shellStyles.adminContent} ${portalStyles.content}`}>
         <div className={portalStyles.contentInner}>{children}</div>
       </div>

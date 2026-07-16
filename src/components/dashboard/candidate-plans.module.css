@@ -43,6 +43,59 @@
   box-shadow: var(--jb-shadow-md);
 }
 
+.freeSection {
+  margin-bottom: 34px;
+  padding: 26px 28px;
+  border: 1px solid var(--jb-border);
+  border-radius: var(--jb-radius-xl);
+  background: var(--jb-surface);
+  box-shadow: var(--jb-shadow-sm);
+}
+
+.freeSection h2 {
+  margin: 12px 0 8px;
+  font-size: 27px;
+}
+
+.freeSection > p {
+  max-width: 720px;
+  color: var(--jb-ink-secondary);
+  line-height: 1.65;
+}
+
+.freeSection ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.freeSection li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--jb-ink-secondary);
+  font-size: 14px;
+}
+
+.freeSection li svg {
+  color: var(--jb-brand);
+}
+
+.freeBadge {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: var(--jb-ink-secondary);
+  background: var(--jb-surface-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .currentSection h2 {
   margin: 12px 0 8px;
   font-size: 28px;
@@ -178,6 +231,14 @@
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+}
+
+.receiptNumber,
+.receiptDelivery {
+  margin: 8px 0 0;
+  color: var(--jb-ink-secondary);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .completePlan {
@@ -355,9 +416,14 @@
   }
 
   .currentSection,
+  .freeSection,
   .planCard,
   .modal {
     padding: 20px;
+  }
+
+  .freeSection ul {
+    grid-template-columns: 1fr;
   }
 
   .formRow {

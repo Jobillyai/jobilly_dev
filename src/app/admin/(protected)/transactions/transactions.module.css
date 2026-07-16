@@ -1,0 +1,40 @@
+.reference,
+.receipt,
+.email,
+.status {
+  display: block;
+}
+
+.reference {
+  color: var(--jb-admin-ink);
+  font-size: 13px;
+}
+
+.receipt,
+.email {
+  margin-top: 3px;
+  color: var(--jb-ink-muted);
+  font-size: 12px;
+}
+
+.status {
+  margin-top: 4px;
+  color: var(--jb-brand);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--jb-brand-border);
+  border-radius: 999px;
+  color: var(--jb-brand);
+  background: var(--jb-brand-soft);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}

@@ -2,6 +2,7 @@ import { createClient } from "@/server/db/supabase-server";
 import type { PremiumPlanId } from "@/lib/candidate-services";
 import {
   entitlementsForPlan,
+  getCandidateEntitlements,
   getCandidateSubscription,
 } from "@/server/services/candidate-subscriptions";
 import { createAdminClient } from "@/server/db/supabase-admin";
@@ -99,6 +100,7 @@ export type AdminRecentCandidate = {
   createdAt: string;
   hasSubmission: boolean;
   scrapedJobCount: number;
+  hasManagedApplications: boolean;
 };
 
 export type AdminRecentSubmission = {
@@ -324,6 +326,19 @@ async function getFullAdminDashboardOverview(): Promise<AdminDashboardOverview> 
         new Date(b.sessionScheduledAt ?? 0).getTime(),
     )
     .slice(0, 8);
+  const recentCandidates = await Promise.all(
+    (recentUsersResult.data ?? []).map(async (user) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.created_at,
+      hasSubmission: submissionCandidateIds.has(user.id),
+      scrapedJobCount: scrapedCountByCandidate.get(user.id) ?? 0,
+      hasManagedApplications: (
+        await getCandidateEntitlements(user.id)
+      ).hasManagedApplications,
+    })),
+  );
 
   return {
     stats: {
@@ -342,14 +357,7 @@ async function getFullAdminDashboardOverview(): Promise<AdminDashboardOverview> 
         totalCandidates - submissionCandidateIds.size,
       ),
     },
-    recentCandidates: (recentUsersResult.data ?? []).map((user) => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      createdAt: user.created_at,
-      hasSubmission: submissionCandidateIds.has(user.id),
-      scrapedJobCount: scrapedCountByCandidate.get(user.id) ?? 0,
-    })),
+    recentCandidates,
     recentSubmissions,
     upcomingMeetings,
   };
@@ -775,6 +783,7 @@ async function getMentorDashboardOverview(
       createdAt: candidate.createdAt,
       hasSubmission: submissionCandidateIds.has(candidate.id),
       scrapedJobCount: scrapedCountByCandidate.get(candidate.id) ?? 0,
+      hasManagedApplications: candidate.hasManagedApplications,
     })),
     recentSubmissions,
     upcomingMeetings,

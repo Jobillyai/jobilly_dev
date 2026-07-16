@@ -10,6 +10,7 @@ import {
   Inbox,
   LayoutDashboard,
   Menu,
+  ReceiptText,
   UserCircle,
   Users,
   X,
@@ -23,6 +24,7 @@ const navItems = [
     icon: LayoutDashboard,
     exact: true,
     jobApplyOnly: false,
+    managerOnly: false,
   },
   {
     href: "/admin/candidates" as const,
@@ -30,6 +32,7 @@ const navItems = [
     icon: Users,
     exact: false,
     jobApplyOnly: false,
+    managerOnly: false,
   },
   {
     href: "/admin/jobs" as const,
@@ -37,6 +40,7 @@ const navItems = [
     icon: Briefcase,
     exact: false,
     jobApplyOnly: true,
+    managerOnly: false,
   },
   {
     href: "/admin/requests" as const,
@@ -44,6 +48,7 @@ const navItems = [
     icon: Inbox,
     exact: false,
     jobApplyOnly: false,
+    managerOnly: false,
   },
   {
     href: "/admin/tasks" as const,
@@ -51,6 +56,7 @@ const navItems = [
     icon: ClipboardList,
     exact: false,
     jobApplyOnly: false,
+    managerOnly: false,
   },
   {
     href: "/admin/calendar" as const,
@@ -58,6 +64,15 @@ const navItems = [
     icon: Calendar,
     exact: false,
     jobApplyOnly: false,
+    managerOnly: false,
+  },
+  {
+    href: "/admin/transactions" as const,
+    label: "Transactions",
+    icon: ReceiptText,
+    exact: false,
+    jobApplyOnly: false,
+    managerOnly: true,
   },
   {
     href: "/admin/profile" as const,
@@ -65,18 +80,25 @@ const navItems = [
     icon: UserCircle,
     exact: false,
     jobApplyOnly: false,
+    managerOnly: false,
   },
 ];
 
 type AdminSidebarProps = {
   showJobApplyNav?: boolean;
+  showManagerNav?: boolean;
 };
 
-export function AdminSidebar({ showJobApplyNav = true }: AdminSidebarProps) {
+export function AdminSidebar({
+  showJobApplyNav = true,
+  showManagerNav = false,
+}: AdminSidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const visibleNavItems = navItems.filter(
-    (item) => !item.jobApplyOnly || showJobApplyNav,
+    (item) =>
+      (!item.jobApplyOnly || showJobApplyNav) &&
+      (!item.managerOnly || showManagerNav),
   );
 
   useEffect(() => {
