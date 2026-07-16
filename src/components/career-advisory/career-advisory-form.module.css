@@ -259,44 +259,6 @@
   color: var(--jb-ink);
 }
 
-.formFieldset {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  transition: opacity 0.2s ease;
-}
-
-.formFieldset:disabled {
-  opacity: 0.58;
-}
-
-.cooldownNotice {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 14px 0 20px;
-  padding: 13px 15px;
-  border: 1px solid var(--jb-brand-border);
-  border-radius: 13px;
-  background: var(--jb-brand-soft);
-  color: var(--jb-ink-secondary);
-}
-
-.cooldownNotice strong {
-  color: var(--jb-brand);
-  font-size: 13px;
-}
-
-.cooldownNotice span {
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .formSectionHint {
   margin: 0 0 20px;
   font-size: 14px;
@@ -305,12 +267,6 @@
 }
 
 @media (max-width: 640px) {
-  .cooldownNotice {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 5px;
-  }
-
   .previousSubmissionHeader {
     flex-direction: column;
     align-items: flex-start;

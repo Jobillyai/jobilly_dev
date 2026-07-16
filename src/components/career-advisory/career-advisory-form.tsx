@@ -43,7 +43,6 @@ type CareerAdvisoryFormProps = {
   defaultLastName?: string;
   defaultEmail?: string;
   existingIntake?: CandidateCareerAdvisoryIntake | null;
-  serverNowMs: number;
   initialResumeFileName?: string | null;
   initialResumePreviewUrl?: string | null;
 };
@@ -120,7 +119,6 @@ export function CareerAdvisoryForm({
   defaultLastName = "",
   defaultEmail = "",
   existingIntake = null,
-  serverNowMs,
   initialResumeFileName = null,
   initialResumePreviewUrl = null,
 }: CareerAdvisoryFormProps) {
@@ -136,7 +134,6 @@ export function CareerAdvisoryForm({
   const [resumePreviewUrl, setResumePreviewUrl] = useState(
     initialResumePreviewUrl ?? "",
   );
-  const [nowMs, setNowMs] = useState(serverNowMs);
 
   useEffect(() => {
     if (existingIntake) {
@@ -148,26 +145,6 @@ export function CareerAdvisoryForm({
     setResumeFileName(initialResumeFileName ?? "");
     setResumePreviewUrl(initialResumePreviewUrl ?? "");
   }, [initialResumeFileName, initialResumePreviewUrl]);
-
-  const latestSubmittedAt = latestSubmission?.candidateSubmittedAt;
-  const submissionCooldownUntil = latestSubmittedAt
-    ? new Date(latestSubmittedAt).getTime() + 60 * 60 * 1000
-    : 0;
-  const actionCooldownUntil = state.cooldownUntil
-    ? new Date(state.cooldownUntil).getTime()
-    : 0;
-  const cooldownUntilMs = Math.max(submissionCooldownUntil, actionCooldownUntil);
-  const isCooldownActive =
-    Number.isFinite(cooldownUntilMs) && cooldownUntilMs > nowMs;
-  const cooldownRemainingMs = Math.max(0, cooldownUntilMs - nowMs);
-  const cooldownMinutes = Math.floor(cooldownRemainingMs / 60_000);
-  const cooldownSeconds = Math.floor((cooldownRemainingMs % 60_000) / 1000);
-
-  useEffect(() => {
-    if (!isCooldownActive) return;
-    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [isCooldownActive]);
 
   async function handleResumeSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -244,8 +221,8 @@ export function CareerAdvisoryForm({
           <p className={dashboardStyles.eyebrow}>Student portal</p>
           <h1 className={dashboardStyles.title}>Career advisory</h1>
           <p className={dashboardStyles.subtitle}>
-            Submit your background details and book a session. After booking, the form
-            stays locked for one hour before updates are allowed.
+            Submit your background details and book a session. You can update your
+            submission anytime — your latest entry is shown below.
           </p>
         </div>
       </header>
@@ -268,22 +245,11 @@ export function CareerAdvisoryForm({
         <h2 className={styles.formSectionTitle}>
           {previousSubmission ? "Update your details" : "Submit your details"}
         </h2>
-        {isCooldownActive ? (
-          <div className={styles.cooldownNotice} role="status">
-            <strong>Booking confirmed — form temporarily locked</strong>
-            <span>
-              You can update these details in {cooldownMinutes}:
-              {String(cooldownSeconds).padStart(2, "0")}.
-            </span>
-          </div>
-        ) : null}
-
         <form
           key={previousSubmission?.updatedAt ?? "new"}
           action={handleSubmit}
           className={authStyles.form}
         >
-          <fieldset disabled={isCooldownActive} className={styles.formFieldset}>
           <PersonNameFields
             firstName={{
               defaultValue: nameParts.firstName,
@@ -443,7 +409,6 @@ export function CareerAdvisoryForm({
           <SubmitButton pending={pending} pendingLabel="Submitting request…">
             Submit request
           </SubmitButton>
-          </fieldset>
         </form>
       </div>
 

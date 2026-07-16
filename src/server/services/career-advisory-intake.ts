@@ -12,7 +12,6 @@ export type CandidateCareerAdvisoryIntake = {
   inviteSentAt: string | null;
   sessionScheduledAt: string | null;
   googleMeetLink: string | null;
-  candidateSubmittedAt: string;
   bookedAt: string;
   updatedAt: string;
 };
@@ -28,7 +27,6 @@ type IntakeRow = {
   invite_sent_at: string | null;
   session_scheduled_at: string | null;
   google_meet_link: string | null;
-  candidate_submitted_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -45,7 +43,6 @@ function mapIntakeRow(data: IntakeRow): CandidateCareerAdvisoryIntake {
     inviteSentAt: data.invite_sent_at,
     sessionScheduledAt: data.session_scheduled_at,
     googleMeetLink: data.google_meet_link,
-    candidateSubmittedAt: data.candidate_submitted_at ?? data.updated_at,
     bookedAt: data.created_at,
     updatedAt: data.updated_at,
   };
@@ -79,7 +76,7 @@ export async function getCareerAdvisoryIntakeForCandidate(
   const { data, error } = await supabase
     .from("career_advisory_intakes")
     .select(
-      "name, email, phone, graduation_details, branch, is_veteran, interested_technology, invite_sent_at, session_scheduled_at, google_meet_link, candidate_submitted_at, created_at, updated_at",
+      "name, email, phone, graduation_details, branch, is_veteran, interested_technology, invite_sent_at, session_scheduled_at, google_meet_link, created_at, updated_at",
     )
     .eq("candidate_id", candidateId)
     .maybeSingle();
