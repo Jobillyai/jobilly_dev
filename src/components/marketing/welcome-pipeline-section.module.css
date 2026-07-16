@@ -5,7 +5,7 @@
 }
 
 .sectionInner {
-  max-width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -35,6 +35,10 @@
 
 .titleAccent {
   color: var(--jb-brand);
+  background: linear-gradient(135deg, #5170ff 0%, #38b6ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .stageFlow {

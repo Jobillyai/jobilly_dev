@@ -96,7 +96,17 @@ function CandidateRow({
       }
 
       onAssigned(candidate.id, selectedMentorId);
-      setAssignMessage("Mentor assigned.");
+      if (result.meetInviteSent) {
+        setAssignMessage(
+          result.meetInviteMessage ??
+            "Mentor assigned. Meet invite emailed to the candidate.",
+        );
+      } else if (result.meetInviteMessage) {
+        setAssignError(result.meetInviteMessage);
+        setAssignMessage("Mentor assigned.");
+      } else {
+        setAssignMessage("Mentor assigned.");
+      }
     });
   }
 

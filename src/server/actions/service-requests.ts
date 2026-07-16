@@ -50,7 +50,12 @@ const assignSchema = z.object({
 export async function assignServiceRequestAction(
   requestId: string,
   mentorId: string,
-): Promise<{ error?: string; success?: true }> {
+): Promise<{
+  error?: string;
+  success?: true;
+  meetInviteSent?: boolean;
+  meetInviteMessage?: string;
+}> {
   const admin = await getAdminUser();
   if (!admin || !staffIsManager(toStaffContext(admin))) {
     return { error: "Only managers can assign service requests." };
@@ -74,7 +79,11 @@ export async function assignServiceRequestAction(
   revalidatePath("/admin/requests");
   revalidatePath("/admin/candidates");
   revalidatePath("/admin");
-  return { success: true };
+  return {
+    success: true,
+    meetInviteSent: result.meetInviteSent,
+    meetInviteMessage: result.meetInviteMessage,
+  };
 }
 
 const candidateAssignSchema = z.object({
@@ -85,7 +94,12 @@ const candidateAssignSchema = z.object({
 export async function assignCandidateToMentorAction(
   candidateId: string,
   mentorId: string,
-): Promise<{ error?: string; success?: true }> {
+): Promise<{
+  error?: string;
+  success?: true;
+  meetInviteSent?: boolean;
+  meetInviteMessage?: string;
+}> {
   const admin = await getAdminUser();
   if (!admin || !staffIsManager(toStaffContext(admin))) {
     return { error: "Only managers can assign mentors to candidates." };
@@ -109,7 +123,12 @@ export async function assignCandidateToMentorAction(
   revalidatePath("/admin/candidates");
   revalidatePath("/admin/requests");
   revalidatePath("/admin");
-  return { success: true };
+  revalidatePath("/admin/calendar");
+  return {
+    success: true,
+    meetInviteSent: result.meetInviteSent,
+    meetInviteMessage: result.meetInviteMessage,
+  };
 }
 
 export async function updateServiceRequestStatusAction(

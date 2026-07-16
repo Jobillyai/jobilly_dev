@@ -17,7 +17,7 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
 }
 
@@ -38,7 +38,11 @@
   font-family: inherit;
   font-style: normal;
   font-weight: 700;
-  color: var(--jb-ink);
+  color: var(--jb-brand);
+  background: linear-gradient(135deg, #5170ff 0%, #38b6ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .subtitle {

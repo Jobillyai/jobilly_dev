@@ -205,7 +205,7 @@ export async function assignServiceRequestToMentor(
   requestId: string,
   mentorId: string,
   managerId: string,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; meetInviteSent?: boolean; meetInviteMessage?: string }> {
   const admin = createAdminClient();
 
   const { data: mentor, error: mentorError } = await admin
@@ -272,13 +272,28 @@ export async function assignServiceRequestToMentor(
       return { error: "Mentor assigned to request but candidate link failed." };
     }
 
-    await sendAdvisoryInviteForMentorAssignment(
+    const invite = await sendAdvisoryInviteForMentorAssignment(
       request.candidate_user_id,
       mentorId,
       {
         mentorChanged: existingProfile?.assigned_employee_id !== mentorId,
       },
     );
+
+    if (invite.sent) {
+      return {
+        meetInviteSent: true,
+        meetInviteMessage:
+          "Meet invite with session link emailed to the candidate and mentor.",
+      };
+    }
+
+    if (invite.error) {
+      return {
+        meetInviteSent: false,
+        meetInviteMessage: invite.error,
+      };
+    }
   }
 
   return {};
@@ -296,7 +311,7 @@ async function sendAdvisoryInviteForMentorAssignment(
   candidateId: string,
   mentorId: string,
   options: { mentorChanged: boolean },
-): Promise<void> {
+): Promise<{ sent: boolean; skipped?: boolean; error?: string }> {
   const admin = createAdminClient();
 
   const { data: intake } = await admin
@@ -308,16 +323,32 @@ async function sendAdvisoryInviteForMentorAssignment(
     .maybeSingle();
 
   if (!intake?.session_scheduled_at) {
-    return;
+    return { sent: false, skipped: true };
   }
 
+  // Same mentor + invite already delivered → nothing to do.
   if (!options.mentorChanged && intake.invite_sent_at) {
-    return;
+    return { sent: false, skipped: true };
   }
 
   const sessionStart = new Date(intake.session_scheduled_at);
-  if (Number.isNaN(sessionStart.getTime()) || sessionStart.getTime() <= Date.now()) {
-    return;
+  if (Number.isNaN(sessionStart.getTime())) {
+    return { sent: false, error: "Career advisory session time is invalid." };
+  }
+
+  if (sessionStart.getTime() <= Date.now()) {
+    return {
+      sent: false,
+      error:
+        "Mentor assigned, but the booked session time has already passed — Meet invite was not sent.",
+    };
+  }
+
+  if (!intake.email?.trim()) {
+    return {
+      sent: false,
+      error: "Mentor assigned, but the candidate has no email on their advisory request.",
+    };
   }
 
   const { data: mentorUser } = await admin
@@ -327,17 +358,20 @@ async function sendAdvisoryInviteForMentorAssignment(
     .maybeSingle();
 
   if (!mentorUser?.email) {
-    return;
+    return {
+      sent: false,
+      error: "Mentor assigned, but the mentor account has no email address.",
+    };
   }
 
   const result = await sendCareerAdvisoryMeetInvite({
     candidateId,
     candidateName: intake.name,
     candidateEmail: intake.email,
-    candidatePhone: intake.phone,
-    branch: intake.branch,
-    graduationDetails: intake.graduation_details,
-    interestedTechnology: intake.interested_technology,
+    candidatePhone: intake.phone ?? "",
+    branch: intake.branch ?? "",
+    graduationDetails: intake.graduation_details ?? "",
+    interestedTechnology: intake.interested_technology ?? "",
     sessionScheduledAt: intake.session_scheduled_at,
     mentorEmail: mentorUser.email,
     mentorName: mentorUser.name,
@@ -354,19 +388,31 @@ async function sendAdvisoryInviteForMentorAssignment(
         updated_at: now,
       })
       .eq("candidate_id", candidateId);
-  } else if ("error" in result) {
-    console.error(
-      "sendAdvisoryInviteForMentorAssignment email failed:",
-      result.error,
-    );
+
+    return { sent: true };
   }
+
+  if ("skipped" in result && result.skipped) {
+    return {
+      sent: false,
+      error:
+        "Mentor assigned, but Meet invites are not configured (set CAREER_ADVISORY_GOOGLE_MEET_URL).",
+    };
+  }
+
+  const error =
+    "error" in result
+      ? result.error
+      : "Mentor assigned, but the Meet invite email could not be sent.";
+  console.error("sendAdvisoryInviteForMentorAssignment email failed:", error);
+  return { sent: false, error };
 }
 
 export async function assignCandidateToMentor(
   candidateId: string,
   mentorId: string,
   managerId: string,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; meetInviteSent?: boolean; meetInviteMessage?: string }> {
   const admin = createAdminClient();
 
   const { data: mentor, error: mentorError } = await admin
@@ -428,9 +474,24 @@ export async function assignCandidateToMentor(
     .eq("request_type", "new_candidate")
     .eq("status", "open");
 
-  await sendAdvisoryInviteForMentorAssignment(candidateId, mentorId, {
+  const invite = await sendAdvisoryInviteForMentorAssignment(candidateId, mentorId, {
     mentorChanged: existingProfile?.assigned_employee_id !== mentorId,
   });
+
+  if (invite.sent) {
+    return {
+      meetInviteSent: true,
+      meetInviteMessage:
+        "Meet invite with session link emailed to the candidate and mentor.",
+    };
+  }
+
+  if (invite.error) {
+    return {
+      meetInviteSent: false,
+      meetInviteMessage: invite.error,
+    };
+  }
 
   return {};
 }

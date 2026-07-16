@@ -102,11 +102,21 @@ export function ServiceRequestsPanel({
         ),
       );
       setMessageKind("success");
-      setMessage(
-        assignedRequest?.requestType === "new_candidate"
-          ? "Mentor assigned. The candidate is now linked to this mentor admin."
-          : "Request assigned to mentor.",
-      );
+      if (result.meetInviteSent) {
+        setMessage(
+          result.meetInviteMessage ??
+            "Mentor assigned. Meet invite emailed to the candidate.",
+        );
+      } else if (result.meetInviteMessage) {
+        setMessageKind("error");
+        setMessage(result.meetInviteMessage);
+      } else {
+        setMessage(
+          assignedRequest?.requestType === "new_candidate"
+            ? "Mentor assigned. The candidate is now linked to this mentor admin."
+            : "Request assigned to mentor.",
+        );
+      }
     });
   }
 

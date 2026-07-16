@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { JobillyMark } from "@/components/brand/jobilly-mark";
 import { PageWaveBackground } from "@/components/layout/page-wave-background";
 import styles from "./auth-background.module.css";
 
@@ -9,14 +8,16 @@ export function AuthBackground() {
       <PageWaveBackground direction="tl-br" lineCount={52} />
 
       <div className={styles.featureBrand}>
-        <Link href="/" className={styles.featureLogo}>
-          <JobillyMark size={112} className={styles.featureMark} />
-          <span className={styles.featureWordmarkBlock}>
-            <span className={styles.featureWordmark}>
-              jobilly<span className={styles.featureWordmarkAccent}>.ai</span>
-            </span>
-            <span className={styles.featureSubtitle}>From graduation to first job</span>
-          </span>
+        <Link href="/" className={styles.featureLogo} aria-label="Jobilly.ai home">
+          {/* eslint-disable-next-line @next/next/no-img-element -- local brand PNG lockup */}
+          <img
+            src="/brand/jobilly-logo-arrow-name.png"
+            alt=""
+            className={styles.featureLockup}
+            draggable={false}
+            aria-hidden
+          />
+          <span className={styles.featureSubtitle}>From graduation to first job</span>
         </Link>
         <p className={styles.featureCopy}>
           Career advisory, AI learning, mock interviews, and managed applications — all in one
