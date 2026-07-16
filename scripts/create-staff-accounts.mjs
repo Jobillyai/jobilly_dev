@@ -1,5 +1,5 @@
 /**
- * One-shot: create admin + manager accounts with correct roles and member IDs.
+ * One-shot: create staff accounts with correct roles and member IDs.
  * Run: node scripts/create-staff-accounts.mjs
  */
 import { randomBytes } from "node:crypto";
@@ -41,8 +41,8 @@ const headers = {
 };
 
 const accounts = [
-  { email: "bssavinash202@gmail.com", name: "Shivasai", role: "admin" },
-  { email: "avinashprince812@gmail.com", name: "Avinash", role: "manager" },
+  { email: "rajeshwari.m@jobilly.ai", name: "Rajeshwari", role: "admin" },
+  { email: "saikrupa.p@jobilly.ai", name: "Sai Krupa", role: "admin" },
 ];
 
 const results = [];
