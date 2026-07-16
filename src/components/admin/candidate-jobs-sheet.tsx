@@ -1039,6 +1039,7 @@ export function CandidateJobsSheet({
         </div>
       ) : (
         <AdminJobList
+          candidateId={candidateId}
           jobs={filteredJobs}
           viewMode={isAppliedView ? "applied" : "pipeline"}
           onToggleSelected={handleToggleSelected}

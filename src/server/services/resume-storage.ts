@@ -4,6 +4,17 @@ import { RESUME_MIME_TYPES } from "@/lib/resume-mime";
 const RESUME_SIGNED_URL_TTL_SECONDS = 60 * 60;
 const RESUME_EXTENSIONS = ["pdf", "docx", "doc"] as const;
 
+function contentTypeForFileName(fileName: string): string {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  if (extension === "docx") {
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  }
+  if (extension === "doc") {
+    return "application/msword";
+  }
+  return "application/pdf";
+}
+
 async function resolveResumeStoragePath(
   admin: ReturnType<typeof createAdminClient>,
   userId: string,
@@ -61,6 +72,40 @@ export async function getFreshCandidateResumeUrl(
   return {
     resumeUrl: signedData.signedUrl,
     fileName,
+  };
+}
+
+export async function getCandidateResumeFile(
+  userId: string,
+): Promise<{
+  storagePath: string;
+  fileName: string;
+  fileBuffer: Buffer;
+  contentType: string;
+} | null> {
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from("candidate_profiles")
+    .select("resume_url")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const storagePath = await resolveResumeStoragePath(
+    admin,
+    userId,
+    profile?.resume_url ?? null,
+  );
+  if (!storagePath) return null;
+
+  const { data, error } = await admin.storage.from("resumes").download(storagePath);
+  if (error || !data) {
+    throw new Error(error?.message ?? "Could not download the candidate resume.");
+  }
+  const fileName = storagePath.split("/").pop() ?? "base-resume.pdf";
+  return {
+    storagePath,
+    fileName,
+    fileBuffer: Buffer.from(await data.arrayBuffer()),
+    contentType: data.type || contentTypeForFileName(fileName),
   };
 }
 
@@ -180,4 +225,33 @@ export async function saveApplicationResumeFile(input: {
   }
 
   return { storagePath: path, fileName: input.fileName };
+}
+
+export async function saveResumeTailoringRunFile(input: {
+  candidateId: string;
+  jobId: string;
+  runId: string;
+  fileName: string;
+  fileBuffer: Buffer;
+  contentType: string;
+}): Promise<string> {
+  const safeName =
+    input.fileName.replace(/[^\w.-]/g, "_").slice(0, 120) || "resume.pdf";
+  const path =
+    `${input.candidateId}/applications/${input.jobId}/tailored/` +
+    `${input.runId}/${safeName}`;
+  const admin = createAdminClient();
+  const { error } = await admin.storage.from("resumes").upload(path, input.fileBuffer, {
+    upsert: false,
+    contentType: input.contentType,
+  });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+export async function removeResumeTailoringRunFiles(paths: string[]): Promise<void> {
+  if (paths.length === 0) return;
+  const admin = createAdminClient();
+  const { error } = await admin.storage.from("resumes").remove(paths);
+  if (error) throw new Error(error.message);
 }

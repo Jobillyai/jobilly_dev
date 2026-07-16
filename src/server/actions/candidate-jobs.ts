@@ -44,6 +44,13 @@ import {
   saveApplicationResumeFile,
 } from "@/server/services/resume-storage";
 import { RESUME_MIME_TYPES } from "@/lib/resume-mime";
+import { checkRateLimit, rateLimitErrorMessage } from "@/lib/rate-limit";
+import {
+  approveResumeTailoringRun,
+  generateResumeTailoringRun,
+  getLatestResumeTailoringRun,
+  type ResumeTailoringRun,
+} from "@/server/services/resume-tailoring-runs";
 
 export type JobSearchSourceMode = JobMarketSource | "all";
 
@@ -843,4 +850,73 @@ export async function sendCandidateApplicationsDigestAction(
     onlyToday: false,
     skipDuplicateCheck: true,
   });
+}
+
+export type ResumeTailoringActionResult =
+  | { success: true; run: ResumeTailoringRun }
+  | { error: string };
+
+export async function getResumeTailoringRunAction(
+  candidateId: string,
+  jobId: string,
+): Promise<ResumeTailoringActionResult | { success: true; run: null }> {
+  const access = await authorizeCandidateAccess(candidateId);
+  if ("error" in access) return { error: access.error };
+  const run = await getLatestResumeTailoringRun(candidateId, jobId);
+  return { success: true, run };
+}
+
+export async function generateResumeTailoringRunAction(
+  candidateId: string,
+  jobId: string,
+): Promise<ResumeTailoringActionResult> {
+  const access = await authorizeCandidateAccess(candidateId);
+  if ("error" in access) return { error: access.error };
+
+  const rateLimit = await checkRateLimit(
+    "resumeTailoringUser",
+    `${access.admin.id}:${candidateId}`,
+  );
+  if (!rateLimit.allowed) {
+    return { error: rateLimitErrorMessage(rateLimit.retryAfterSeconds) };
+  }
+
+  const result = await generateResumeTailoringRun({
+    candidateId,
+    jobId,
+    createdBy: access.admin.id,
+    candidateName: access.candidate.name || access.candidate.email.split("@")[0] || "Candidate",
+    targetRole: access.candidate.jobSearchRole,
+  });
+  if ("error" in result) return result;
+
+  revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+  revalidatePath(`/admin/candidates/${candidateId}/jobs/applied`);
+  return { success: true, run: result.run };
+}
+
+export async function approveResumeTailoringRunAction(
+  candidateId: string,
+  jobId: string,
+  runId: string,
+): Promise<ResumeTailoringActionResult> {
+  const access = await authorizeCandidateAccess(candidateId);
+  if ("error" in access) return { error: access.error };
+
+  const approved = await approveResumeTailoringRun({
+    runId,
+    candidateId,
+    jobId,
+    approvedBy: access.admin.id,
+  });
+  if (!approved) {
+    return { error: "This resume could not be approved. Refresh and try again." };
+  }
+
+  const run = await getLatestResumeTailoringRun(candidateId, jobId);
+  if (!run) return { error: "Approved resume could not be reloaded." };
+  revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+  revalidatePath(`/admin/candidates/${candidateId}/jobs/applied`);
+  revalidatePath("/dashboard/applications");
+  return { success: true, run };
 }

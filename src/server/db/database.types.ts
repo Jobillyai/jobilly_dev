@@ -212,6 +212,60 @@ export type Database = {
         >;
         Relationships: [];
       };
+      resume_tailoring_runs: {
+        Row: {
+          id: string;
+          candidate_id: string;
+          scraped_job_id: string;
+          created_by: string;
+          status: "queued" | "generating" | "review_required" | "approved" | "failed";
+          source_resume_path: string;
+          source_resume_file_name: string;
+          source_resume_sha256: string;
+          job_description_snapshot: string;
+          model: string | null;
+          prompt_version: string;
+          result_json: Record<string, unknown> | null;
+          ats_score: number | null;
+          generated_docx_path: string | null;
+          generated_pdf_path: string | null;
+          generated_docx_file_name: string | null;
+          generated_pdf_file_name: string | null;
+          error_message: string | null;
+          approved_by: string | null;
+          approved_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          candidate_id: string;
+          scraped_job_id: string;
+          created_by: string;
+          status?: "queued" | "generating" | "review_required" | "approved" | "failed";
+          source_resume_path: string;
+          source_resume_file_name: string;
+          source_resume_sha256: string;
+          job_description_snapshot: string;
+          model?: string | null;
+          prompt_version: string;
+          result_json?: Record<string, unknown> | null;
+          ats_score?: number | null;
+          generated_docx_path?: string | null;
+          generated_pdf_path?: string | null;
+          generated_docx_file_name?: string | null;
+          generated_pdf_file_name?: string | null;
+          error_message?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["resume_tailoring_runs"]["Insert"]
+        >;
+        Relationships: [];
+      };
       resume_ats_checks: {
         Row: {
           id: string;
@@ -446,6 +500,13 @@ export type Database = {
           p_paid_at: string;
         };
         Returns: string;
+      };
+      approve_resume_tailoring_run: {
+        Args: {
+          p_run_id: string;
+          p_approved_by: string;
+        };
+        Returns: boolean;
       };
     };
     Enums: {
