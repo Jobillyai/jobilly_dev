@@ -115,7 +115,19 @@
 }
 
 .fieldWide {
-  grid-column: span 1;
+  grid-column: 1 / -1;
+}
+
+.keywordsTextarea {
+  min-height: 108px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.fieldHelp {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--jb-ink-muted);
 }
 
 .fieldHistory {

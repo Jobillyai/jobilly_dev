@@ -995,17 +995,20 @@ export function CandidateJobsSheet({
               <label htmlFor="searchKeywords" className={styles.fieldLabel}>
                 Role-based keywords
               </label>
-              <input
+              <textarea
                 id="searchKeywords"
-                type="text"
+                rows={4}
                 value={keywordsInput}
                 onChange={(event) => {
                   setKeywordsInput(event.target.value);
                 }}
-                placeholder="Generated from resume skills and keywords"
-                className={styles.fieldInput}
+                placeholder="Generated from resume skills and keywords. Add or edit comma-separated keywords."
+                className={`${styles.fieldInput} ${styles.keywordsTextarea}`}
                 disabled={loadingPreviousSearch}
               />
+              <span className={styles.fieldHelp}>
+                Review, remove, or add comma-separated keywords before searching.
+              </span>
             </div>
             <div className={styles.fieldHistory}>
               <label htmlFor="previousSearch" className={styles.fieldLabel}>
