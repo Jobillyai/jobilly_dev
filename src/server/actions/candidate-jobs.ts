@@ -41,6 +41,7 @@ import {
 import { sendCandidateApplicationsDigest } from "@/server/services/run-daily-applications-digest";
 import {
   createSignedResumeUrl,
+  saveCandidateResumeFile,
   saveApplicationResumeFile,
 } from "@/server/services/resume-storage";
 import { RESUME_MIME_TYPES } from "@/lib/resume-mime";
@@ -57,8 +58,10 @@ import {
   confirmResumeCategory,
   getResumeIntelligence,
   invalidateAndAnalyzeResume,
+  registerBaseResumeForIntelligence,
   removeAdminTxtOverride,
   saveAdminTxtOverride,
+  validateBaseResumeFile,
 } from "@/server/services/resume-intelligence";
 
 export type JobSearchSourceMode = JobMarketSource | "all";
@@ -112,6 +115,52 @@ export async function getResumeIntelligenceAction(candidateId: string) {
   const access = await resumeIntelligenceAccess(candidateId);
   if ("error" in access) return access;
   return { success: true as const, intelligence: await getResumeIntelligence(candidateId) };
+}
+
+export async function uploadCandidateBaseResumeAction(candidateId: string, formData: FormData) {
+  const access = await resumeIntelligenceAccess(candidateId);
+  if ("error" in access) return access;
+  const file = formData.get("baseResume");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a PDF or DOCX resume." };
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return { error: "Resume must be 5 MB or smaller." };
+  }
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    validateBaseResumeFile(buffer, file.name, file.type);
+    const saved = await saveCandidateResumeFile({
+      userId: candidateId,
+      fileName: file.name,
+      fileBuffer: buffer,
+      contentType: file.type,
+    });
+    try {
+      await registerBaseResumeForIntelligence({
+        candidateId,
+        actorId: access.admin.id,
+        storagePath: saved.storagePath,
+        fileName: file.name,
+        contentType: file.type,
+        buffer,
+      });
+    } catch (analysisError) {
+      revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+      return {
+        success: true as const,
+        warning:
+          analysisError instanceof Error
+            ? `Resume uploaded, but analysis failed: ${analysisError.message}`
+            : "Resume uploaded, but analysis failed. Use Retry analysis.",
+      };
+    }
+    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+    revalidatePath("/admin/candidates");
+    return { success: true as const };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Could not upload the resume." };
+  }
 }
 
 export async function uploadResumeTxtOverrideAction(candidateId: string, formData: FormData) {

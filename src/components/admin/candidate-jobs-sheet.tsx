@@ -16,6 +16,7 @@ import {
   getResumeIntelligenceAction,
   removeResumeTxtOverrideAction,
   retryResumeIntelligenceAction,
+  uploadCandidateBaseResumeAction,
   uploadResumeTxtOverrideAction,
   type JobSearchSourceMode,
 } from "@/server/actions/candidate-jobs";
@@ -639,6 +640,27 @@ export function CandidateJobsSheet({
     setIntelligencePending(false);
   }
 
+  async function handleBaseResume(file: File | undefined) {
+    if (!file) return;
+    setIntelligencePending(true);
+    setMessage(null);
+    const data = new FormData();
+    data.set("baseResume", file);
+    const result = await uploadCandidateBaseResumeAction(candidateId, data);
+    await reloadResumeIntelligence();
+    if (result && "error" in result && result.error) {
+      setMessageKind("error");
+      setMessage(result.error);
+    } else if (result && "warning" in result && result.warning) {
+      setMessageKind("warning");
+      setMessage(result.warning);
+    } else {
+      setMessageKind("success");
+      setMessage("Base resume uploaded and analyzed. Review and confirm the category.");
+    }
+    setIntelligencePending(false);
+  }
+
   async function handleRemoveOverride() {
     setIntelligencePending(true);
     const result = await removeResumeTxtOverrideAction(candidateId);
@@ -868,6 +890,17 @@ export function CandidateJobsSheet({
             </p>
           )}
           <div className={styles.intelligenceActions}>
+            <label className={styles.fileAction}>
+              {resumeIntelligence.sources.some((source) => source.source_kind === "base_resume")
+                ? "Replace base resume"
+                : "Upload base resume"}
+              <input
+                type="file"
+                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                disabled={intelligencePending}
+                onChange={(event) => void handleBaseResume(event.target.files?.[0])}
+              />
+            </label>
             <label className={styles.fileAction}>
               {resumeIntelligence.sources.some((source) => source.source_kind === "admin_txt_override")
                 ? "Replace TXT override"
