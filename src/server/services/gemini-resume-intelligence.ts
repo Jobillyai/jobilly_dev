@@ -1,6 +1,6 @@
 import "server-only";
 import {z} from "zod";
-import {JOB_CATEGORY_IDS,JOB_TAXONOMY_VERSION,type JobCategoryId} from "@/lib/job-category-taxonomy";
+import {JOB_CATEGORY_IDS,JOB_TAXONOMY_VERSION} from "@/lib/job-category-taxonomy";
 export const RESUME_INTELLIGENCE_PROMPT_VERSION="2026-07-v1";
 export const RESUME_INTELLIGENCE_SCHEMA_VERSION="2026-07-v1";
 const schema=z.object({
@@ -45,4 +45,3 @@ Resume: ${input.resumeText.slice(0,50000)}`;
  }
  throw new Error(message);
 }
-export function isConfirmedCategory(categoryId:JobCategoryId,confidence:number){return categoryId!=="other"&&confidence>=.7}

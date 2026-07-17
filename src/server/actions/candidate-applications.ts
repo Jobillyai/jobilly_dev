@@ -50,12 +50,12 @@ export async function getApplicationResumeDownloadAction(jobId: string): Promise
     .maybeSingle();
 
   if (error || !data?.application_resume_path) {
-    return { error: "No tailored resume attached for this application yet." };
+    return { error: "No application resume is attached yet." };
   }
 
   const downloadUrl = await createSignedResumeUrl(data.application_resume_path);
   if (!downloadUrl) {
-    return { error: "Could not open the tailored resume. Please try again." };
+    return { error: "Could not open the application resume. Please try again." };
   }
 
   return {

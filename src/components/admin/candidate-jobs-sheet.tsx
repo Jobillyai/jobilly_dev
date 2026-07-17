@@ -67,7 +67,7 @@ type ResumeIntelligenceData = {
 };
 
 function resumeSearchTerms(analysis: ResumeIntelligenceData["analysis"]): string {
-  if (!analysis || (analysis.confidence ?? 0) < 0.6) return "";
+  if (!analysis) return "";
   return [...new Set([...analysis.skills, ...analysis.search_keywords])]
     .filter(Boolean)
     .join(", ");
@@ -470,9 +470,13 @@ export function CandidateJobsSheet({
   }
 
   async function handleSearch(sourceMode: JobSearchSourceMode) {
-    if (!resumeIntelligence.analysis?.category_confirmed_at) {
+    if (
+      resumeIntelligence.analysis?.status !== "completed" ||
+      !resumeIntelligence.analysis.category_id ||
+      !resumeIntelligence.analysis.canonical_search_title
+    ) {
       setMessageKind("error");
-      setMessage("Resume analysis needs at least 60% category confidence before searching.");
+      setMessage("Complete resume analysis before searching.");
       return;
     }
     const role = interestedRole.trim();
@@ -645,7 +649,7 @@ export function CandidateJobsSheet({
     if (result && "success" in result) {
       setResumeIntelligence(result.intelligence);
       const analysis = result.intelligence.analysis;
-      if (analysis?.category_confirmed_at) {
+      if (analysis?.status === "completed" && analysis.canonical_search_title) {
         setInterestedRole(analysis.canonical_search_title ?? "");
         setKeywordsInput(resumeSearchTerms(analysis));
       }
@@ -866,12 +870,12 @@ export function CandidateJobsSheet({
             </div>
             <span
               className={
-                resumeIntelligence.analysis?.category_confirmed_at
+                resumeIntelligence.analysis?.status === "completed"
                   ? styles.intelligenceReady
                   : styles.intelligenceNeedsReview
               }
             >
-              {resumeIntelligence.analysis?.category_confirmed_at
+              {resumeIntelligence.analysis?.status === "completed"
                 ? "Ready to search"
                 : resumeIntelligence.analysis?.status ?? "No analysis"}
             </span>
@@ -884,7 +888,7 @@ export function CandidateJobsSheet({
                 <div><strong>Skills</strong><span>{resumeIntelligence.analysis.skills.join(", ") || "—"}</span></div>
                 <div><strong>Keywords</strong><span>{resumeIntelligence.analysis.search_keywords.join(", ") || "—"}</span></div>
                 <div><strong>Responsibilities</strong><span>{resumeIntelligence.analysis.responsibilities.join(" · ") || "—"}</span></div>
-                <div><strong>Confidence</strong><span>{resumeIntelligence.analysis.confidence == null ? "—" : `${Math.round(resumeIntelligence.analysis.confidence * 100)}%`}</span></div>
+                <div><strong>Analysis confidence (informational)</strong><span>{resumeIntelligence.analysis.confidence == null ? "—" : `${Math.round(resumeIntelligence.analysis.confidence * 100)}%`}</span></div>
               </div>
               {resumeIntelligence.analysis.error_message ? (
                 <p className={styles.intelligenceError}>{resumeIntelligence.analysis.error_message}</p>
@@ -927,12 +931,6 @@ export function CandidateJobsSheet({
               Retry analysis
             </button>
           </div>
-          {resumeIntelligence.analysis &&
-          !resumeIntelligence.analysis.category_confirmed_at ? (
-            <p className={styles.intelligenceNotice}>
-              Upload a clearer resume or TXT override so automatic category confidence reaches 60%.
-            </p>
-          ) : null}
         </section>
       ) : null}
       <section className={styles.controls}>
@@ -1091,7 +1089,9 @@ export function CandidateJobsSheet({
                 loadingPreviousSearch ||
                 searchRequestInFlight ||
                 scrapeInProgress ||
-                !resumeIntelligence.analysis?.category_confirmed_at
+                resumeIntelligence.analysis?.status !== "completed" ||
+                !resumeIntelligence.analysis?.category_id ||
+                !resumeIntelligence.analysis?.canonical_search_title
               }
             >
               {pendingSource
@@ -1268,7 +1268,6 @@ export function CandidateJobsSheet({
         </div>
       ) : (
         <AdminJobList
-          candidateId={candidateId}
           jobs={filteredJobs}
           viewMode={isAppliedView ? "applied" : "pipeline"}
           onToggleSelected={handleToggleSelected}

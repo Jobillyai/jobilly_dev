@@ -42,7 +42,7 @@ export default async function CandidateApplicationsPage() {
             <h1 className={styles.title}>My applications</h1>
             <p className={pageStyles.subtitle}>
               When our team applies to a role on your behalf, you&apos;ll see the full job
-              description, tailored resume, and preparation tips here.
+              description, application resume, and preparation tips here.
             </p>
           </div>
         </header>
@@ -56,7 +56,7 @@ export default async function CandidateApplicationsPage() {
             </p>
             <p className={pageStyles.emptyText}>
               {hasMockOnly
-                ? "Your current plan includes mock interviews only. Upgrade to the Full Bundle to keep mock interviews and add role matching, tailored resumes, and applications by the Jobilly team."
+                ? "Your current plan includes mock interviews only. Upgrade to the Full Bundle to keep mock interviews and add role matching, application support, and applications by the Jobilly team."
                 : "The free tier includes Career Advisory and candidate tools. Choose Job Applications or the Full Bundle to unlock managed applications."}
             </p>
             <div className={pageStyles.upgradeActions}>

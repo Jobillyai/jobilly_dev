@@ -141,6 +141,29 @@ function scoreJobListing(
   return { score, resumeMatch: resumeMatchLevel(score) };
 }
 
+function quotedOrGroup(values: string[]): string {
+  const uniqueValues = [
+    ...new Set(
+      values
+        .map((value) => value.replace(/"/g, "").trim())
+        .filter(Boolean),
+    ),
+  ];
+  return uniqueValues.map((value) => `"${value}"`).join(" OR ");
+}
+
+function buildStrictSearchPosition(
+  canonicalTitle: string,
+  targetRoles: string[],
+  keywords: string[],
+): string {
+  const roleClause = quotedOrGroup([canonicalTitle, ...targetRoles]);
+  const keywordClause = quotedOrGroup(keywords);
+
+  const roleQuery = roleClause ? `(${roleClause})` : canonicalTitle.trim();
+  return keywordClause ? `${roleQuery} (${keywordClause})` : roleQuery;
+}
+
 export async function scrapeJobsForCandidate(
   candidate: AdminCandidate,
   sources: JobMarketSource[] = [...JOB_MARKET_SOURCES],
@@ -154,15 +177,15 @@ export async function scrapeJobsForCandidate(
 ): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[]; rejectedCount: number }> {
   const experienceYears = options?.experienceYears ?? candidate.experienceYears;
   const strictKeywords = options?.strictIntent?.searchKeywords ?? [];
-  const searchKeywords =
-    (options?.strictIntent ? strictKeywords.slice(0, 2).join(" ") : null) ||
-    options?.searchKeywords;
+  const searchKeywords = options?.searchKeywords;
   const resumeCorpus = buildResumeCorpusForCandidate(candidate, interestedRole);
   const { position, location } = options?.strictIntent
     ? {
-        position: [options.strictIntent.canonicalSearchTitle, ...strictKeywords.slice(0, 2)]
-          .filter(Boolean)
-          .join(" "),
+        position: buildStrictSearchPosition(
+          options.strictIntent.canonicalSearchTitle,
+          options.strictIntent.targetRoles,
+          strictKeywords,
+        ),
         location: JOB_SEARCH_LOCATION,
       }
     : buildCandidateJobSearchQuery(candidate, interestedRole, {
@@ -175,7 +198,6 @@ export async function scrapeJobsForCandidate(
     position,
     location,
     sources,
-    maxItemsPerSource: 30,
     postedWithin: options?.postedWithin,
     includeFortune500: true,
   });
@@ -252,8 +274,7 @@ export async function scrapeJobsForCandidate(
       (a, b) =>
         b.keywordMatchCount - a.keywordMatchCount ||
         b.relevanceScore - a.relevanceScore,
-    )
-    .slice(0, 40);
+    );
 
   return {
     jobs: ranked,

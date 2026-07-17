@@ -19,7 +19,7 @@ export async function classifyJobsForStrictIntent(
  let rejectedCount=0;
  jobs.forEach((job,index)=>{
   const found=detectJobCategory(job.role,job.jdText);
-  if(found.categoryId===intent.categoryId&&found.confidence>=.75){
+  if(found.categoryId===intent.categoryId){
    const titleOkay=!intent.acceptedTitlePatterns.length||intent.acceptedTitlePatterns.some(p=>job.role.toLowerCase().includes(p.toLowerCase()));
    if(titleOkay)accepted.push({job,detectedCategory:found.categoryId,confidence:found.confidence});else rejectedCount++;
   }else if(found.categoryId==="other")ambiguous.push({job,index});else rejectedCount++;
@@ -45,7 +45,7 @@ Jobs: ${JSON.stringify(compact)}`;
   const byIndex=new Map(parsed.results.map(result=>[result.index,result]));
   for(const item of ambiguous){
    const result=byIndex.get(item.index);
-   if(result?.categoryId===intent.categoryId&&result.confidence>=.8&&!intent.excludedCategoryIds.includes(result.categoryId)){
+   if(result?.categoryId===intent.categoryId&&!intent.excludedCategoryIds.includes(result.categoryId)){
     accepted.push({job:item.job,detectedCategory:result.categoryId,confidence:result.confidence});
    }else rejectedCount++;
   }

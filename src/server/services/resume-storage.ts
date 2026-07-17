@@ -227,31 +227,3 @@ export async function saveApplicationResumeFile(input: {
   return { storagePath: path, fileName: input.fileName };
 }
 
-export async function saveResumeTailoringRunFile(input: {
-  candidateId: string;
-  jobId: string;
-  runId: string;
-  fileName: string;
-  fileBuffer: Buffer;
-  contentType: string;
-}): Promise<string> {
-  const safeName =
-    input.fileName.replace(/[^\w.-]/g, "_").slice(0, 120) || "resume.pdf";
-  const path =
-    `${input.candidateId}/applications/${input.jobId}/tailored/` +
-    `${input.runId}/${safeName}`;
-  const admin = createAdminClient();
-  const { error } = await admin.storage.from("resumes").upload(path, input.fileBuffer, {
-    upsert: false,
-    contentType: input.contentType,
-  });
-  if (error) throw new Error(error.message);
-  return path;
-}
-
-export async function removeResumeTailoringRunFiles(paths: string[]): Promise<void> {
-  if (paths.length === 0) return;
-  const admin = createAdminClient();
-  const { error } = await admin.storage.from("resumes").remove(paths);
-  if (error) throw new Error(error.message);
-}

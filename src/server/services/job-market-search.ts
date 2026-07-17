@@ -632,8 +632,12 @@ export async function searchIndeedJobs(input: {
   const result = await runApifyActor<ApifyIndeedJob>(APIFY_INDEED_ACTOR_ID, {
     country: "US",
     startUrls: [{ url: searchUrl }],
-    maxItemsPerSearch: input.maxItems ?? 20,
-    maxItems: input.maxItems ?? 20,
+    ...(typeof input.maxItems === "number"
+      ? {
+          maxItemsPerSearch: input.maxItems,
+          maxItems: input.maxItems,
+        }
+      : {}),
     saveOnlyUniqueItems: true,
     parseCompanyDetails: true,
   });
@@ -642,14 +646,18 @@ export async function searchIndeedJobs(input: {
     return { error: result.error };
   }
 
-  const jobs = filterRelevantJobs(
+  const filteredJobs = filterRelevantJobs(
     dedupeJobs(
       result.items
         .map((item) => normalizeIndeedJob(item))
         .filter((job): job is JobListing => job !== null),
     ),
     input.position,
-  ).slice(0, input.maxItems ?? 20);
+  );
+  const jobs =
+    typeof input.maxItems === "number"
+      ? filteredJobs.slice(0, input.maxItems)
+      : filteredJobs;
 
   if (jobs.length === 0) {
     return { error: "Indeed returned no relevant jobs for this search." };
@@ -675,7 +683,9 @@ export async function searchLinkedInJobs(input: {
     APIFY_LINKEDIN_ACTOR_ID,
     {
       urls: [searchUrl],
-      count: Math.max(10, input.maxItems ?? 20),
+      ...(typeof input.maxItems === "number"
+        ? { count: Math.max(10, input.maxItems) }
+        : {}),
       scrapeCompany: true,
       splitByLocation: false,
     },
@@ -686,14 +696,18 @@ export async function searchLinkedInJobs(input: {
     return { error: result.error };
   }
 
-  const jobs = filterRelevantJobs(
+  const filteredJobs = filterRelevantJobs(
     dedupeJobs(
       result.items
         .map((item) => normalizeLinkedInJob(item))
         .filter((job): job is JobListing => job !== null),
     ),
     input.position,
-  ).slice(0, input.maxItems ?? 20);
+  );
+  const jobs =
+    typeof input.maxItems === "number"
+      ? filteredJobs.slice(0, input.maxItems)
+      : filteredJobs;
 
   if (jobs.length === 0) {
     return { error: "LinkedIn returned no relevant jobs for this search." };
@@ -710,7 +724,7 @@ export async function searchJobsBySources(input: {
   postedWithin?: JobPostedWithin;
   includeFortune500?: boolean;
 }): Promise<{ jobs: JobListing[]; errors: string[] }> {
-  const maxItems = input.maxItemsPerSource ?? 20;
+  const maxItems = input.maxItemsPerSource;
   const location = input.location ?? "United States";
   const requested = new Set(
     input.sources.filter((source) => JOB_MARKET_SOURCES.includes(source)),

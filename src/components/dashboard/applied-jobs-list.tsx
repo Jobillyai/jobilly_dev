@@ -60,7 +60,7 @@ function AppliedJobRow({
   const [resumePending, startResumeTransition] = useTransition();
   const [resumeError, setResumeError] = useState<string | null>(null);
 
-  function openTailoredResume() {
+  function openApplicationResume() {
     setResumeError(null);
     startResumeTransition(async () => {
       if (isAdmin && job.applicationResumeDownloadUrl) {
@@ -110,11 +110,11 @@ function AppliedJobRow({
             <button
               type="button"
               className={styles.resumeSummaryBtn}
-              onClick={openTailoredResume}
+              onClick={openApplicationResume}
               disabled={resumePending}
             >
               <FileText size={16} aria-hidden />
-              <span>{resumePending ? "Opening…" : "Tailored resume"}</span>
+              <span>{resumePending ? "Opening…" : "Application resume"}</span>
             </button>
           ) : null}
           {!isAdmin ? (
@@ -204,7 +204,7 @@ function AppliedJobRow({
 
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
-              {isAdmin ? "Resume used" : "Tailored resume"}
+              {isAdmin ? "Resume used" : "Application resume"}
             </h2>
             {isAdmin ? (
               <div className={styles.adminResumeControl}>
@@ -212,7 +212,7 @@ function AppliedJobRow({
                   <button
                     type="button"
                     className={styles.resumeLink}
-                    onClick={openTailoredResume}
+                    onClick={openApplicationResume}
                     disabled={resumePending}
                   >
                     <FileText size={16} aria-hidden />
@@ -243,21 +243,21 @@ function AppliedJobRow({
                 <button
                   type="button"
                   className={styles.resumeLink}
-                  onClick={openTailoredResume}
+                  onClick={openApplicationResume}
                   disabled={resumePending}
                 >
                   <FileText size={16} aria-hidden />
                   <span>
                     {resumePending
                       ? "Opening…"
-                      : job.applicationResumeFileName ?? "Download tailored resume"}
+                      : job.applicationResumeFileName ?? "Download application resume"}
                   </span>
                 </button>
                 {resumeError ? <p className={styles.resumeError}>{resumeError}</p> : null}
               </div>
             ) : (
               <p className={styles.resumePending}>
-                Your tailored resume will appear here once our team attaches it to this
+                Your application resume will appear here once our team attaches it to this
                 application.
               </p>
             )}

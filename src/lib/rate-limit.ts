@@ -17,7 +17,6 @@ type LimiterKey =
   | "passwordResetIp"
   | "passwordResetEmail"
   | "updatePasswordIp"
-  | "resumeTailoringUser"
   | "contactFormIp"
   | "contactFormEmail";
 
@@ -32,7 +31,6 @@ const LIMITER_CONFIG: Record<
   passwordResetIp: { requests: 5, window: "1 h" },
   passwordResetEmail: { requests: 3, window: "1 h" },
   updatePasswordIp: { requests: 10, window: "1 h" },
-  resumeTailoringUser: { requests: 5, window: "1 d" },
   contactFormIp: { requests: 5, window: "1 h" },
   contactFormEmail: { requests: 3, window: "1 h" },
 };

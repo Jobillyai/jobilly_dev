@@ -65,7 +65,7 @@ const valuePoints = [
   {
     icon: Target,
     title: "Quality over quantity",
-    text: "Matched roles on Indeed and LinkedIn, tailored resumes, and thoughtful outreach.",
+    text: "Matched roles on Indeed and LinkedIn, application support, and thoughtful outreach.",
   },
   {
     icon: Eye,

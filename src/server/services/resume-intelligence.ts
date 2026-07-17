@@ -46,7 +46,7 @@ export async function invalidateAndAnalyzeResume(candidateId:string){
  const fingerprint=hash([source.sha256,source.parser_version,RESUME_INTELLIGENCE_PROMPT_VERSION,RESUME_INTELLIGENCE_SCHEMA_VERSION,JOB_TAXONOMY_VERSION].join(":"));
  const {data:cached}=await admin.from("candidate_resume_analysis").select("*").eq("candidate_id",candidateId).eq("source_fingerprint",fingerprint).eq("status","completed").maybeSingle();
  if(cached){
-  if(!cached.category_confirmed_at&&cached.category_id&&cached.category_id!=="other"&&(cached.confidence??0)>=.6){
+  if(!cached.category_confirmed_at&&cached.category_id&&cached.canonical_search_title){
    const confirmedAt=new Date().toISOString();
    const {data:confirmed}=await admin.from("candidate_resume_analysis").update({category_confirmed_at:confirmedAt,category_confirmed_by:source.uploaded_by,updated_at:confirmedAt}).eq("candidate_id",candidateId).select("*").single();
    return confirmed??cached;
@@ -59,8 +59,7 @@ export async function invalidateAndAnalyzeResume(candidateId:string){
   const {data:profile}=await admin.from("candidate_profiles").select("job_search_role").eq("user_id",candidateId).maybeSingle();
   const result=await classifyResumeIntent({resumeText:source.extracted_text,interestedRole:profile?.job_search_role});
   const analyzedAt=new Date().toISOString();
-  const autoConfirmed=result.categoryId!=="other"&&result.confidence>=.6;
-  const {data,error:updateError}=await admin.from("candidate_resume_analysis").update({status:"completed",target_roles:result.targetRoles,responsibilities:result.responsibilities,skills:result.skills,search_keywords:result.searchKeywords,canonical_search_title:result.canonicalSearchTitle,category_id:result.categoryId,confidence:result.confidence,accepted_title_patterns:result.acceptedTitlePatterns,excluded_category_ids:result.excludedCategoryIds,result_json:result,model:result.model,category_confirmed_at:autoConfirmed?analyzedAt:null,category_confirmed_by:autoConfirmed?source.uploaded_by:null,analyzed_at:analyzedAt,error_message:autoConfirmed?null:"Resume category confidence is below 60%; upload a clearer resume or TXT override.",updated_at:analyzedAt}).eq("candidate_id",candidateId).eq("generation_token",token).select("*").maybeSingle();if(updateError)throw new Error(updateError.message);await audit(source.uploaded_by,"resume_intelligence_analyzed",candidateId);return data;
+  const {data,error:updateError}=await admin.from("candidate_resume_analysis").update({status:"completed",target_roles:result.targetRoles,responsibilities:result.responsibilities,skills:result.skills,search_keywords:result.searchKeywords,canonical_search_title:result.canonicalSearchTitle,category_id:result.categoryId,confidence:result.confidence,accepted_title_patterns:result.acceptedTitlePatterns,excluded_category_ids:result.excludedCategoryIds,result_json:result,model:result.model,category_confirmed_at:analyzedAt,category_confirmed_by:source.uploaded_by,analyzed_at:analyzedAt,error_message:null,updated_at:analyzedAt}).eq("candidate_id",candidateId).eq("generation_token",token).select("*").maybeSingle();if(updateError)throw new Error(updateError.message);await audit(source.uploaded_by,"resume_intelligence_analyzed",candidateId);return data;
  }catch(e){await admin.from("candidate_resume_analysis").update({status:"failed",error_message:e instanceof Error?e.message:"Resume analysis failed.",updated_at:new Date().toISOString()}).eq("candidate_id",candidateId).eq("generation_token",token);throw e}
 }
 export async function getResumeIntelligence(candidateId:string){
@@ -69,6 +68,6 @@ export async function getResumeIntelligence(candidateId:string){
 }
 export async function getConfirmedStrictIntent(candidateId:string):Promise<StrictJobIntent>{
  const {data,error}=await createAdminClient().from("candidate_resume_analysis").select("*").eq("candidate_id",candidateId).eq("status","completed").maybeSingle();if(error)throw new Error(error.message);
- if(!data?.category_id||!data.category_confirmed_at||!data.canonical_search_title)throw new Error("Resume analysis must identify a job category with at least 60% confidence before scraping.");
- return {canonicalSearchTitle:data.canonical_search_title,categoryId:data.category_id as JobCategoryId,searchKeywords:data.search_keywords,acceptedTitlePatterns:data.accepted_title_patterns,excludedCategoryIds:data.excluded_category_ids as JobCategoryId[],intentFingerprint:hash([data.source_fingerprint,data.category_id,data.canonical_search_title,data.search_keywords.join("|"),JOB_CLASSIFIER_VERSION].join(":"))};
+ if(!data?.category_id||!data.canonical_search_title)throw new Error("Resume analysis must identify a job category and search title before scraping.");
+ return {canonicalSearchTitle:data.canonical_search_title,targetRoles:data.target_roles,categoryId:data.category_id as JobCategoryId,searchKeywords:data.search_keywords,acceptedTitlePatterns:data.accepted_title_patterns,excludedCategoryIds:data.excluded_category_ids as JobCategoryId[],intentFingerprint:hash([data.source_fingerprint,data.category_id,data.canonical_search_title,data.target_roles.join("|"),data.search_keywords.join("|"),JOB_CLASSIFIER_VERSION].join(":"))};
 }

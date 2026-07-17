@@ -50,10 +50,10 @@ export function detectJobCategory(title:string,description=""):{categoryId:JobCa
   }
   return {categoryId:"other",confidence:.25};
 }
-export type StrictJobIntent={canonicalSearchTitle:string;categoryId:JobCategoryId;searchKeywords:string[];acceptedTitlePatterns:string[];excludedCategoryIds:JobCategoryId[];intentFingerprint:string};
+export type StrictJobIntent={canonicalSearchTitle:string;targetRoles:string[];categoryId:JobCategoryId;searchKeywords:string[];acceptedTitlePatterns:string[];excludedCategoryIds:JobCategoryId[];intentFingerprint:string};
 export function strictJobMatchesIntent(job:{role:string;jdText?:string|null},intent:StrictJobIntent){
   const found=detectJobCategory(job.role,job.jdText??"");
   const titleAccepted=intent.acceptedTitlePatterns.length===0||
     intent.acceptedTitlePatterns.some(p=>job.role.toLowerCase().includes(p.toLowerCase()));
-  return {accepted:found.categoryId===intent.categoryId&&found.confidence>=.75&&titleAccepted&&!intent.excludedCategoryIds.includes(found.categoryId),detectedCategory:found.categoryId,confidence:found.confidence};
+  return {accepted:found.categoryId===intent.categoryId&&titleAccepted&&!intent.excludedCategoryIds.includes(found.categoryId),detectedCategory:found.categoryId,confidence:found.confidence};
 }

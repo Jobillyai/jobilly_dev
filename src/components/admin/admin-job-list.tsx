@@ -9,15 +9,10 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import {
-  AlertTriangle,
-  CheckCircle2,
-  Download,
   ExternalLink,
   FileText,
-  LoaderCircle,
   MapPin,
   Upload,
-  WandSparkles,
   X,
 } from "lucide-react";
 import {
@@ -28,12 +23,6 @@ import {
 import type { CandidateJobListing, JobListingViewMode } from "@/server/services/candidate-jobs";
 import { formatJobFreshnessLabel } from "@/server/services/job-role-cache";
 import { isPostedWithinDays } from "@/lib/job-posted-date";
-import {
-  approveResumeTailoringRunAction,
-  generateResumeTailoringRunAction,
-  getResumeTailoringRunAction,
-} from "@/server/actions/candidate-jobs";
-import type { ResumeTailoringRun } from "@/server/services/resume-tailoring-runs";
 import styles from "./admin-job-list.module.css";
 
 function formatSummaryDate(value: string): string {
@@ -65,7 +54,6 @@ function sourceBadgeClass(source: string, jobUrl: string): string {
 }
 
 type AdminJobListProps = {
-  candidateId: string;
   jobs: CandidateJobListing[];
   viewMode: JobListingViewMode;
   onToggleSelected: (jobId: string, selected: boolean) => void;
@@ -80,7 +68,6 @@ type AdminJobListProps = {
 };
 
 type AdminJobDetailModalProps = {
-  candidateId: string;
   job: CandidateJobListing;
   viewMode: JobListingViewMode;
   onClose: () => void;
@@ -90,7 +77,6 @@ type AdminJobDetailModalProps = {
 };
 
 function AdminJobDetailModal({
-  candidateId,
   job,
   viewMode,
   onClose,
@@ -102,57 +88,6 @@ function AdminJobDetailModal({
   const listingUrl = getCleanJobListingUrl(job.jobUrl, job.source);
   const [uploadingResume, setUploadingResume] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
-  const [tailoringRun, setTailoringRun] = useState<ResumeTailoringRun | null>(null);
-  const [tailoringLoading, setTailoringLoading] = useState(true);
-  const [tailoringError, setTailoringError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let disposed = false;
-    setTailoringLoading(true);
-    setTailoringError(null);
-    void getResumeTailoringRunAction(candidateId, job.id).then((result) => {
-      if (disposed) return;
-      setTailoringLoading(false);
-      if ("error" in result) {
-        setTailoringError(result.error);
-      } else {
-        setTailoringRun(result.run);
-      }
-    });
-    return () => {
-      disposed = true;
-    };
-  }, [candidateId, job.id]);
-
-  async function handleGenerateTailoredResume() {
-    setTailoringLoading(true);
-    setTailoringError(null);
-    const result = await generateResumeTailoringRunAction(candidateId, job.id);
-    setTailoringLoading(false);
-    if ("error" in result) {
-      setTailoringError(result.error);
-    } else {
-      setTailoringRun(result.run);
-    }
-  }
-
-  async function handleApproveTailoredResume() {
-    if (!tailoringRun) return;
-    setTailoringLoading(true);
-    setTailoringError(null);
-    const result = await approveResumeTailoringRunAction(
-      candidateId,
-      job.id,
-      tailoringRun.id,
-    );
-    setTailoringLoading(false);
-    if ("error" in result) {
-      setTailoringError(result.error);
-    } else {
-      setTailoringRun(result.run);
-    }
-  }
-
   async function handleResumeFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -307,123 +242,6 @@ function AdminJobDetailModal({
                 </a>
               ) : null}
             </div>
-          </section>
-
-          <section className={`${styles.modalSection} ${styles.tailorSection}`}>
-            <div className={styles.tailorHeader}>
-              <div>
-                <p className={styles.tailorEyebrow}>AI-assisted · Admin review required</p>
-                <h3 className={styles.sectionTitle}>Tailor resume to this job</h3>
-              </div>
-              {tailoringRun?.status === "approved" ? (
-                <span className={styles.tailorApproved}>
-                  <CheckCircle2 size={14} />
-                  Approved
-                </span>
-              ) : null}
-            </div>
-
-            {tailoringLoading ||
-            tailoringRun?.status === "queued" ||
-            tailoringRun?.status === "generating" ? (
-              <div className={styles.tailorLoading}>
-                <LoaderCircle size={18} className={styles.tailorSpinner} />
-                <span>Loading resume tailoring…</span>
-              </div>
-            ) : tailoringRun?.status === "review_required" ||
-              tailoringRun?.status === "approved" ? (
-              <div className={styles.tailorResult}>
-                <div className={styles.tailorScore}>
-                  <strong>{tailoringRun.atsScore ?? 0}</strong>
-                  <span>ATS keyword coverage</span>
-                </div>
-                <div className={styles.tailorDownloads}>
-                  {tailoringRun.docxDownloadUrl ? (
-                    <a href={tailoringRun.docxDownloadUrl} target="_blank" rel="noreferrer">
-                      <Download size={14} />
-                      Editable DOCX
-                    </a>
-                  ) : null}
-                  {tailoringRun.pdfDownloadUrl ? (
-                    <a href={tailoringRun.pdfDownloadUrl} target="_blank" rel="noreferrer">
-                      <Download size={14} />
-                      Review PDF
-                    </a>
-                  ) : null}
-                </div>
-                {tailoringRun.result ? (
-                  <div className={styles.tailorReviewGrid}>
-                    <div>
-                      <h4>Changes made</h4>
-                      <ul>
-                        {tailoringRun.result.changeSummary.map((change) => (
-                          <li key={change}>{change}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4>Missing requirements</h4>
-                      {tailoringRun.result.missingRequirements.length > 0 ? (
-                        <ul>
-                          {tailoringRun.result.missingRequirements.map((requirement) => (
-                            <li key={requirement}>{requirement}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p>No unsupported requirements identified.</p>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-                <div className={styles.tailorActions}>
-                  <button type="button" onClick={() => void handleGenerateTailoredResume()}>
-                    <WandSparkles size={15} />
-                    Generate new version
-                  </button>
-                  {tailoringRun.status === "review_required" ? (
-                    <button
-                      type="button"
-                      className={styles.tailorApproveBtn}
-                      onClick={() => void handleApproveTailoredResume()}
-                    >
-                      <CheckCircle2 size={15} />
-                      Approve and attach PDF
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            ) : (
-              <div className={styles.tailorEmpty}>
-                <WandSparkles size={22} />
-                <div>
-                  <strong>
-                    {tailoringRun?.status === "failed"
-                      ? "The previous generation failed"
-                      : "Create a factual, ATS-safe tailored resume"}
-                  </strong>
-                  <p>
-                    The base resume stays unchanged. Unsupported job requirements are
-                    flagged instead of added as candidate claims.
-                  </p>
-                </div>
-                <button type="button" onClick={() => void handleGenerateTailoredResume()}>
-                  {tailoringRun?.status === "failed" ? "Retry tailoring" : "Tailor resume"}
-                </button>
-              </div>
-            )}
-
-            {tailoringRun?.status === "failed" && tailoringRun.errorMessage ? (
-              <p className={styles.tailorError}>
-                <AlertTriangle size={14} />
-                {tailoringRun.errorMessage}
-              </p>
-            ) : null}
-            {tailoringError ? (
-              <p className={styles.tailorError}>
-                <AlertTriangle size={14} />
-                {tailoringError}
-              </p>
-            ) : null}
           </section>
 
           {isAppliedView ? (
@@ -594,7 +412,6 @@ function AdminJobCard({ job, viewMode, onOpen }: AdminJobCardProps) {
 }
 
 export function AdminJobList({
-  candidateId,
   jobs,
   viewMode,
   onToggleSelected,
@@ -619,7 +436,6 @@ export function AdminJobList({
 
       {openJob ? (
         <AdminJobDetailModal
-          candidateId={candidateId}
           job={openJob}
           viewMode={viewMode}
           onClose={() => setOpenJobId(null)}

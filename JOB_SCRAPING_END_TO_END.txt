@@ -1,0 +1,619 @@
+JOBILLY JOB SCRAPING — END-TO-END EXPLANATION
+Current implementation as of July 18, 2026
+
+PURPOSE
+=======
+
+Jobilly's job scraping pipeline finds United States job listings for an eligible
+candidate, validates them against the candidate's resume-derived occupation and
+keywords, ranks the strongest matches, removes duplicates, and stores the
+results for an assigned administrator to review.
+
+The system is designed to prioritize occupational accuracy. For example, a
+"Data Technician" candidate should not receive "Electronics Technician" jobs
+simply because both titles contain the word "technician."
+
+
+EXECUTIVE SUMMARY
+=================
+
+1. An authorized administrator opens an eligible candidate's job page.
+2. The candidate's PDF/DOCX resume, or an optional administrator TXT override,
+   is analyzed.
+3. Resume analysis produces:
+   - target roles;
+   - a canonical search title;
+   - responsibilities;
+   - skills;
+   - search keywords;
+   - an occupational category;
+   - accepted title patterns; and
+   - excluded occupational categories.
+4. The administrator can review and add keywords.
+5. The external job-board query uses every resume-derived target role plus the
+   complete keyword list. Both sets are represented as OR groups.
+6. LinkedIn and Indeed are searched nationwide in the United States.
+7. A normal role search and a Fortune 500-targeted search run for each source.
+8. Results are normalized and deduplicated.
+9. Jobs must match the resume's occupational category and title rules.
+10. Jobs must match any two keywords from the complete merged keyword list.
+11. Jobs matching more keywords are ranked ahead of jobs matching fewer.
+12. Matching jobs are stored. Existing URLs are refreshed instead of inserted
+    again.
+
+
+1. ACCESS AND ELIGIBILITY
+=========================
+
+The scrape endpoint is protected.
+
+The requesting user must:
+- be authenticated as authorized admin staff;
+- have access to the Job Apply portal;
+- have permission to scrape jobs;
+- be assigned to the selected candidate; and
+- select a candidate whose plan includes Managed Applications.
+
+Managers are not permitted to use the Job Apply portal.
+
+These checks prevent an administrator from scraping for an unrelated candidate
+or for a candidate whose subscription does not include managed applications.
+
+
+2. RESUME INPUT AND ANALYSIS
+============================
+
+Supported base resume sources:
+- PDF
+- DOCX
+
+Optional override:
+- TXT uploaded by an administrator
+
+When a TXT override exists, it becomes the active source for resume
+intelligence. Otherwise, the candidate's PDF/DOCX resume is used.
+
+Resume analysis extracts and stores:
+- target roles;
+- responsibilities;
+- skills;
+- search keywords;
+- canonical search title;
+- occupational category;
+- accepted title patterns;
+- excluded category IDs;
+- model and classifier metadata; and
+- analysis confidence.
+
+Confidence is informational only. There is no longer a 60%, 75%, or 80%
+confidence threshold that blocks scraping or rejects a job.
+
+Scraping still requires completed analysis with:
+- an occupational category; and
+- at least a canonical search title. All extracted target roles are also used.
+
+
+3. KEYWORD PREPARATION
+======================
+
+The default administrator keyword field is populated from:
+- extracted resume skills; and
+- resume-generated search keywords.
+
+The administrator can add, remove, or edit keywords before searching.
+
+The final keyword list merges:
+1. administrator-entered keywords; and
+2. resume-generated keywords.
+
+Keywords are:
+- converted to lowercase for matching;
+- trimmed;
+- deduplicated; and
+- accepted from comma, semicolon, or newline-separated input.
+
+Confidence does not control whether these keywords are used.
+
+
+4. EXTERNAL SEARCH QUERY
+========================
+
+The strict search query sent to the job boards uses:
+
+    (target role 1 OR target role 2 OR ...)
+    + (keyword 1 OR keyword 2 OR ...)
+    Location: United States
+
+Example:
+
+    Query: ("Data Technician" OR "Data Operations Technician")
+           ("SQL" OR "database" OR "data quality")
+    Location: United States
+
+Every analyzed target role and every keyword is included in the provider query.
+The OR groups broaden discovery without making the first two roles or keywords
+mandatory. After jobs are returned, Jobilly independently requires at least two
+keywords from the full list to match the job title or description.
+
+Candidate location and timezone do not restrict the search. The search is
+nationwide within the United States.
+
+Experience level is retained as candidate information, but the current strict
+external query is driven by the resume-derived target roles rather than an
+experience-level phrase.
+
+
+5. ACTIVE JOB SOURCES
+=====================
+
+Active sources:
+- LinkedIn
+- Indeed
+
+The administrator can search:
+- LinkedIn only;
+- Indeed only; or
+- all active sources.
+
+Glassdoor and ZipRecruiter integrations exist in the codebase but are not part
+of the currently active source list.
+
+Apify actors perform the external collection:
+- LinkedIn actor: curious_coder~linkedin-jobs-scraper
+- Indeed actor: misceres~indeed-scraper
+
+An APIFY_API_TOKEN or APIFY_KEY is required.
+
+
+6. RESULT LIMITS
+================
+
+Jobilly no longer imposes:
+- a 30-result regular-search cap;
+- a 30-result Fortune-search cap; or
+- a top-40 post-ranking retention cap.
+
+All jobs returned by the active provider that pass validation can be retained.
+
+Important: LinkedIn, Indeed, Apify actors, runtime limits, account limits, and
+provider billing may still impose their own practical limits. Removing Jobilly's
+application cap does not guarantee an unlimited number of external results.
+
+
+7. REGULAR AND FORTUNE 500 SEARCHES
+===================================
+
+For each selected source, the pipeline runs two searches in parallel:
+
+A. Regular role search
+   Example: ("Data Technician" OR "Data Operations Technician")
+   ("SQL" OR "database" OR "data quality")
+
+B. Fortune 500-targeted role search
+   Example:
+   ("Data Technician" OR "Data Operations Technician")
+   ("SQL" OR "database" OR "data quality")
+   ("Company A" OR "Company B" OR ...)
+
+Fortune 500 behavior:
+- The company list comes from a public 2023 Fortune 500 CSV.
+- A valid downloaded list is cached in memory for 24 hours.
+- If download or parsing fails, a built-in 30-company fallback is used and
+  cached for one hour.
+- Twelve companies are targeted per search batch.
+- The twelve-company batch rotates using the role and a three-hour time bucket.
+- The complete Fortune 500 list is therefore covered over rotating searches,
+  not in one single request.
+- A returned Fortune-targeted job is retained as a Fortune result only when
+  its company matches the loaded list or its company/description explicitly
+  mentions Fortune 50, Fortune 100, or Fortune 500.
+
+
+8. SCRAPE WINDOWS AND THREE-HOUR CACHE
+======================================
+
+Cache duration:
+- Three hours per candidate, source, role/intent.
+
+First successful search:
+- Requests jobs from the previous 15 days.
+
+Later searches:
+- Start from the last successful scrape time.
+- Add a one-hour overlap to avoid missing jobs around the boundary.
+- Deduplication removes repeated URLs caused by that overlap.
+- The maximum lookback remains 15 days.
+
+This naturally covers:
+- overnight gaps;
+- weekends;
+- holidays; and
+- periods when no administrator is using the portal.
+
+Important clarification:
+- The current system does not automatically launch a scrape every three hours.
+- Three hours is the cache freshness period.
+- A scrape occurs when the search flow is triggered and the selected source is
+  no longer fresh.
+- The window is based on the last successful scrape, not directly on logout
+  and login timestamps.
+
+Provider-specific date behavior:
+- LinkedIn receives a seconds-based lookback window.
+- LinkedIn uses a minimum one-hour lookback.
+- Indeed supports only 1, 3, 7, or 14-day lookback values.
+- A requested 15-day first search is represented as 14 days on Indeed because
+  14 is the maximum supported step in the current integration.
+
+If more than 15 days pass between successful searches, the current maximum
+window remains 15 days.
+
+
+9. NORMALIZATION BEFORE MATCHING
+================================
+
+Raw provider records are converted into a common structure containing:
+- company;
+- role/title;
+- canonical job URL;
+- external apply URL when available;
+- location;
+- job description;
+- source; and
+- posted date when available.
+
+Listings are removed before strict matching when:
+- the title is missing;
+- the URL is missing;
+- the listing is identified as Jobright;
+- the title is clearly irrelevant to the technical search; or
+- the same canonical URL already appeared in the same returned batch.
+
+LinkedIn URLs are canonicalized to stable LinkedIn job-view URLs when possible.
+Descriptions are cleaned from HTML and normalized as plain text.
+
+
+10. OCCUPATIONAL CATEGORY MATCHING
+==================================
+
+Each resume analysis has a target occupational category.
+
+Examples:
+- software_engineering
+- frontend_development
+- backend_development
+- data_analysis
+- data_engineering
+- data_operations_technician
+- data_center_technician
+- it_support
+- cloud_devops
+- cybersecurity
+- quality_assurance
+- product_management
+- design_ux
+- electrical_electronics_technician
+- mechanical_maintenance_technician
+- medical_laboratory_technician
+- other
+
+Each returned job is classified independently.
+
+A job must:
+- match the resume's target category;
+- match an accepted title pattern when title patterns exist; and
+- not belong to an explicitly excluded category.
+
+Known title/category rules are evaluated locally. Ambiguous jobs classified as
+"other" are sent to Gemini for category classification.
+
+There is no category-confidence percentage threshold. Confidence may still be
+stored for diagnostics and displayed as informational data.
+
+If Gemini is unavailable, ambiguous jobs that cannot be classified locally are
+rejected because their category cannot be safely established.
+
+Example:
+
+Resume target:
+    Data Technician -> data_operations_technician
+
+Returned job:
+    Electronics Technician -> electrical_electronics_technician
+
+Result:
+    Rejected because the occupational categories differ.
+
+
+11. KEYWORD ACCEPTANCE RULE
+===========================
+
+After category validation, every job is checked against the complete merged
+keyword list.
+
+Matching text:
+- job title; plus
+- job description.
+
+Company and location are not used for keyword qualification.
+
+Qualification:
+- No keywords: no keyword rejection.
+- One keyword: that one keyword must match.
+- Two or more keywords: any two keywords must match.
+
+The first two keywords have no special priority.
+
+Example keyword list:
+
+    Python, FastAPI, Django, Kafka, Kubernetes, PostgreSQL
+
+Accepted examples:
+- Python + Django
+- Kafka + Kubernetes
+- FastAPI + PostgreSQL
+
+The job does not need to match every keyword.
+
+Multiword keyword behavior:
+- Every meaningful token in that keyword must appear somewhere in the job
+  title or description.
+
+Example:
+
+    Keyword: event-driven architecture
+
+The matching text must contain the meaningful tokens for "event", "driven",
+and "architecture".
+
+Keyword matching is currently literal/substring based. It is not semantic
+matching, synonym expansion, or stemming.
+
+
+12. RANKING
+===========
+
+Passing jobs are ranked primarily by the number of matched keywords.
+
+Primary order:
+1. Highest keyword-match count.
+2. Highest combined relevance score when keyword counts tie.
+
+The combined score uses:
+- 90% keyword score; and
+- 10% resume-to-job relevance score.
+
+The keyword score considers both:
+- percentage of the full keyword list matched; and
+- total number of keyword matches.
+
+Therefore:
+- any two keywords can qualify a job;
+- three matches rank above two;
+- six matches rank above three; and
+- resume relevance helps break ties and refine ordering.
+
+There is no Jobilly top-40 retention limit after ranking.
+
+
+13. DATABASE STORAGE AND DEDUPLICATION
+======================================
+
+Accepted jobs are stored in the scraped_jobs table with:
+- candidate ID;
+- assigned administrator ID;
+- normalized search role;
+- company and title;
+- job and apply URLs;
+- description;
+- location;
+- source;
+- relevance score;
+- posted and scraped timestamps;
+- target category;
+- detected category;
+- informational category confidence;
+- classifier version; and
+- intent fingerprint.
+
+Database uniqueness is based on:
+
+    candidate + normalized search role + job URL
+
+If the URL is new:
+- a new job row is inserted.
+
+If the URL already exists:
+- it is not counted as a newly added job;
+- apply URL, description, score, posted date, scrape timestamp, location, and
+  source are refreshed.
+
+This explains why:
+- a provider may return many jobs;
+- many may pass matching;
+- but "new jobs added" may still be small because previously stored URLs are
+  updates, not new inserts.
+
+
+14. COUNTS SHOWN TO ADMINISTRATORS
+==================================
+
+Different counts represent different pipeline stages:
+
+Fetched:
+    Raw records returned by LinkedIn/Indeed actors.
+
+Rejected:
+    Records removed by normalization, category/title rules, excluded
+    categories, or the keyword minimum.
+
+Accepted:
+    Records that pass category and keyword checks.
+
+New jobs added:
+    Accepted URLs not already stored for that candidate and role.
+
+Refreshed:
+    Accepted URLs that already existed and were updated.
+
+Displayed:
+    Stored jobs remaining after the current portal view and UI filters.
+
+Displayed count may be lower because:
+- applied jobs are excluded from the pipeline view;
+- only the selected stored role is loaded;
+- source filters may be active;
+- posting-age filters may be active; or
+- the UI keyword filter applies the any-two-keyword rule again.
+
+
+15. PIPELINE AND APPLIED JOB VIEWS
+==================================
+
+Pipeline view:
+- shows jobs where applied = false;
+- uses the selected normalized role;
+- sorts by scrape recency and relevance in storage;
+- allows admin review and selection.
+
+Applied view:
+- shows jobs where applied = true;
+- sorts by applied date;
+- can include the application resume attached by the administrator.
+
+Marking a job as applied moves it out of the pipeline view and into the applied
+view. It is not deleted.
+
+
+16. FAILURE HANDLING
+====================
+
+Possible source errors include:
+- missing Apify credentials;
+- provider/actor timeout;
+- provider HTTP failure;
+- invalid provider payload;
+- no relevant jobs returned;
+- Gemini unavailable for ambiguous category classification; or
+- database insert/update failure.
+
+LinkedIn actor timeout:
+- up to 240 seconds.
+
+Indeed actor:
+- uses the shared actor timeout, normally 180 seconds.
+
+API route maximum duration:
+- 300 seconds.
+
+A source's last-success timestamp is updated only when that source is not
+reported as failed. This allows a later search to retry the missing window.
+
+
+17. AUDITING
+============
+
+The application writes an audit event after strict scraping.
+
+The audit target records:
+- candidate;
+- target category;
+- accepted/new count; and
+- rejected count.
+
+This supports operational review of scrape activity.
+
+
+18. CURRENT DESIGN DECISIONS
+============================
+
+The current production logic intentionally uses:
+- nationwide United States search;
+- all resume-derived target roles plus all keywords in the provider query;
+- all keywords for post-fetch evaluation;
+- any two keywords as the minimum;
+- most keyword matches as the strongest ranking signal;
+- exact occupational-category protection;
+- no confidence percentage gate;
+- no application-level result cap;
+- URL-level deduplication;
+- three-hour cache freshness; and
+- last-success-based incremental windows.
+
+
+19. KNOWN PRACTICAL LIMITATIONS
+===============================
+
+1. External providers may return fewer jobs than exist in the market.
+2. Removing Jobilly's cap does not remove provider, actor, timeout, quota, or
+   billing limits.
+3. Fortune 500 searches target twelve rotating companies per batch, not all
+   companies simultaneously.
+4. The default Fortune list is based on a public 2023 dataset.
+5. Indeed's current date filter has a maximum 14-day step.
+6. Keyword matching is literal and depends on the provider returning a useful
+   job description.
+7. Missing or short descriptions can prevent a job from reaching two keyword
+   matches.
+8. Exact category and accepted-title rules can reject a relevant job with an
+   unusual title.
+9. Gemini availability affects ambiguous category classification.
+10. The three-hour setting is cache freshness, not a standalone scheduled
+    background scraper.
+11. The maximum incremental lookback is 15 days.
+12. "New jobs added" excludes existing URLs that were refreshed.
+
+
+20. SIMPLE EXAMPLE
+==================
+
+Candidate resume analysis:
+    Canonical role: Backend Engineer
+    Target roles: Backend Engineer, API Developer, Server-side Engineer
+    Category: backend_development
+    Keywords:
+      Python, FastAPI, Django, PostgreSQL, Kafka, Docker, Kubernetes
+
+External query:
+    ("Backend Engineer" OR "API Developer" OR "Server-side Engineer")
+    ("Python" OR "FastAPI" OR "Django" OR "PostgreSQL" OR "Kafka"
+    OR "Docker" OR "Kubernetes")
+    Location: United States
+
+Returned Job A:
+    Title: Backend Software Engineer
+    Category: backend_development
+    Description matches: Python, FastAPI, PostgreSQL, Docker
+    Result: Accepted with four keyword matches and ranked strongly.
+
+Returned Job B:
+    Title: Backend Engineer
+    Category: backend_development
+    Description matches: Django, Kafka
+    Result: Accepted with two keyword matches, ranked below Job A.
+
+Returned Job C:
+    Title: Backend Engineer
+    Category: backend_development
+    Description matches: Python only
+    Result: Rejected because only one keyword matched.
+
+Returned Job D:
+    Title: Electronics Technician
+    Category: electrical_electronics_technician
+    Description happens to mention Python and PostgreSQL
+    Result: Rejected because the occupational category does not match.
+
+Returned Job E:
+    Same accepted URL as a previously stored job
+    Result: Existing row refreshed; not counted as a new job.
+
+
+FINAL ONE-SENTENCE DESCRIPTION
+==============================
+
+Jobilly searches LinkedIn and Indeed nationwide using all resume-derived target
+roles and the complete keyword list, requires each returned listing to match the
+candidate's occupational category and at least any two keywords, ranks jobs with
+the most keyword matches first, deduplicates by URL, and stores all qualifying
+provider results without a Jobilly result cap.

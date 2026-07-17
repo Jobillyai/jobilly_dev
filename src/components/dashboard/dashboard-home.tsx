@@ -18,7 +18,7 @@ const workspaceLinks = [
   {
     href: "/dashboard/applications" as const,
     label: "Applications",
-    description: "Applied roles, tailored resumes, and prep tips.",
+    description: "Applied roles, application resumes, and prep tips.",
     icon: Briefcase,
     tone: "blue" as const,
   },
@@ -200,7 +200,7 @@ export function DashboardHome({
         <div className={styles.alertBanner}>
           <p>
             New update on <strong>{latestApplicationLabel}</strong> — open Applications
-            for the job description, tailored resume, and prep tips.
+            for the job description, application resume, and prep tips.
           </p>
           <Link href="/dashboard/applications" className={styles.alertLink}>
             Open

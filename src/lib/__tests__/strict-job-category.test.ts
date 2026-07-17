@@ -21,7 +21,7 @@ import {
 } from "@/lib/fortune500-job-search";
 
 const dataIntent:StrictJobIntent={
-  canonicalSearchTitle:"Data Technician",categoryId:"data_operations_technician",
+  canonicalSearchTitle:"Data Technician",targetRoles:["Data Technician"],categoryId:"data_operations_technician",
   searchKeywords:["data quality","database"],acceptedTitlePatterns:["data technician"],
   excludedCategoryIds:["electrical_electronics_technician","mechanical_maintenance_technician"],
   intentFingerprint:"test",
