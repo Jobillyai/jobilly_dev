@@ -33,11 +33,10 @@
 .intelligenceGrid strong { color: var(--jb-admin-accent-bright); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
 .intelligenceGrid span { color: var(--jb-ink-secondary); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
 .intelligenceActions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.intelligenceActions button, .fileAction, .categorySelect { min-height: 38px; padding: 8px 12px; border: 1px solid var(--jb-border); border-radius: 10px; background: var(--jb-input-bg); color: var(--jb-ink); font: inherit; font-size: 12px; font-weight: 700; }
+.intelligenceActions button, .fileAction { min-height: 38px; padding: 8px 12px; border: 1px solid var(--jb-border); border-radius: 10px; background: var(--jb-input-bg); color: var(--jb-ink); font: inherit; font-size: 12px; font-weight: 700; }
 .intelligenceActions button, .fileAction { cursor: pointer; }
 .intelligenceActions button:disabled, .fileAction:has(input:disabled) { opacity: .55; cursor: not-allowed; }
 .fileAction input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.categorySelect { min-width: 220px; }
 .intelligenceNotice, .intelligenceError { margin: 0; font-size: 12px; line-height: 1.5; }
 .intelligenceNotice { color: var(--jb-ink-muted); }
 .intelligenceError { color: #d44b62; }
@@ -45,7 +44,6 @@
 @media (max-width: 720px) {
   .intelligenceHeader { flex-direction: column; }
   .intelligenceGrid { grid-template-columns: 1fr; }
-  .categorySelect { width: 100%; min-width: 0; }
 }
 
 .controls {

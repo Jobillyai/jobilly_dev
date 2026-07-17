@@ -21,20 +21,6 @@ export const JOB_CATEGORY_LABELS: Record<JobCategoryId, string> = {
   mechanical_maintenance_technician:"Mechanical / Maintenance Technician",
   medical_laboratory_technician:"Medical / Laboratory Technician", other:"Other / Needs Review",
 };
-export function categorySearchDefaults(categoryId:JobCategoryId){
- if(categoryId==="data_center_technician")return {
-  canonicalSearchTitle:"Data Center Technician",
-  acceptedTitlePatterns:["data center technician","datacenter technician"],
-  excludedCategoryIds:["data_operations_technician","electrical_electronics_technician","mechanical_maintenance_technician","medical_laboratory_technician"] as JobCategoryId[],
- };
- if(categoryId==="data_operations_technician")return {
-  canonicalSearchTitle:"Data Technician",
-  acceptedTitlePatterns:["data technician","data operations technician","data processing technician"],
-  excludedCategoryIds:["data_center_technician","electrical_electronics_technician","mechanical_maintenance_technician","medical_laboratory_technician"] as JobCategoryId[],
- };
- return {canonicalSearchTitle:JOB_CATEGORY_LABELS[categoryId],acceptedTitlePatterns:[] as string[],excludedCategoryIds:[] as JobCategoryId[]};
-}
-
 type Rule={id:JobCategoryId;title:RegExp;context?:RegExp};
 const RULES:Rule[]=[
   // Specific IT technician titles must win before adjacent trade categories.

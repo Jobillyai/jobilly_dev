@@ -12,7 +12,6 @@ import {
   toggleCandidateJobAppliedAction,
   toggleCandidateJobSelectedAction,
   uploadAppliedJobResumeAction,
-  confirmResumeCategoryAction,
   getResumeIntelligenceAction,
   removeResumeTxtOverrideAction,
   retryResumeIntelligenceAction,
@@ -61,6 +60,13 @@ type ResumeIntelligenceData = {
   analysis: Database["public"]["Tables"]["candidate_resume_analysis"]["Row"] | null;
   categories: Database["public"]["Tables"]["job_categories"]["Row"][];
 };
+
+function resumeSearchTerms(analysis: ResumeIntelligenceData["analysis"]): string {
+  if (!analysis || (analysis.confidence ?? 0) < 0.6) return "";
+  return [...new Set([...analysis.skills, ...analysis.search_keywords])]
+    .filter(Boolean)
+    .join(", ");
+}
 
 type CandidateJobsSheetProps = {
   candidateId: string;
@@ -193,6 +199,7 @@ export function CandidateJobsSheet({
     () => experienceLevelFromYears(candidateExperienceYears) ?? "",
   );
   const [keywordsInput, setKeywordsInput] = useState(() =>
+    resumeSearchTerms(initialResumeIntelligence.analysis) ||
     suggestJobSearchKeywords(defaultInterestedRole),
   );
   const [previousSearches, setPreviousSearches] = useState(initialPreviousSearches);
@@ -202,10 +209,6 @@ export function CandidateJobsSheet({
   const [sendingDigestEmail, setSendingDigestEmail] = useState(false);
   const [resumeIntelligence, setResumeIntelligence] = useState(initialResumeIntelligence);
   const [intelligencePending, setIntelligencePending] = useState(false);
-  const [categoryChoice, setCategoryChoice] = useState(
-    initialResumeIntelligence.analysis?.category_id ?? "",
-  );
-  const [resumeSuggestionsApplied, setResumeSuggestionsApplied] = useState(false);
   const skipRoleReloadRef = useRef(false);
   const lastSearchRoleRef = useRef<string | null>(null);
 
@@ -240,19 +243,25 @@ export function CandidateJobsSheet({
   useEffect(() => {
     setJobs(initialJobs);
     setPreviousSearches(initialPreviousSearches);
-    setInterestedRole(defaultInterestedRole);
+    setInterestedRole(
+      initialResumeIntelligence.analysis?.canonical_search_title ?? defaultInterestedRole,
+    );
     setMessage(null);
     setSelectedPreviousSearch("");
     setSourceFilter("all");
     setFreshnessFilter("all");
     setJobSort("best_match");
-    setKeywordsInput(suggestJobSearchKeywords(defaultInterestedRole));
+    setKeywordsInput(
+      resumeSearchTerms(initialResumeIntelligence.analysis) ||
+      suggestJobSearchKeywords(defaultInterestedRole),
+    );
     skipRoleReloadRef.current = false;
     lastSearchRoleRef.current = null;
   }, [
     candidateId,
     initialJobs,
     initialPreviousSearches,
+    initialResumeIntelligence,
     defaultInterestedRole,
   ]);
 
@@ -440,12 +449,7 @@ export function CandidateJobsSheet({
   async function handleSearch(sourceMode: JobSearchSourceMode) {
     if (!resumeIntelligence.analysis?.category_confirmed_at) {
       setMessageKind("error");
-      setMessage("Review and confirm the Resume Intelligence category before searching.");
-      return;
-    }
-    if (!resumeSuggestionsApplied) {
-      setMessageKind("error");
-      setMessage("Apply the resume-derived role and keywords before searching.");
+      setMessage("Resume analysis needs at least 60% category confidence before searching.");
       return;
     }
     const role = interestedRole.trim();
@@ -617,8 +621,11 @@ export function CandidateJobsSheet({
     const result = await getResumeIntelligenceAction(candidateId);
     if (result && "success" in result) {
       setResumeIntelligence(result.intelligence);
-      setCategoryChoice(result.intelligence.analysis?.category_id ?? "");
-      setResumeSuggestionsApplied(false);
+      const analysis = result.intelligence.analysis;
+      if (analysis?.category_confirmed_at) {
+        setInterestedRole(analysis.canonical_search_title ?? "");
+        setKeywordsInput(resumeSearchTerms(analysis));
+      }
     }
   }
 
@@ -635,7 +642,7 @@ export function CandidateJobsSheet({
     } else {
       await reloadResumeIntelligence();
       setMessageKind("success");
-      setMessage("TXT override analyzed. Review and confirm the category.");
+      setMessage("TXT override analyzed. Role, skills, and keywords were filled automatically.");
     }
     setIntelligencePending(false);
   }
@@ -656,7 +663,7 @@ export function CandidateJobsSheet({
       setMessage(result.warning);
     } else {
       setMessageKind("success");
-      setMessage("Base resume uploaded and analyzed. Review and confirm the category.");
+      setMessage("Base resume analyzed. Role, skills, and keywords were filled automatically.");
     }
     setIntelligencePending(false);
   }
@@ -685,30 +692,6 @@ export function CandidateJobsSheet({
       await reloadResumeIntelligence();
     }
     setIntelligencePending(false);
-  }
-
-  async function handleConfirmCategory() {
-    setIntelligencePending(true);
-    const result = await confirmResumeCategoryAction(candidateId, categoryChoice);
-    if (result && "error" in result && result.error) {
-      setMessageKind("error");
-      setMessage(result.error);
-    } else {
-      await reloadResumeIntelligence();
-      setMessageKind("success");
-      setMessage("Strict job category confirmed.");
-    }
-    setIntelligencePending(false);
-  }
-
-  function applyResumeSuggestions() {
-    const analysis = resumeIntelligence.analysis;
-    if (!analysis) return;
-    setInterestedRole(analysis.canonical_search_title ?? "");
-    setKeywordsInput(analysis.search_keywords.join(", "));
-    setResumeSuggestionsApplied(true);
-    setMessageKind("info");
-    setMessage("Resume-derived role and keywords copied into the search controls.");
   }
 
   function handleToggleSelected(jobId: string, selected: boolean) {
@@ -866,7 +849,7 @@ export function CandidateJobsSheet({
               }
             >
               {resumeIntelligence.analysis?.category_confirmed_at
-                ? "Category confirmed"
+                ? "Ready to search"
                 : resumeIntelligence.analysis?.status ?? "No analysis"}
             </span>
           </div>
@@ -920,29 +903,11 @@ export function CandidateJobsSheet({
             <button type="button" onClick={() => void handleRetryIntelligence()} disabled={intelligencePending}>
               Retry analysis
             </button>
-            <select
-              className={styles.categorySelect}
-              value={categoryChoice}
-              onChange={(event) => setCategoryChoice(event.target.value)}
-              disabled={intelligencePending || resumeIntelligence.analysis?.status !== "completed"}
-              aria-label="Strict job category"
-            >
-              <option value="">Choose job category</option>
-              {resumeIntelligence.categories
-                .filter((category) => category.id !== "other")
-                .map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}
-            </select>
-            <button type="button" onClick={() => void handleConfirmCategory()} disabled={intelligencePending || !categoryChoice}>
-              Confirm category
-            </button>
-            <button type="button" onClick={applyResumeSuggestions} disabled={!resumeIntelligence.analysis}>
-              Apply role &amp; keywords
-            </button>
           </div>
-          {!resumeIntelligence.analysis?.category_confirmed_at || !resumeSuggestionsApplied ? (
+          {resumeIntelligence.analysis &&
+          !resumeIntelligence.analysis.category_confirmed_at ? (
             <p className={styles.intelligenceNotice}>
-              Scraping is disabled until an assigned admin confirms a specific occupational category
-              and applies the resume-derived role and keywords.
+              Upload a clearer resume or TXT override so automatic category confidence reaches 60%.
             </p>
           ) : null}
         </section>
@@ -999,7 +964,6 @@ export function CandidateJobsSheet({
                   const nextRole = event.target.value;
                   setInterestedRole(nextRole);
                   setKeywordsInput(suggestJobSearchKeywords(nextRole));
-                  setResumeSuggestionsApplied(false);
                   setSelectedPreviousSearch("");
                 }}
                 placeholder="e.g. Software Engineer, Data Analyst"
@@ -1037,9 +1001,8 @@ export function CandidateJobsSheet({
                 value={keywordsInput}
                 onChange={(event) => {
                   setKeywordsInput(event.target.value);
-                  setResumeSuggestionsApplied(false);
                 }}
-                placeholder="Generated from the interested role"
+                placeholder="Generated from resume skills and keywords"
                 className={styles.fieldInput}
                 disabled={loadingPreviousSearch}
               />
@@ -1102,8 +1065,7 @@ export function CandidateJobsSheet({
                 loadingPreviousSearch ||
                 searchRequestInFlight ||
                 scrapeInProgress ||
-                !resumeIntelligence.analysis?.category_confirmed_at ||
-                !resumeSuggestionsApplied
+                !resumeIntelligence.analysis?.category_confirmed_at
               }
             >
               {pendingSource
@@ -1271,7 +1233,6 @@ export function CandidateJobsSheet({
                 className={styles.searchBtn}
                 onClick={() => {
                   setKeywordsInput("");
-                  setResumeSuggestionsApplied(false);
                 }}
               >
                 Clear keywords

@@ -52,10 +52,7 @@ import {
   getLatestResumeTailoringRun,
   type ResumeTailoringRun,
 } from "@/server/services/resume-tailoring-runs";
-import { z } from "zod";
-import { JOB_CATEGORY_IDS } from "@/lib/job-category-taxonomy";
 import {
-  confirmResumeCategory,
   getResumeIntelligence,
   invalidateAndAnalyzeResume,
   registerBaseResumeForIntelligence,
@@ -204,24 +201,6 @@ export async function retryResumeIntelligenceAction(candidateId: string) {
     return { success: true as const };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Resume analysis failed." };
-  }
-}
-
-export async function confirmResumeCategoryAction(candidateId: string, category: string) {
-  const access = await resumeIntelligenceAccess(candidateId);
-  if ("error" in access) return access;
-  const parsed = z.enum(JOB_CATEGORY_IDS).safeParse(category);
-  if (!parsed.success || parsed.data === "other") return { error: "Choose a specific job category." };
-  try {
-    await confirmResumeCategory({
-      candidateId,
-      actorId: access.admin.id,
-      categoryId: parsed.data,
-    });
-    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
-    return { success: true as const };
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "Could not confirm category." };
   }
 }
 
