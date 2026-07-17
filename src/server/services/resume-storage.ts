@@ -114,7 +114,7 @@ export async function saveCandidateResumeFile(input: {
   fileName: string;
   fileBuffer: Buffer;
   contentType: string;
-}): Promise<{ resumeUrl: string }> {
+}): Promise<{ resumeUrl: string; storagePath: string }> {
   const admin = createAdminClient();
 
   const { data: buckets, error: listError } = await admin.storage.listBuckets();
@@ -164,7 +164,7 @@ export async function saveCandidateResumeFile(input: {
     { onConflict: "user_id" },
   );
 
-  return { resumeUrl: signedData.signedUrl };
+  return { resumeUrl: signedData.signedUrl, storagePath: path };
 }
 
 export async function createSignedResumeUrl(

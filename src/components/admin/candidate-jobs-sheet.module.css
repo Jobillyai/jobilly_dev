@@ -6,6 +6,48 @@
   gap: 20px;
 }
 
+.intelligenceCard {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgba(56, 182, 255, 0.3);
+  border-radius: var(--jb-radius-lg);
+  background: linear-gradient(145deg, var(--jb-admin-elevated-mid), var(--jb-admin-accent-soft));
+}
+
+.intelligenceHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.intelligenceHeader h2 { margin: 3px 0 5px; font-size: 20px; color: var(--jb-ink); }
+.intelligenceHeader p { margin: 0; color: var(--jb-ink-muted); font-size: 13px; }
+.intelligenceEyebrow { color: var(--jb-admin-accent-bright); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.intelligenceReady, .intelligenceNeedsReview { padding: 7px 11px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.intelligenceReady { color: #08765b; background: rgba(52, 211, 153, .16); border: 1px solid rgba(52, 211, 153, .3); }
+.intelligenceNeedsReview { color: var(--jb-admin-accent-bright); background: var(--jb-admin-accent-soft); border: 1px solid rgba(56, 182, 255, .3); }
+.intelligenceGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.intelligenceGrid > div { display: grid; gap: 4px; padding: 11px 12px; border: 1px solid var(--jb-border); border-radius: var(--jb-radius-sm); background: var(--jb-input-bg); }
+.intelligenceGrid strong { color: var(--jb-admin-accent-bright); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.intelligenceGrid span { color: var(--jb-ink-secondary); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.intelligenceActions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.intelligenceActions button, .fileAction, .categorySelect { min-height: 38px; padding: 8px 12px; border: 1px solid var(--jb-border); border-radius: 10px; background: var(--jb-input-bg); color: var(--jb-ink); font: inherit; font-size: 12px; font-weight: 700; }
+.intelligenceActions button, .fileAction { cursor: pointer; }
+.intelligenceActions button:disabled, .fileAction:has(input:disabled) { opacity: .55; cursor: not-allowed; }
+.fileAction input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.categorySelect { min-width: 220px; }
+.intelligenceNotice, .intelligenceError { margin: 0; font-size: 12px; line-height: 1.5; }
+.intelligenceNotice { color: var(--jb-ink-muted); }
+.intelligenceError { color: #d44b62; }
+
+@media (max-width: 720px) {
+  .intelligenceHeader { flex-direction: column; }
+  .intelligenceGrid { grid-template-columns: 1fr; }
+  .categorySelect { width: 100%; min-width: 0; }
+}
+
 .controls {
   display: flex;
   flex-direction: column;

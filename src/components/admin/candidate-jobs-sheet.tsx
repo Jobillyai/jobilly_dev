@@ -12,6 +12,11 @@ import {
   toggleCandidateJobAppliedAction,
   toggleCandidateJobSelectedAction,
   uploadAppliedJobResumeAction,
+  confirmResumeCategoryAction,
+  getResumeIntelligenceAction,
+  removeResumeTxtOverrideAction,
+  retryResumeIntelligenceAction,
+  uploadResumeTxtOverrideAction,
   type JobSearchSourceMode,
 } from "@/server/actions/candidate-jobs";
 import {
@@ -48,6 +53,13 @@ import {
 } from "@/lib/resume-job-match";
 import { AdminJobList } from "@/components/admin/admin-job-list";
 import styles from "./candidate-jobs-sheet.module.css";
+import type { Database } from "@/server/db/database.types";
+
+type ResumeIntelligenceData = {
+  sources: Database["public"]["Tables"]["candidate_resume_sources"]["Row"][];
+  analysis: Database["public"]["Tables"]["candidate_resume_analysis"]["Row"] | null;
+  categories: Database["public"]["Tables"]["job_categories"]["Row"][];
+};
 
 type CandidateJobsSheetProps = {
   candidateId: string;
@@ -60,6 +72,7 @@ type CandidateJobsSheetProps = {
   viewMode?: JobListingViewMode;
   appliedCount?: number;
   candidateResumeMatch?: CandidateResumeMatchInput;
+  initialResumeIntelligence?: ResumeIntelligenceData;
 };
 
 type SourceFilter = JobListingSourceFilter;
@@ -149,7 +162,6 @@ function mergeJobListings(
 
 export function CandidateJobsSheet({
   candidateId,
-  candidateName,
   candidateExperienceYears = null,
   defaultInterestedRole,
   initialJobs,
@@ -158,6 +170,7 @@ export function CandidateJobsSheet({
   viewMode = "pipeline",
   appliedCount = 0,
   candidateResumeMatch,
+  initialResumeIntelligence = { sources: [], analysis: null, categories: [] },
 }: CandidateJobsSheetProps) {
   const isAppliedView = viewMode === "applied";
   const router = useRouter();
@@ -186,6 +199,12 @@ export function CandidateJobsSheet({
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [isBackgroundScraping, setIsBackgroundScraping] = useState(false);
   const [sendingDigestEmail, setSendingDigestEmail] = useState(false);
+  const [resumeIntelligence, setResumeIntelligence] = useState(initialResumeIntelligence);
+  const [intelligencePending, setIntelligencePending] = useState(false);
+  const [categoryChoice, setCategoryChoice] = useState(
+    initialResumeIntelligence.analysis?.category_id ?? "",
+  );
+  const [resumeSuggestionsApplied, setResumeSuggestionsApplied] = useState(false);
   const skipRoleReloadRef = useRef(false);
   const lastSearchRoleRef = useRef<string | null>(null);
 
@@ -418,6 +437,16 @@ export function CandidateJobsSheet({
   }
 
   async function handleSearch(sourceMode: JobSearchSourceMode) {
+    if (!resumeIntelligence.analysis?.category_confirmed_at) {
+      setMessageKind("error");
+      setMessage("Review and confirm the Resume Intelligence category before searching.");
+      return;
+    }
+    if (!resumeSuggestionsApplied) {
+      setMessageKind("error");
+      setMessage("Apply the resume-derived role and keywords before searching.");
+      return;
+    }
     const role = interestedRole.trim();
     if (!role) {
       setMessageKind("error");
@@ -583,6 +612,83 @@ export function CandidateJobsSheet({
     }
   }
 
+  async function reloadResumeIntelligence() {
+    const result = await getResumeIntelligenceAction(candidateId);
+    if (result && "success" in result) {
+      setResumeIntelligence(result.intelligence);
+      setCategoryChoice(result.intelligence.analysis?.category_id ?? "");
+      setResumeSuggestionsApplied(false);
+    }
+  }
+
+  async function handleTxtOverride(file: File | undefined) {
+    if (!file) return;
+    setIntelligencePending(true);
+    setMessage(null);
+    const data = new FormData();
+    data.set("resumeTxt", file);
+    const result = await uploadResumeTxtOverrideAction(candidateId, data);
+    if (result && "error" in result && result.error) {
+      setMessageKind("error");
+      setMessage(result.error);
+    } else {
+      await reloadResumeIntelligence();
+      setMessageKind("success");
+      setMessage("TXT override analyzed. Review and confirm the category.");
+    }
+    setIntelligencePending(false);
+  }
+
+  async function handleRemoveOverride() {
+    setIntelligencePending(true);
+    const result = await removeResumeTxtOverrideAction(candidateId);
+    if (result && "error" in result && result.error) {
+      setMessageKind("error");
+      setMessage(result.error);
+    } else {
+      await reloadResumeIntelligence();
+      setMessageKind("success");
+      setMessage("TXT override removed; the base resume is active again.");
+    }
+    setIntelligencePending(false);
+  }
+
+  async function handleRetryIntelligence() {
+    setIntelligencePending(true);
+    const result = await retryResumeIntelligenceAction(candidateId);
+    if (result && "error" in result && result.error) {
+      setMessageKind("error");
+      setMessage(result.error);
+    } else {
+      await reloadResumeIntelligence();
+    }
+    setIntelligencePending(false);
+  }
+
+  async function handleConfirmCategory() {
+    setIntelligencePending(true);
+    const result = await confirmResumeCategoryAction(candidateId, categoryChoice);
+    if (result && "error" in result && result.error) {
+      setMessageKind("error");
+      setMessage(result.error);
+    } else {
+      await reloadResumeIntelligence();
+      setMessageKind("success");
+      setMessage("Strict job category confirmed.");
+    }
+    setIntelligencePending(false);
+  }
+
+  function applyResumeSuggestions() {
+    const analysis = resumeIntelligence.analysis;
+    if (!analysis) return;
+    setInterestedRole(analysis.canonical_search_title ?? "");
+    setKeywordsInput(analysis.search_keywords.join(", "));
+    setResumeSuggestionsApplied(true);
+    setMessageKind("info");
+    setMessage("Resume-derived role and keywords copied into the search controls.");
+  }
+
   function handleToggleSelected(jobId: string, selected: boolean) {
     startTransition(async () => {
       const result = await toggleCandidateJobSelectedAction(
@@ -718,6 +824,96 @@ export function CandidateJobsSheet({
 
   return (
     <div className={styles.sheet}>
+      {!isAppliedView ? (
+        <section className={styles.intelligenceCard}>
+          <div className={styles.intelligenceHeader}>
+            <div>
+              <span className={styles.intelligenceEyebrow}>Strict search gate</span>
+              <h2>Resume intelligence</h2>
+              <p>
+                {resumeIntelligence.analysis?.effective_source_kind === "admin_txt_override"
+                  ? "Admin TXT override is the active analysis source."
+                  : "The candidate’s PDF/DOCX resume is the active analysis source."}
+              </p>
+            </div>
+            <span
+              className={
+                resumeIntelligence.analysis?.category_confirmed_at
+                  ? styles.intelligenceReady
+                  : styles.intelligenceNeedsReview
+              }
+            >
+              {resumeIntelligence.analysis?.category_confirmed_at
+                ? "Category confirmed"
+                : resumeIntelligence.analysis?.status ?? "No analysis"}
+            </span>
+          </div>
+          {resumeIntelligence.analysis ? (
+            <>
+              <div className={styles.intelligenceGrid}>
+                <div><strong>Target roles</strong><span>{resumeIntelligence.analysis.target_roles.join(", ") || "—"}</span></div>
+                <div><strong>Canonical search</strong><span>{resumeIntelligence.analysis.canonical_search_title || "—"}</span></div>
+                <div><strong>Skills</strong><span>{resumeIntelligence.analysis.skills.join(", ") || "—"}</span></div>
+                <div><strong>Keywords</strong><span>{resumeIntelligence.analysis.search_keywords.join(", ") || "—"}</span></div>
+                <div><strong>Responsibilities</strong><span>{resumeIntelligence.analysis.responsibilities.join(" · ") || "—"}</span></div>
+                <div><strong>Confidence</strong><span>{resumeIntelligence.analysis.confidence == null ? "—" : `${Math.round(resumeIntelligence.analysis.confidence * 100)}%`}</span></div>
+              </div>
+              {resumeIntelligence.analysis.error_message ? (
+                <p className={styles.intelligenceError}>{resumeIntelligence.analysis.error_message}</p>
+              ) : null}
+            </>
+          ) : (
+            <p className={styles.intelligenceError}>
+              Upload a current PDF or DOCX from the candidate profile, then retry analysis.
+            </p>
+          )}
+          <div className={styles.intelligenceActions}>
+            <label className={styles.fileAction}>
+              {resumeIntelligence.sources.some((source) => source.source_kind === "admin_txt_override")
+                ? "Replace TXT override"
+                : "Upload TXT override"}
+              <input
+                type="file"
+                accept=".txt,text/plain"
+                disabled={intelligencePending}
+                onChange={(event) => void handleTxtOverride(event.target.files?.[0])}
+              />
+            </label>
+            {resumeIntelligence.sources.some((source) => source.source_kind === "admin_txt_override") ? (
+              <button type="button" onClick={() => void handleRemoveOverride()} disabled={intelligencePending}>
+                Remove override
+              </button>
+            ) : null}
+            <button type="button" onClick={() => void handleRetryIntelligence()} disabled={intelligencePending}>
+              Retry analysis
+            </button>
+            <select
+              className={styles.categorySelect}
+              value={categoryChoice}
+              onChange={(event) => setCategoryChoice(event.target.value)}
+              disabled={intelligencePending || resumeIntelligence.analysis?.status !== "completed"}
+              aria-label="Strict job category"
+            >
+              <option value="">Choose job category</option>
+              {resumeIntelligence.categories
+                .filter((category) => category.id !== "other")
+                .map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}
+            </select>
+            <button type="button" onClick={() => void handleConfirmCategory()} disabled={intelligencePending || !categoryChoice}>
+              Confirm category
+            </button>
+            <button type="button" onClick={applyResumeSuggestions} disabled={!resumeIntelligence.analysis}>
+              Apply role &amp; keywords
+            </button>
+          </div>
+          {!resumeIntelligence.analysis?.category_confirmed_at || !resumeSuggestionsApplied ? (
+            <p className={styles.intelligenceNotice}>
+              Scraping is disabled until an assigned admin confirms a specific occupational category
+              and applies the resume-derived role and keywords.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
       <section className={styles.controls}>
         <div className={styles.controlsTop}>
           <div className={styles.controlsIntro}>
@@ -770,6 +966,7 @@ export function CandidateJobsSheet({
                   const nextRole = event.target.value;
                   setInterestedRole(nextRole);
                   setKeywordsInput(suggestJobSearchKeywords(nextRole));
+                  setResumeSuggestionsApplied(false);
                   setSelectedPreviousSearch("");
                 }}
                 placeholder="e.g. Software Engineer, Data Analyst"
@@ -805,7 +1002,10 @@ export function CandidateJobsSheet({
                 id="searchKeywords"
                 type="text"
                 value={keywordsInput}
-                onChange={(event) => setKeywordsInput(event.target.value)}
+                onChange={(event) => {
+                  setKeywordsInput(event.target.value);
+                  setResumeSuggestionsApplied(false);
+                }}
                 placeholder="Generated from the interested role"
                 className={styles.fieldInput}
                 disabled={loadingPreviousSearch}
@@ -865,7 +1065,13 @@ export function CandidateJobsSheet({
               type="button"
               className={styles.searchBtn}
               onClick={() => void handleSearch(searchSourceMode)}
-              disabled={loadingPreviousSearch || searchRequestInFlight || scrapeInProgress}
+              disabled={
+                loadingPreviousSearch ||
+                searchRequestInFlight ||
+                scrapeInProgress ||
+                !resumeIntelligence.analysis?.category_confirmed_at ||
+                !resumeSuggestionsApplied
+              }
             >
               {pendingSource
                 ? `Searching ${searchSourceLabel(pendingSource)}…`
@@ -1030,7 +1236,10 @@ export function CandidateJobsSheet({
               <button
                 type="button"
                 className={styles.searchBtn}
-                onClick={() => setKeywordsInput("")}
+                onClick={() => {
+                  setKeywordsInput("");
+                  setResumeSuggestionsApplied(false);
+                }}
               >
                 Clear keywords
               </button>

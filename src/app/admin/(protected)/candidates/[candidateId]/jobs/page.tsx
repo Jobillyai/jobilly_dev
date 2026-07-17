@@ -18,6 +18,7 @@ import {
 } from "@/server/services/candidate-jobs";
 import { getAdminCandidateById } from "@/server/services/admin-dashboard";
 import styles from "@/app/admin/admin.module.css";
+import { getResumeIntelligence } from "@/server/services/resume-intelligence";
 
 export const maxDuration = 300;
 
@@ -51,7 +52,11 @@ export default async function AdminCandidateJobsPage({
     redirect("/admin/jobs");
   }
 
-  const defaultInterestedRole = resolveCandidateJobRole(candidate) ?? "";
+  const intelligence = await getResumeIntelligence(candidate.id);
+  const defaultInterestedRole =
+    intelligence.analysis?.canonical_search_title ??
+    resolveCandidateJobRole(candidate) ??
+    "";
 
   const jobs = await getCandidateJobListings(candidate.id, defaultInterestedRole);
   const [previousSearches, appliedCount] = await Promise.all([
@@ -101,6 +106,7 @@ export default async function AdminCandidateJobsPage({
             canScrape={staffCanScrapeJobs(staff)}
             viewMode="pipeline"
             appliedCount={appliedCount}
+            initialResumeIntelligence={intelligence}
             candidateResumeMatch={{
               workExperience: candidate.workExperience,
               profileEducation: candidate.profileEducation,

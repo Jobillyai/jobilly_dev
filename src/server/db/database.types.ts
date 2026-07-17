@@ -212,6 +212,66 @@ export type Database = {
         >;
         Relationships: [];
       };
+      audit_log: {
+        Row: { id: string; actor_user_id: string | null; action: string; target: string; timestamp: string; ip: string | null };
+        Insert: { id?: string; actor_user_id?: string | null; action: string; target: string; timestamp?: string; ip?: string | null };
+        Update: Partial<Database["public"]["Tables"]["audit_log"]["Insert"]>;
+        Relationships: [];
+      };
+      job_categories: {
+        Row: { id: string; label: string; taxonomy_version: string; active: boolean };
+        Insert: { id: string; label: string; taxonomy_version?: string; active?: boolean };
+        Update: Partial<Database["public"]["Tables"]["job_categories"]["Insert"]>;
+        Relationships: [];
+      };
+      candidate_resume_sources: {
+        Row: {
+          candidate_id: string; source_kind: "base_resume" | "admin_txt_override";
+          storage_path: string; original_file_name: string; canonical_mime: string;
+          byte_size: number; sha256: string; extracted_text: string | null;
+          parser_version: string; extraction_status: "pending" | "processing" | "completed" | "failed";
+          error_message: string | null; uploaded_by: string; uploaded_at: string;
+          extracted_at: string | null; updated_at: string;
+        };
+        Insert: {
+          candidate_id: string; source_kind: "base_resume" | "admin_txt_override";
+          storage_path: string; original_file_name: string; canonical_mime: string;
+          byte_size: number; sha256: string; extracted_text?: string | null;
+          parser_version: string; extraction_status: "pending" | "processing" | "completed" | "failed";
+          error_message?: string | null; uploaded_by: string; uploaded_at?: string;
+          extracted_at?: string | null; updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["candidate_resume_sources"]["Insert"]>;
+        Relationships: [];
+      };
+      candidate_resume_analysis: {
+        Row: {
+          candidate_id: string; effective_source_kind: "base_resume" | "admin_txt_override";
+          source_fingerprint: string; status: "pending" | "processing" | "completed" | "failed";
+          target_roles: string[]; responsibilities: string[]; skills: string[];
+          search_keywords: string[]; canonical_search_title: string | null;
+          category_id: string | null; confidence: number | null;
+          accepted_title_patterns: string[]; excluded_category_ids: string[];
+          result_json: Record<string, unknown> | null; model: string | null;
+          prompt_version: string; taxonomy_version: string; generation_token: string;
+          category_confirmed_at: string | null; category_confirmed_by: string | null;
+          analyzed_at: string | null; error_message: string | null; updated_at: string;
+        };
+        Insert: {
+          candidate_id: string; effective_source_kind: "base_resume" | "admin_txt_override";
+          source_fingerprint: string; status: "pending" | "processing" | "completed" | "failed";
+          target_roles?: string[]; responsibilities?: string[]; skills?: string[];
+          search_keywords?: string[]; canonical_search_title?: string | null;
+          category_id?: string | null; confidence?: number | null;
+          accepted_title_patterns?: string[]; excluded_category_ids?: string[];
+          result_json?: Record<string, unknown> | null; model?: string | null;
+          prompt_version: string; taxonomy_version: string; generation_token: string;
+          category_confirmed_at?: string | null; category_confirmed_by?: string | null;
+          analyzed_at?: string | null; error_message?: string | null; updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["candidate_resume_analysis"]["Insert"]>;
+        Relationships: [];
+      };
       resume_tailoring_runs: {
         Row: {
           id: string;
@@ -325,6 +385,11 @@ export type Database = {
           candidate_viewed_at: string | null;
           application_resume_path: string | null;
           application_resume_file_name: string | null;
+          target_category: string | null;
+          detected_category: string | null;
+          category_confidence: number | null;
+          classifier_version: string | null;
+          intent_fingerprint: string | null;
         };
         Insert: {
           id?: string;
@@ -348,6 +413,11 @@ export type Database = {
           candidate_viewed_at?: string | null;
           application_resume_path?: string | null;
           application_resume_file_name?: string | null;
+          target_category?: string | null;
+          detected_category?: string | null;
+          category_confidence?: number | null;
+          classifier_version?: string | null;
+          intent_fingerprint?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["scraped_jobs"]["Insert"]>;
         Relationships: [];
@@ -358,12 +428,18 @@ export type Database = {
           search_role: string;
           source: string;
           last_scraped_at: string;
+          target_category: string | null;
+          classifier_version: string | null;
+          intent_fingerprint: string;
         };
         Insert: {
           candidate_id: string;
           search_role: string;
           source: string;
           last_scraped_at?: string;
+          target_category?: string | null;
+          classifier_version?: string | null;
+          intent_fingerprint?: string;
         };
         Update: Partial<Database["public"]["Tables"]["job_role_scrapes"]["Insert"]>;
         Relationships: [];

@@ -19,12 +19,10 @@ import {
   parsePreparationTips,
   serializePreparationTips,
 } from "@/server/services/job-preparation-tips";
-import { suggestJobSearchKeywords } from "@/lib/job-search-keywords";
 import {
   describeCacheStatus,
   describeScrapeWindow,
   isScrapeCacheFresh,
-  LEGACY_SEARCH_ROLE,
   normalizeSearchRole,
   resolveScrapeWindow,
   sourceScrapeHadError,
@@ -32,6 +30,8 @@ import {
   type RoleScrapeCacheStatus,
 } from "@/server/services/job-role-cache";
 import { createSignedResumeUrl } from "@/server/services/resume-storage";
+import { JOB_CLASSIFIER_VERSION, type StrictJobIntent } from "@/lib/job-category-taxonomy";
+import { getConfirmedStrictIntent } from "@/server/services/resume-intelligence";
 
 export type JobListingViewMode = "pipeline" | "applied";
 
@@ -153,14 +153,18 @@ async function getRoleScrapeCache(
   searchRole: string,
   sources: JobMarketSource[],
   db?: AppSupabase,
+  intentFingerprint?: string,
 ): Promise<RoleScrapeCacheStatus[]> {
   const supabase = await resolveDb(db);
-  const { data } = await supabase
+  let query = supabase
     .from("job_role_scrapes")
     .select("source, last_scraped_at")
     .eq("candidate_id", candidateId)
-    .eq("search_role", searchRole)
     .in("source", sources);
+  query = intentFingerprint
+    ? query.eq("intent_fingerprint", intentFingerprint)
+    : query.eq("search_role", searchRole);
+  const { data } = await query;
 
   const bySource = new Map(
     (data ?? []).map((row) => [row.source as JobMarketSource, row.last_scraped_at]),
@@ -181,6 +185,7 @@ async function markRoleScraped(
   searchRole: string,
   source: JobMarketSource,
   db?: AppSupabase,
+  intent?: StrictJobIntent,
 ): Promise<void> {
   const supabase = await resolveDb(db);
   await supabase.from("job_role_scrapes").upsert(
@@ -189,8 +194,11 @@ async function markRoleScraped(
       search_role: searchRole,
       source,
       last_scraped_at: new Date().toISOString(),
+      intent_fingerprint: intent?.intentFingerprint ?? "legacy",
+      target_category: intent?.categoryId ?? null,
+      classifier_version: intent ? JOB_CLASSIFIER_VERSION : null,
     },
-    { onConflict: "candidate_id,search_role,source" },
+    { onConflict: "candidate_id,intent_fingerprint,source" },
   );
 }
 
@@ -215,6 +223,7 @@ async function appendJobsForRole(
   searchRole: string,
   jobs: JobSearchResult[],
   db?: AppSupabase,
+  intent?: StrictJobIntent,
 ): Promise<{ inserted: number; updated: number; error?: string }> {
   if (jobs.length === 0) {
     return { inserted: 0, updated: 0 };
@@ -253,6 +262,11 @@ async function appendJobsForRole(
       applied_at: null,
       scraped_at: scrapedAt,
       posted_at: job.postedAt,
+      target_category: intent?.categoryId ?? null,
+      detected_category: job.detectedCategory ?? null,
+      category_confidence: job.categoryConfidence ?? null,
+      classifier_version: intent ? JOB_CLASSIFIER_VERSION : null,
+      intent_fingerprint: intent?.intentFingerprint ?? null,
     }));
 
   let inserted = 0;
@@ -331,11 +345,7 @@ export async function getCandidateJobListings(
 
   const normalizedRole = searchRole ? normalizeSearchRole(searchRole) : null;
   if (normalizedRole) {
-    if (options?.exactRoleOnly) {
-      query = query.eq("search_role", normalizedRole);
-    } else {
-      query = query.in("search_role", [normalizedRole, LEGACY_SEARCH_ROLE]);
-    }
+    query = query.eq("search_role", normalizedRole).not("intent_fingerprint", "is", null);
   }
 
   const { data, error } = await query;
@@ -355,7 +365,8 @@ export async function getCandidateAppliedJobCount(
     .from("scraped_jobs")
     .select("id", { count: "exact", head: true })
     .eq("candidate_id", candidateId)
-    .eq("applied", true);
+    .eq("applied", true)
+    .not("intent_fingerprint", "is", null);
 
   if (error) {
     return 0;
@@ -379,6 +390,7 @@ export async function getCandidatePreviousSearches(
     .from("scraped_jobs")
     .select("search_role, scraped_at")
     .eq("candidate_id", candidateId)
+    .not("intent_fingerprint", "is", null)
     .order("scraped_at", { ascending: false });
 
   if (error || !data) {
@@ -448,6 +460,7 @@ export async function getCandidateAppliedJobs(
     .select(JOB_SELECT)
     .eq("candidate_id", candidateId)
     .eq("applied", true)
+    .not("intent_fingerprint", "is", null)
     .order("applied_at", { ascending: false });
 
   if (error || !data) {
@@ -547,10 +560,11 @@ export async function runCandidateJobScrapeForSources(input: {
   scrapeErrors: string[];
   fatalError?: string;
   windowInfo?: string;
+  rejectedCount: number;
 }> {
-  const searchRole = normalizeSearchRole(input.interestedRole);
-  const searchKeywords =
-    input.searchKeywords?.trim() || suggestJobSearchKeywords(input.interestedRole);
+  const intent = await getConfirmedStrictIntent(input.candidate.id);
+  const searchRole = normalizeSearchRole(intent.canonicalSearchTitle);
+  const searchKeywords = intent.searchKeywords.join(" ");
 
   // Windowed scraping: the first scrape for a candidate+role looks back 15
   // days; each later scrape only covers the gap since that source's last
@@ -561,6 +575,7 @@ export async function runCandidateJobScrapeForSources(input: {
     searchRole,
     input.sources,
     input.db,
+    intent.intentFingerprint,
   );
   const lastScrapedBySource = new Map(
     cacheStatus.map((entry) => [entry.source, entry.lastScrapedAt]),
@@ -587,6 +602,7 @@ export async function runCandidateJobScrapeForSources(input: {
           experienceYears: input.candidate.experienceYears,
           searchKeywords,
           postedWithin,
+          strictIntent: intent,
         },
       );
 
@@ -596,6 +612,7 @@ export async function runCandidateJobScrapeForSources(input: {
         searchRole,
         scraped.jobs,
         input.db,
+        intent,
       );
 
       if (appendResult.error) {
@@ -603,17 +620,19 @@ export async function runCandidateJobScrapeForSources(input: {
           newJobsAdded: 0,
           scrapeErrors: scraped.errors,
           fatalError: appendResult.error,
+          rejectedCount: scraped.rejectedCount,
         };
       }
 
       if (!sourceScrapeHadError(source, scraped.errors)) {
-        await markRoleScraped(input.candidate.id, searchRole, source, input.db);
+        await markRoleScraped(input.candidate.id, searchRole, source, input.db, intent);
       }
 
       return {
         newJobsAdded: appendResult.inserted,
         scrapeErrors: scraped.errors,
         fatalError: undefined as string | undefined,
+        rejectedCount: scraped.rejectedCount,
       };
     }),
   );
@@ -621,12 +640,19 @@ export async function runCandidateJobScrapeForSources(input: {
   const scrapeErrors = results.flatMap((result) => result.scrapeErrors);
   const newJobsAdded = results.reduce((sum, result) => sum + result.newJobsAdded, 0);
   const fatalError = results.find((result) => result.fatalError)?.fatalError;
+  const rejectedCount = results.reduce((sum, result) => sum + result.rejectedCount, 0);
+  await createAdminClient().from("audit_log").insert({
+    actor_user_id: input.adminUserId,
+    action: "strict_job_scrape_executed",
+    target: `candidate:${input.candidate.id}:category:${intent.categoryId}:accepted:${newJobsAdded}:rejected:${rejectedCount}`,
+  });
 
   return {
     newJobsAdded,
     scrapeErrors,
     fatalError,
     windowInfo: describeScrapeWindow(widestWindow),
+    rejectedCount,
   };
 }
 
@@ -667,16 +693,25 @@ export async function refreshCandidateJobListings(
     };
   }
 
-  const searchRole = normalizeSearchRole(roleInput);
-  const searchKeywords =
-    options?.searchKeywords?.trim() || suggestJobSearchKeywords(roleInput);
+  let intent: StrictJobIntent;
+  try {
+    intent = await getConfirmedStrictIntent(candidate.id);
+  } catch (error) {
+    return {
+      jobs: [], searchTerms: [], searchQuery: "", searchRole: "", cacheStatus: [],
+      scrapeCalled: false, newJobsAdded: 0,
+      error: error instanceof Error ? error.message : "Confirm resume intelligence first.",
+    };
+  }
+  const searchRole = normalizeSearchRole(intent.canonicalSearchTitle);
+  const searchKeywords = intent.searchKeywords.join(" ");
   const searchTerms = buildCandidateSearchTerms(
     candidate,
-    roleInput,
+    intent.canonicalSearchTitle,
     candidate.experienceYears,
     searchKeywords,
   );
-  const { position, location } = buildCandidateJobSearchQuery(candidate, roleInput, {
+  const { position, location } = buildCandidateJobSearchQuery(candidate, intent.canonicalSearchTitle, {
     experienceYears: candidate.experienceYears,
     searchKeywords,
   });
@@ -686,7 +721,9 @@ export async function refreshCandidateJobListings(
   const forceScrape = options?.forceScrape ?? false;
   const db = options?.db;
 
-  const cacheStatus = await getRoleScrapeCache(candidate.id, searchRole, sources, db);
+  const cacheStatus = await getRoleScrapeCache(
+    candidate.id, searchRole, sources, db, intent.intentFingerprint,
+  );
   const sourcesToScrape = forceScrape
     ? sources
     : cacheStatus.filter((entry) => !entry.fresh).map((entry) => entry.source);
@@ -724,6 +761,7 @@ export async function refreshCandidateJobListings(
           searchRole,
           sources,
           db,
+          intent.intentFingerprint,
         ),
         scrapeCalled,
         newJobsAdded,
@@ -738,6 +776,7 @@ export async function refreshCandidateJobListings(
     searchRole,
     sources,
     db,
+    intent.intentFingerprint,
   );
   const jobs = await getCandidateJobListings(candidate.id, searchRole);
 

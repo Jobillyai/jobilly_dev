@@ -23,6 +23,7 @@ import {
   type RoleScrapeCacheStatus,
 } from "@/server/services/job-role-cache";
 import { createClient } from "@/server/db/supabase-server";
+import { getConfirmedStrictIntent } from "@/server/services/resume-intelligence";
 
 export const maxDuration = 300;
 
@@ -42,15 +43,15 @@ function sourcesFromMode(mode: z.infer<typeof bodySchema>["sourceMode"]): JobMar
 
 async function getRoleScrapeCacheForSources(
   candidateId: string,
-  searchRole: string,
   sources: JobMarketSource[],
+  intentFingerprint: string,
 ): Promise<RoleScrapeCacheStatus[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("job_role_scrapes")
     .select("source, last_scraped_at")
     .eq("candidate_id", candidateId)
-    .eq("search_role", searchRole)
+    .eq("intent_fingerprint", intentFingerprint)
     .in("source", sources);
 
   const bySource = new Map(
@@ -96,17 +97,25 @@ export async function POST(request: Request) {
 
   const { candidateId, sourceMode, interestedRole, searchKeywords } = parsed.data;
   const sources = sourcesFromMode(sourceMode);
-  const searchRole = normalizeSearchRole(interestedRole);
-
   const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
   if (!candidate) {
     return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
   }
+  let intent;
+  try {
+    intent = await getConfirmedStrictIntent(candidateId);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Confirm resume intelligence first." },
+      { status: 409 },
+    );
+  }
+  const searchRole = normalizeSearchRole(intent.canonicalSearchTitle);
 
   const cacheStatus = await getRoleScrapeCacheForSources(
     candidateId,
-    searchRole,
     sources,
+    intent.intentFingerprint,
   );
   const sourcesToScrape = cacheStatus
     .filter((entry) => !entry.fresh)
@@ -134,8 +143,8 @@ export async function POST(request: Request) {
 
   const updatedCacheStatus = await getRoleScrapeCacheForSources(
     candidateId,
-    searchRole,
     sources,
+    intent.intentFingerprint,
   );
   const jobs = await getCandidateJobListings(candidateId, searchRole);
   const warning =
@@ -166,6 +175,7 @@ export async function POST(request: Request) {
     cacheStatus: updatedCacheStatus,
     warning,
     info,
+    rejectedCount: scrapeResult.rejectedCount,
     error: scrapeResult.fatalError,
   });
 }

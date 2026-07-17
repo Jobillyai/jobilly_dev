@@ -16,6 +16,8 @@ import {
   type JobPostedWithin,
   JOB_MARKET_SOURCES,
 } from "@/server/services/job-market-search";
+import { type JobCategoryId, type StrictJobIntent } from "@/lib/job-category-taxonomy";
+import { classifyJobsForStrictIntent } from "@/server/services/gemini-job-category";
 
 export type JobSearchResult = {
   company: string;
@@ -28,6 +30,8 @@ export type JobSearchResult = {
   resumeMatch: "high" | "medium" | "low";
   source: JobListingSource;
   postedAt: string | null;
+  detectedCategory?: JobCategoryId;
+  categoryConfidence?: number;
 };
 
 /** Job search currently supports the US market only — always search nationwide. */
@@ -140,15 +144,24 @@ export async function scrapeJobsForCandidate(
     experienceYears?: number | null;
     searchKeywords?: string | null;
     postedWithin?: JobPostedWithin;
+    strictIntent?: StrictJobIntent;
   },
-): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[] }> {
+): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[]; rejectedCount: number }> {
   const experienceYears = options?.experienceYears ?? candidate.experienceYears;
-  const searchKeywords = options?.searchKeywords;
+  const searchKeywords =
+    options?.strictIntent?.searchKeywords.join(" ") || options?.searchKeywords;
   const resumeCorpus = buildResumeCorpusForCandidate(candidate, interestedRole);
-  const { position, location } = buildCandidateJobSearchQuery(candidate, interestedRole, {
-    experienceYears,
-    searchKeywords,
-  });
+  const { position, location } = options?.strictIntent
+    ? {
+        position: [options.strictIntent.canonicalSearchTitle, searchKeywords]
+          .filter(Boolean)
+          .join(" "),
+        location: JOB_SEARCH_LOCATION,
+      }
+    : buildCandidateJobSearchQuery(candidate, interestedRole, {
+        experienceYears,
+        searchKeywords,
+      });
   const searchQuery = `${position} · ${location}`;
 
   const apifyResult = await searchJobsBySources({
@@ -161,9 +174,29 @@ export async function scrapeJobsForCandidate(
 
   const roleForFilter = interestedRole?.trim() || candidate.jobSearchRole?.trim() || position;
 
-  const ranked = apifyResult.jobs
+  const classified = options?.strictIntent
+    ? await classifyJobsForStrictIntent(apifyResult.jobs, options.strictIntent)
+    : null;
+  const rejectedCount = classified?.rejectedCount ?? 0;
+  const categoryGated: Array<
+    JobListing & {
+      strictDetectedCategory?: JobCategoryId;
+      strictCategoryConfidence?: number;
+    }
+  > = classified
+    ? classified.accepted.map((entry) => ({
+        ...entry.job,
+        strictDetectedCategory: entry.detectedCategory,
+        strictCategoryConfidence: entry.confidence,
+      }))
+    : apifyResult.jobs;
+  const ranked = categoryGated
     .filter((job) => !isJobrightListing(job.source, job.jobUrl))
-    .filter((job) => jobMatchesSearchCriteria(job, roleForFilter, searchKeywords))
+    .filter((job) =>
+      options?.strictIntent
+        ? true
+        : jobMatchesSearchCriteria(job, roleForFilter, searchKeywords),
+    )
     .map((job) => {
       const { score, resumeMatch } = scoreJobListing(job, resumeCorpus);
       return {
@@ -177,6 +210,8 @@ export async function scrapeJobsForCandidate(
         resumeMatch,
         source: job.source,
         postedAt: job.postedAt,
+        detectedCategory: job.strictDetectedCategory,
+        categoryConfidence: job.strictCategoryConfidence,
       };
     })
     .sort((a, b) => b.relevanceScore - a.relevanceScore)
@@ -185,6 +220,7 @@ export async function scrapeJobsForCandidate(
   return {
     jobs: ranked,
     searchQuery,
-    errors: apifyResult.errors,
+    errors: [...apifyResult.errors, ...(classified?.error ? [classified.error] : [])],
+    rejectedCount,
   };
 }

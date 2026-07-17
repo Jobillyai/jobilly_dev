@@ -16,7 +16,10 @@ import {
 import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { saveCandidateResumeFile } from "@/server/services/resume-storage";
-import { RESUME_MIME_TYPES } from "@/lib/resume-mime";
+import {
+  registerBaseResumeForIntelligence,
+  validateBaseResumeFile,
+} from "@/server/services/resume-intelligence";
 
 const AVATAR_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -219,8 +222,8 @@ export async function uploadProfileResumeAction(
     return { error: "Resume must be 5 MB or smaller." };
   }
 
-  if (!(RESUME_MIME_TYPES as readonly string[]).includes(file.type)) {
-    return { error: "Use a PDF or Word document (.pdf, .doc, .docx)." };
+  if (!["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.type)) {
+    return { error: "Use a PDF or DOCX resume. Legacy .doc files cannot be analyzed." };
   }
 
   const supabase = await createClient();
@@ -231,12 +234,26 @@ export async function uploadProfileResumeAction(
   }
 
   try {
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    validateBaseResumeFile(fileBuffer, file.name, file.type);
     const saved = await saveCandidateResumeFile({
       userId: authData.user.id,
       fileName: file.name,
-      fileBuffer: Buffer.from(await file.arrayBuffer()),
+      fileBuffer,
       contentType: file.type,
     });
+    try {
+      await registerBaseResumeForIntelligence({
+        candidateId: authData.user.id,
+        actorId: authData.user.id,
+        storagePath: saved.storagePath,
+        fileName: file.name,
+        contentType: file.type,
+        buffer: fileBuffer,
+      });
+    } catch (analysisError) {
+      console.error("Resume intelligence analysis failed after upload:", analysisError);
+    }
 
     revalidatePath("/dashboard/profile");
     revalidatePath("/dashboard/career-advisory");
