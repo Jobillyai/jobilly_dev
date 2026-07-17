@@ -18,6 +18,10 @@ import {
 } from "@/server/services/job-market-search";
 import { type JobCategoryId, type StrictJobIntent } from "@/lib/job-category-taxonomy";
 import { classifyJobsForStrictIntent } from "@/server/services/gemini-job-category";
+import {
+  countMatchedJobKeywords,
+  keywordCoveragePercent,
+} from "@/lib/job-keyword-match";
 
 export type JobSearchResult = {
   company: string;
@@ -112,6 +116,7 @@ function buildResumeCorpusForCandidate(
   interestedRole?: string | null,
 ): string {
   return buildCandidateResumeCorpus({
+    resumeText: candidate.analyzedResumeText,
     workExperience: candidate.workExperience,
     profileEducation: candidate.profileEducation,
     specialization: candidate.specialization,
@@ -148,12 +153,14 @@ export async function scrapeJobsForCandidate(
   },
 ): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[]; rejectedCount: number }> {
   const experienceYears = options?.experienceYears ?? candidate.experienceYears;
+  const strictKeywords = options?.strictIntent?.searchKeywords ?? [];
   const searchKeywords =
-    options?.strictIntent?.searchKeywords.join(" ") || options?.searchKeywords;
+    (options?.strictIntent ? strictKeywords.slice(0, 2).join(" ") : null) ||
+    options?.searchKeywords;
   const resumeCorpus = buildResumeCorpusForCandidate(candidate, interestedRole);
   const { position, location } = options?.strictIntent
     ? {
-        position: [options.strictIntent.canonicalSearchTitle, searchKeywords]
+        position: [options.strictIntent.canonicalSearchTitle, ...strictKeywords.slice(0, 2)]
           .filter(Boolean)
           .join(" "),
         location: JOB_SEARCH_LOCATION,
@@ -177,7 +184,7 @@ export async function scrapeJobsForCandidate(
   const classified = options?.strictIntent
     ? await classifyJobsForStrictIntent(apifyResult.jobs, options.strictIntent)
     : null;
-  const rejectedCount = classified?.rejectedCount ?? 0;
+  let rejectedCount = classified?.rejectedCount ?? 0;
   const categoryGated: Array<
     JobListing & {
       strictDetectedCategory?: JobCategoryId;
@@ -190,7 +197,20 @@ export async function scrapeJobsForCandidate(
         strictCategoryConfidence: entry.confidence,
       }))
     : apifyResult.jobs;
-  const ranked = categoryGated
+  const keywordMinimum = Math.min(2, strictKeywords.length);
+  const keywordGated = categoryGated.filter((job) => {
+    if (!options?.strictIntent || keywordMinimum === 0) return true;
+    const matched = countMatchedJobKeywords(strictKeywords, {
+      role: job.role,
+      jdText: job.jdText,
+    });
+    if (matched < keywordMinimum) {
+      rejectedCount += 1;
+      return false;
+    }
+    return true;
+  });
+  const ranked = keywordGated
     .filter((job) => !isJobrightListing(job.source, job.jobUrl))
     .filter((job) =>
       options?.strictIntent
@@ -198,7 +218,19 @@ export async function scrapeJobsForCandidate(
         : jobMatchesSearchCriteria(job, roleForFilter, searchKeywords),
     )
     .map((job) => {
-      const { score, resumeMatch } = scoreJobListing(job, resumeCorpus);
+      const { score } = scoreJobListing(job, resumeCorpus);
+      const keywordMatchCount = options?.strictIntent
+        ? countMatchedJobKeywords(strictKeywords, { role: job.role, jdText: job.jdText })
+        : 0;
+      const keywordScore = options?.strictIntent
+        ? Math.max(
+            keywordCoveragePercent(keywordMatchCount, strictKeywords.length),
+            Math.min(100, keywordMatchCount * 10),
+          )
+        : score;
+      const combinedScore = options?.strictIntent
+        ? Math.round(keywordScore * 0.9 + score * 0.1)
+        : score;
       return {
         company: job.company,
         role: job.role,
@@ -206,15 +238,20 @@ export async function scrapeJobsForCandidate(
         applyUrl: job.applyUrl ?? null,
         location: job.location,
         jdText: job.jdText,
-        relevanceScore: score,
-        resumeMatch,
+        relevanceScore: combinedScore,
+        resumeMatch: resumeMatchLevel(combinedScore),
         source: job.source,
         postedAt: job.postedAt,
         detectedCategory: job.strictDetectedCategory,
         categoryConfidence: job.strictCategoryConfidence,
+        keywordMatchCount,
       };
     })
-    .sort((a, b) => b.relevanceScore - a.relevanceScore)
+    .sort(
+      (a, b) =>
+        b.keywordMatchCount - a.keywordMatchCount ||
+        b.relevanceScore - a.relevanceScore,
+    )
     .slice(0, 40);
 
   return {

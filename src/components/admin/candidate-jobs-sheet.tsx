@@ -54,6 +54,11 @@ import {
 import { AdminJobList } from "@/components/admin/admin-job-list";
 import styles from "./candidate-jobs-sheet.module.css";
 import type { Database } from "@/server/db/database.types";
+import {
+  countMatchedJobKeywords,
+  keywordCoveragePercent,
+  parseJobSearchKeywords,
+} from "@/lib/job-keyword-match";
 
 type ResumeIntelligenceData = {
   sources: Database["public"]["Tables"]["candidate_resume_sources"]["Row"][];
@@ -369,6 +374,10 @@ export function CandidateJobsSheet({
       }),
     [candidateResumeMatch, interestedRole],
   );
+  const activeKeywords = useMemo(
+    () => parseJobSearchKeywords(keywordsInput),
+    [keywordsInput],
+  );
 
   const jobsWithMatch = useMemo(
     () =>
@@ -378,14 +387,27 @@ export function CandidateJobsSheet({
           company: job.company,
           jdText: job.jdText,
         });
+        const keywordMatchCount = countMatchedJobKeywords(activeKeywords, {
+          role: job.role,
+          jdText: job.jdText,
+        });
+        const keywordScore = Math.max(
+          keywordCoveragePercent(keywordMatchCount, activeKeywords.length),
+          Math.min(100, keywordMatchCount * 10),
+        );
+        const combinedScore =
+          activeKeywords.length > 0
+            ? Math.round(keywordScore * 0.9 + score * 0.1)
+            : score;
 
         return {
           ...job,
-          relevanceScore: score,
-          resumeMatch: resumeMatchLevel(score),
+          relevanceScore: combinedScore,
+          resumeMatch: resumeMatchLevel(combinedScore),
+          keywordMatchCount,
         };
       }),
-    [jobs, resumeCorpus],
+    [activeKeywords, jobs, resumeCorpus],
   );
 
   const filteredJobs = useMemo(
@@ -412,6 +434,7 @@ export function CandidateJobsSheet({
           }
 
           return (
+            b.keywordMatchCount - a.keywordMatchCount ||
             b.relevanceScore - a.relevanceScore ||
             timestamp(b.postedAt) - timestamp(a.postedAt)
           );

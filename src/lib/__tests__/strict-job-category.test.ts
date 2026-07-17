@@ -8,6 +8,11 @@ import {
   validateBaseResumeFile,
   validateTxtOverride,
 } from "@/lib/resume-source-validation";
+import {
+  countMatchedJobKeywords,
+  mergeJobSearchKeywords,
+  parseJobSearchKeywords,
+} from "@/lib/job-keyword-match";
 
 const dataIntent:StrictJobIntent={
   canonicalSearchTitle:"Data Technician",categoryId:"data_operations_technician",
@@ -56,5 +61,33 @@ describe("resume source validation",()=>{
       .toThrow(/Binary/);
     const text="Data technician experienced with SQL, data quality, records, and databases.";
     expect(validateTxtOverride(Buffer.from(text),"resume.txt","text/plain")).toBe(text);
+  });
+});
+
+describe("role keyword matching",()=>{
+  it("uses editable comma-separated keywords without requiring every keyword",()=>{
+    const keywords=mergeJobSearchKeywords(
+      parseJobSearchKeywords("Python, FastAPI, Kubernetes"),
+      ["python","postgresql"],
+    );
+    expect(keywords).toEqual(["python","fastapi","kubernetes","postgresql"]);
+    expect(countMatchedJobKeywords(keywords,{
+      role:"Python Backend Engineer",
+      jdText:"Build FastAPI services deployed with Docker.",
+    })).toBe(2);
+  });
+
+  it("ranks a JD with more matching keywords above a weaker JD",()=>{
+    const keywords=["python","fastapi","kubernetes","postgresql"];
+    const strong=countMatchedJobKeywords(keywords,{
+      role:"Backend Engineer",
+      jdText:"Python and FastAPI services using Kubernetes and PostgreSQL.",
+    });
+    const weak=countMatchedJobKeywords(keywords,{
+      role:"Backend Engineer",
+      jdText:"Develop Python services with FastAPI.",
+    });
+    expect(strong).toBeGreaterThan(weak);
+    expect(weak).toBe(2);
   });
 });

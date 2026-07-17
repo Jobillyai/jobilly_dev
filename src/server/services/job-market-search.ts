@@ -1,6 +1,10 @@
 import { getApifyToken } from "@/server/services/apify-client";
 import { experienceLevelSearchTerms } from "@/lib/format-experience-years";
 import { extractJobPostedDate } from "@/lib/job-posted-date";
+import {
+  countMatchedJobKeywords,
+  parseJobSearchKeywords,
+} from "@/lib/job-keyword-match";
 
 const APIFY_GLASSDOOR_ACTOR_ID = "automation-lab~glassdoor-jobs-scraper";
 const APIFY_ZIPRECRUITER_ACTOR_ID = "piotrv1001~ziprecruiter-jobs-scraper";
@@ -118,16 +122,14 @@ export function jobMatchesKeywordFilter(
   },
   keywordsInput: string,
 ): boolean {
-  const tokens = parseKeywordFilterTokens(keywordsInput);
-  if (tokens.length === 0) {
+  const keywords = parseJobSearchKeywords(keywordsInput);
+  if (keywords.length === 0) {
     return true;
   }
-
-  const haystack = [job.role, job.company, job.location ?? "", job.jdText ?? ""]
-    .join(" ")
-    .toLowerCase();
-
-  return tokens.some((token) => haystack.includes(token));
+  return (
+    countMatchedJobKeywords(keywords, { role: job.role, jdText: job.jdText }) >=
+    Math.min(2, keywords.length)
+  );
 }
 
 /** Builds the job-board query from role, interest keywords, and experience (manager scrape). */
