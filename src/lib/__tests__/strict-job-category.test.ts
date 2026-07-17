@@ -13,6 +13,12 @@ import {
   mergeJobSearchKeywords,
   parseJobSearchKeywords,
 } from "@/lib/job-keyword-match";
+import {
+  buildFortune500SearchPosition,
+  hasFortuneCompanySignal,
+  parseFortune500Companies,
+  selectFortuneCompanyBatch,
+} from "@/lib/fortune500-job-search";
 
 const dataIntent:StrictJobIntent={
   canonicalSearchTitle:"Data Technician",categoryId:"data_operations_technician",
@@ -89,5 +95,36 @@ describe("role keyword matching",()=>{
     });
     expect(strong).toBeGreaterThan(weak);
     expect(weak).toBe(2);
+  });
+});
+
+describe("Fortune 500 targeting",()=>{
+  it("adds Fortune employer signals without replacing the role query",()=>{
+    expect(buildFortune500SearchPosition("Data Center Technician Python")).toBe(
+      'Data Center Technician Python ("Fortune 500" OR "Fortune 100")',
+    );
+  });
+
+  it("keeps targeted results only when the company or JD carries a Fortune signal",()=>{
+    expect(hasFortuneCompanySignal({
+      company:"Example Corp",
+      jdText:"Join a Fortune 500 infrastructure team.",
+    })).toBe(true);
+    expect(hasFortuneCompanySignal({
+      company:"Small Startup",
+      jdText:"Join our infrastructure team.",
+    })).toBe(false);
+  });
+
+  it("parses a company catalog and rotates bounded target batches",()=>{
+    const companies=parseFortune500Companies(
+      'Rank,Company,Industry\n1,Walmart,Retail\n2,"Amazon.com",Technology\n3,Apple,Technology\n',
+    );
+    expect(companies).toEqual(["Walmart","Amazon.com","Apple"]);
+    expect(selectFortuneCompanyBatch(companies,"window-1",2)).toHaveLength(2);
+    expect(hasFortuneCompanySignal({
+      company:"Amazon",
+      jdText:"Backend engineering role.",
+    },companies)).toBe(true);
   });
 });

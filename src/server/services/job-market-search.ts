@@ -5,6 +5,12 @@ import {
   countMatchedJobKeywords,
   parseJobSearchKeywords,
 } from "@/lib/job-keyword-match";
+import {
+  buildFortune500SearchPosition,
+  hasFortuneCompanySignal,
+  loadFortune500Companies,
+  selectFortuneCompanyBatch,
+} from "@/lib/fortune500-job-search";
 
 const APIFY_GLASSDOOR_ACTOR_ID = "automation-lab~glassdoor-jobs-scraper";
 const APIFY_ZIPRECRUITER_ACTOR_ID = "piotrv1001~ziprecruiter-jobs-scraper";
@@ -702,6 +708,7 @@ export async function searchJobsBySources(input: {
   sources: JobMarketSource[];
   maxItemsPerSource?: number;
   postedWithin?: JobPostedWithin;
+  includeFortune500?: boolean;
 }): Promise<{ jobs: JobListing[]; errors: string[] }> {
   const maxItems = input.maxItemsPerSource ?? 20;
   const location = input.location ?? "United States";
@@ -709,32 +716,52 @@ export async function searchJobsBySources(input: {
     input.sources.filter((source) => JOB_MARKET_SOURCES.includes(source)),
   );
   const activeSources = JOB_MARKET_SOURCES.filter((source) => requested.has(source));
+  const fortuneCompanies = input.includeFortune500
+    ? await loadFortune500Companies()
+    : [];
+  const fortuneBatch = selectFortuneCompanyBatch(
+    fortuneCompanies,
+    `${input.position}:${Math.floor(Date.now() / (3 * 60 * 60 * 1000))}`,
+  );
 
   const results = await Promise.all(
     activeSources.map(async (source) => {
-      if (source === "linkedin") {
-        const linkedin = await searchLinkedInJobs({
-          position: input.position,
-          location,
-          maxItems,
-          postedWithin: input.postedWithin,
-        });
-        if ("error" in linkedin) {
-          return { jobs: [] as JobListing[], error: `LinkedIn: ${linkedin.error}` };
-        }
-        return { jobs: linkedin.jobs, error: null as string | null };
+      const search = (position: string) =>
+        source === "linkedin"
+          ? searchLinkedInJobs({
+              position,
+              location,
+              maxItems,
+              postedWithin: input.postedWithin,
+            })
+          : searchIndeedJobs({
+              position,
+              location,
+              maxItems,
+              postedWithin: input.postedWithin,
+            });
+      const basePromise = search(input.position);
+      const fortunePromise = input.includeFortune500
+        ? search(buildFortune500SearchPosition(input.position, fortuneBatch))
+        : null;
+      const [base, fortune] = await Promise.all([basePromise, fortunePromise]);
+      const label = source === "linkedin" ? "LinkedIn" : "Indeed";
+      const baseJobs = base && !("error" in base) ? base.jobs : [];
+      const fortuneJobs =
+        fortune && !("error" in fortune)
+          ? fortune.jobs.filter((job) => hasFortuneCompanySignal(job, fortuneCompanies))
+          : [];
+      if (baseJobs.length === 0 && fortuneJobs.length === 0) {
+        const error =
+          (base && "error" in base ? base.error : null) ??
+          (fortune && "error" in fortune ? fortune.error : null) ??
+          "No relevant jobs were returned.";
+        return { jobs: [] as JobListing[], error: `${label}: ${error}` };
       }
-
-      const indeed = await searchIndeedJobs({
-        position: input.position,
-        location,
-        maxItems,
-        postedWithin: input.postedWithin,
-      });
-      if ("error" in indeed) {
-        return { jobs: [] as JobListing[], error: `Indeed: ${indeed.error}` };
-      }
-      return { jobs: indeed.jobs, error: null as string | null };
+      return {
+        jobs: dedupeJobs([...baseJobs, ...fortuneJobs]),
+        error: null as string | null,
+      };
     }),
   );
 

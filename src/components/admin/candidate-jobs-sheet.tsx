@@ -521,8 +521,8 @@ export function CandidateJobsSheet({
         setMessageKind("info");
         setMessage(
           prep.jobs.length > 0
-            ? `Showing ${prep.jobs.length} stored job${prep.jobs.length === 1 ? "" : "s"}. Searching ${searchSourceLabel(sourceMode)} in parallel — you can open Tasks, Calendar, or other tabs while jobs load.`
-            : `Searching ${searchSourceLabel(sourceMode)} in parallel — feel free to work elsewhere; jobs save automatically.`,
+            ? `Showing ${prep.jobs.length} stored job${prep.jobs.length === 1 ? "" : "s"}. Searching ${searchSourceLabel(sourceMode)}, including Fortune 500 employers, in parallel.`
+            : `Searching ${searchSourceLabel(sourceMode)}, including Fortune 500 employers, in parallel — jobs save automatically.`,
         );
 
         const scrapeModes: JobSearchSourceMode[] =
@@ -598,7 +598,7 @@ export function CandidateJobsSheet({
             } else if (scraped) {
               setMessageKind("success");
               setMessage(
-                `Search finished — ${newJobsAdded} new unique job${newJobsAdded === 1 ? "" : "s"} added (${totalCount} total for this role).`,
+                `Search finished — ${newJobsAdded} new unique job${newJobsAdded === 1 ? "" : "s"} added (${totalCount} total), including Fortune 500 targeting.`,
               );
             } else if (infos.length > 0) {
               setMessageKind("info");

@@ -177,6 +177,7 @@ export async function scrapeJobsForCandidate(
     sources,
     maxItemsPerSource: 30,
     postedWithin: options?.postedWithin,
+    includeFortune500: true,
   });
 
   const roleForFilter = interestedRole?.trim() || candidate.jobSearchRole?.trim() || position;
