@@ -23,8 +23,7 @@ export function SiteBootLoader() {
     setVisible(true);
     setFadeOut(false);
     const startedAt = performance.now();
-    let fadeTimer: number | undefined;
-    let hideTimer: number | undefined;
+    const timers: { fade?: number; hide?: number } = {};
     let cancelled = false;
 
     function finish() {
@@ -35,12 +34,12 @@ export function SiteBootLoader() {
       const elapsed = performance.now() - startedAt;
       const wait = Math.max(0, MIN_VISIBLE_MS - elapsed);
 
-      fadeTimer = window.setTimeout(() => {
+      timers.fade = window.setTimeout(() => {
         if (cancelled) {
           return;
         }
         setFadeOut(true);
-        hideTimer = window.setTimeout(() => {
+        timers.hide = window.setTimeout(() => {
           if (!cancelled) {
             setVisible(false);
           }
@@ -57,8 +56,8 @@ export function SiteBootLoader() {
     return () => {
       cancelled = true;
       window.removeEventListener("load", finish);
-      if (fadeTimer) window.clearTimeout(fadeTimer);
-      if (hideTimer) window.clearTimeout(hideTimer);
+      if (timers.fade) window.clearTimeout(timers.fade);
+      if (timers.hide) window.clearTimeout(timers.hide);
     };
   }, [pathname]);
 

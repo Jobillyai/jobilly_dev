@@ -73,11 +73,10 @@ export function PostAuthWelcomeSplash({ name }: PostAuthWelcomeSplashProps) {
 
     setVisible(true);
     setFadeOut(false);
-    let fadeTimer: number | undefined;
     let hideTimer: number | undefined;
     let cancelled = false;
 
-    fadeTimer = window.setTimeout(() => {
+    const fadeTimer = window.setTimeout(() => {
       if (cancelled) {
         return;
       }
@@ -93,7 +92,7 @@ export function PostAuthWelcomeSplash({ name }: PostAuthWelcomeSplashProps) {
 
     return () => {
       cancelled = true;
-      if (fadeTimer) window.clearTimeout(fadeTimer);
+      window.clearTimeout(fadeTimer);
       if (hideTimer) window.clearTimeout(hideTimer);
     };
   }, []);
