@@ -12,7 +12,7 @@ import {
   formatCandidateVisaStatus,
 } from "@/lib/candidate-profile-options";
 import { getPremiumPlan } from "@/lib/candidate-services";
-import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
+import { resolveCandidateJobRole } from "@/lib/candidate-job-role";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
 import styles from "./candidates-list.module.css";

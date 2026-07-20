@@ -1,5 +1,4 @@
 import { getApifyToken } from "@/server/services/apify-client";
-import { experienceLevelSearchTerms } from "@/lib/format-experience-years";
 import { extractJobPostedDate } from "@/lib/job-posted-date";
 import {
   countMatchedJobKeywords,
@@ -11,6 +10,10 @@ import {
   loadFortune500Companies,
   selectFortuneCompanyBatch,
 } from "@/lib/fortune500-job-search";
+
+import { composeJobSearchPosition } from "@/lib/job-search-position";
+
+export { composeJobSearchPosition };
 
 const APIFY_GLASSDOOR_ACTOR_ID = "automation-lab~glassdoor-jobs-scraper";
 const APIFY_ZIPRECRUITER_ACTOR_ID = "piotrv1001~ziprecruiter-jobs-scraper";
@@ -102,15 +105,6 @@ const NON_TECH_WHEN_TECH_SEARCH =
 const TECH_SEARCH_PATTERN =
   /\b(engineer|developer|devops|data|analyst|software|frontend|backend|full.?stack|sre|machine learning|ml|ai|qa|tester|programmer|architect)\b/i;
 
-function normalizeSearchFragment(value: string | null | undefined): string | null {
-  const trimmed = value?.trim();
-  return trimmed && trimmed.length > 0 ? trimmed : null;
-}
-
-function fragmentIncludedIn(base: string, fragment: string): boolean {
-  return base.toLowerCase().includes(fragment.toLowerCase());
-}
-
 export function parseKeywordFilterTokens(input: string): string[] {
   return input
     .split(/[,;\n]+/)
@@ -136,66 +130,6 @@ export function jobMatchesKeywordFilter(
     countMatchedJobKeywords(keywords, { jdText: job.jdText }) >=
     Math.min(2, keywords.length)
   );
-}
-
-/** Builds the job-board query from role, interest keywords, and experience (manager scrape). */
-export function composeJobSearchPosition(input: {
-  interestedRole?: string | null;
-  interestedTechnology?: string | null;
-  branch?: string | null;
-  graduationDetails?: string | null;
-  careerGoals?: string | null;
-  specialization?: string | null;
-  profileEducation?: string | null;
-  experienceYears?: number | null;
-  searchKeywords?: string | null;
-}): string {
-  const primaryRole =
-    normalizeSearchFragment(input.interestedRole) ||
-    normalizeSearchFragment(input.interestedTechnology) ||
-    normalizeSearchFragment(input.specialization) ||
-    normalizeSearchFragment(input.branch) ||
-    normalizeSearchFragment(input.graduationDetails)?.slice(0, 80) ||
-    normalizeSearchFragment(input.careerGoals)?.slice(0, 80) ||
-    "software engineer";
-
-  const supplements: string[] = [];
-  for (const fragment of [
-    input.interestedTechnology,
-    input.branch,
-    input.specialization,
-    input.profileEducation,
-  ]) {
-    const normalized = normalizeSearchFragment(fragment);
-    if (normalized && !fragmentIncludedIn(primaryRole, normalized)) {
-      supplements.push(normalized.split(/\s+/).slice(0, 5).join(" "));
-    }
-  }
-
-  if (input.searchKeywords?.trim()) {
-    for (const token of parseKeywordFilterTokens(input.searchKeywords)) {
-      if (!fragmentIncludedIn(primaryRole, token)) {
-        supplements.push(token);
-      }
-    }
-  }
-
-  const experienceParts: string[] = [];
-  if (input.experienceYears !== null && input.experienceYears !== undefined) {
-    experienceParts.push(...experienceLevelSearchTerms(input.experienceYears).slice(0, 2));
-  }
-
-  const unique: string[] = [];
-  const seen = new Set<string>();
-  for (const part of [primaryRole, ...supplements, ...experienceParts]) {
-    const key = part.toLowerCase();
-    if (!seen.has(key)) {
-      seen.add(key);
-      unique.push(part);
-    }
-  }
-
-  return unique.join(" ").replace(/\s+/g, " ").trim().slice(0, 120);
 }
 
 const ROLE_STOP_WORDS = new Set([

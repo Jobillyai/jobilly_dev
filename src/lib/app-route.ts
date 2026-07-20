@@ -1,7 +1,6 @@
-import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import type { Route } from "next";
 
-export type AppRoute = Parameters<AppRouterInstance["push"]>[0];
-
-export function asAppRoute(path: string): AppRoute {
-  return path as AppRoute;
+/** Cast a runtime path string to Next.js typed Route (typedRoutes experiment). */
+export function asAppRoute(path: string): Route {
+  return path as Route;
 }

@@ -5,8 +5,8 @@ import {
   calculateResumeJobMatchPercent,
   resumeMatchLevel,
 } from "@/lib/resume-job-match";
+import { composeJobSearchPosition } from "@/lib/job-search-position";
 import {
-  composeJobSearchPosition,
   isJobrightListing,
   jobMatchesSearchCriteria,
   searchJobsBySources,
