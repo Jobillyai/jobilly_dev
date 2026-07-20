@@ -16,6 +16,10 @@ import {
   type JobPostedWithin,
   JOB_MARKET_SOURCES,
 } from "@/server/services/job-market-search";
+import {
+  hasIndexedJobApi,
+  searchIndexedJobs,
+} from "@/server/services/indexed-job-search";
 import { type JobCategoryId, type StrictJobIntent } from "@/lib/job-category-taxonomy";
 import { classifyJobsForStrictIntent } from "@/server/services/gemini-job-category";
 import {
@@ -202,16 +206,48 @@ export async function scrapeJobsForCandidate(
       });
   const searchQuery = `${position} · ${location}`;
 
-  const apifyResult = await searchJobsBySources({
-    position,
-    location,
-    sources,
-    postedWithin: options?.postedWithin,
-    // Cap per-source volume so Apify finishes faster.
-    maxItemsPerSource: 30,
-    // Fortune-500 second pass is expensive; keep it off the hot path.
-    includeFortune500: false,
-  });
+  let apifyResult: { jobs: JobListing[]; errors: string[] };
+
+  // Indexed APIs (JSearch / SerpAPI) first for ~seconds latency; Apify is fallback.
+  if (hasIndexedJobApi()) {
+    const indexed = await searchIndexedJobs({
+      position,
+      location,
+      sources,
+      maxItems: Math.max(30, 30 * Math.max(1, sources.length)),
+      postedWithin: options?.postedWithin,
+    });
+    if (!("error" in indexed) && indexed.jobs.length > 0) {
+      apifyResult = { jobs: indexed.jobs, errors: [] };
+    } else {
+      if ("error" in indexed) {
+        console.warn("Indexed job search failed, falling back to Apify:", indexed.error);
+      }
+      apifyResult = await searchJobsBySources({
+        position,
+        location,
+        sources,
+        postedWithin: options?.postedWithin,
+        maxItemsPerSource: 30,
+        includeFortune500: false,
+      });
+      if ("error" in indexed && apifyResult.jobs.length === 0) {
+        apifyResult = {
+          jobs: [],
+          errors: [indexed.error, ...apifyResult.errors],
+        };
+      }
+    }
+  } else {
+    apifyResult = await searchJobsBySources({
+      position,
+      location,
+      sources,
+      postedWithin: options?.postedWithin,
+      maxItemsPerSource: 30,
+      includeFortune500: false,
+    });
+  }
 
   const roleForFilter = interestedRole?.trim() || candidate.jobSearchRole?.trim() || position;
 

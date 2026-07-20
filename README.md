@@ -39,13 +39,19 @@ Protected routes under `/admin` for staff roles (`admin` mentor, `manager`):
 
 ### Job search sources
 
-Jobs are scraped via **Apify** actors (not Remotive):
+**Preferred (fast):** indexed job APIs return results in a few seconds:
+
+| Provider | Env key | Notes |
+|----------|---------|--------|
+| [JSearch](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch) | `JSEARCH_API_KEY` or `RAPIDAPI_KEY` | Primary |
+| [SerpAPI Google Jobs](https://serpapi.com/google-jobs-api) | `SERPAPI_API_KEY` | Fallback |
+
+**Fallback:** if no indexed key is set (or the API fails), jobs are scraped via **Apify**:
 
 | Source | Actor |
 |--------|--------|
 | Indeed | `misceres/indeed-scraper` |
 | LinkedIn | `curious_coder/linkedin-jobs-scraper` |
-| Google Jobs | `automation-lab/google-jobs-scraper` |
 
 Search uses the manager-set **job role** plus **years of experience** for better matching.
 
@@ -55,7 +61,7 @@ Search uses the manager-set **job role** plus **years of experience** for better
 |-------|------------|
 | Framework | Next.js 14 (App Router), TypeScript strict |
 | Database & auth | Supabase (Postgres, Auth, Storage, RLS, Realtime, pgvector) |
-| Job scraping | Apify API |
+| Job scraping | JSearch / SerpAPI (indexed), Apify fallback |
 | Email | Resend (password reset, career advisory Meet invites) |
 | Rate limiting | Upstash Redis (`@upstash/ratelimit`) |
 | Hosting / cron | Vercel (`vercel.json` — scrape cron every 3 hours) |

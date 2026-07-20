@@ -448,7 +448,7 @@ function normalizeLinkedInJob(raw: ApifyLinkedInJob): JobListing | null {
   };
 }
 
-function dedupeJobs(jobs: JobListing[]): JobListing[] {
+export function dedupeJobs(jobs: JobListing[]): JobListing[] {
   const seen = new Set<string>();
   const unique: JobListing[] = [];
 
@@ -466,7 +466,7 @@ function dedupeJobs(jobs: JobListing[]): JobListing[] {
   return unique;
 }
 
-function filterRelevantJobs(jobs: JobListing[], searchPosition: string): JobListing[] {
+export function filterRelevantJobs(jobs: JobListing[], searchPosition: string): JobListing[] {
   return jobs.filter(
     (job) =>
       !isJobrightListing(job.source, job.jobUrl) &&
