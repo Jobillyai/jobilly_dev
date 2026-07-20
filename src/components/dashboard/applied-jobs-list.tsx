@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { CheckCircle2, ChevronDown, ExternalLink, FileText, Mic } from "lucide-react";
+import { Check, CheckCircle2, ChevronDown, Copy, ExternalLink, FileText, Mic } from "lucide-react";
 import { formatJobSourceLabel } from "@/server/services/job-market-search";
 import {
   getApplicationResumeDownloadAction,
@@ -46,6 +46,18 @@ function AppliedJobRow({ job, expanded, onToggle }: AppliedJobRowProps) {
   const detailsId = `application-details-${job.id}`;
   const [resumePending, startResumeTransition] = useTransition();
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [jdCopied, setJdCopied] = useState(false);
+
+  async function copyJobDescription() {
+    if (!job.jdText) return;
+    try {
+      await navigator.clipboard.writeText(job.jdText);
+      setJdCopied(true);
+      window.setTimeout(() => setJdCopied(false), 2000);
+    } catch {
+      setJdCopied(false);
+    }
+  }
 
   function openApplicationResume() {
     setResumeError(null);
@@ -146,7 +158,19 @@ function AppliedJobRow({ job, expanded, onToggle }: AppliedJobRowProps) {
           ) : null}
 
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Job description</h2>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>Job description</h2>
+              {job.jdText ? (
+                <button
+                  type="button"
+                  className={styles.copyJdBtn}
+                  onClick={() => void copyJobDescription()}
+                >
+                  {jdCopied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
+                  {jdCopied ? "Copied" : "Copy JD"}
+                </button>
+              ) : null}
+            </div>
             {job.jdText ? (
               <div className={styles.jdPanel}>
                 <div className={styles.jdText}>{job.jdText}</div>

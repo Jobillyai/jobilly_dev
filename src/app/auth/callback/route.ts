@@ -2,6 +2,10 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { applySessionCookiesToSet, attachTabSessionCookie } from "@/lib/auth/supabase-cookies";
+import {
+  POST_AUTH_WELCOME_COOKIE,
+  getPostAuthWelcomeCookieOptions,
+} from "@/lib/auth/post-auth-welcome";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import { sanitizeInternalRedirectPath } from "@/lib/auth/safe-redirect";
 import { ensurePublicUserRecord } from "@/server/services/ensure-public-user";
@@ -40,13 +44,21 @@ function redirectWithSessionCookies(
   origin: string,
   path: string,
   cookiesToSet: { name: string; value: string; options: CookieOptions }[],
+  options?: { welcome?: boolean },
 ) {
   const response = NextResponse.redirect(`${origin}${path}`);
-  applySessionCookiesToSet(cookiesToSet, (name, value, options) =>
-    response.cookies.set(name, value, options),
+  applySessionCookiesToSet(cookiesToSet, (name, value, cookieOptions) =>
+    response.cookies.set(name, value, cookieOptions),
   );
   attachTabSessionCookie(response, true);
   response.cookies.delete(RESET_FLOW_COOKIE);
+  if (options?.welcome) {
+    response.cookies.set(
+      POST_AUTH_WELCOME_COOKIE,
+      "1",
+      getPostAuthWelcomeCookieOptions(),
+    );
+  }
   return response;
 }
 
@@ -103,7 +115,12 @@ export async function GET(request: NextRequest) {
       const destination = await resolvePostAuthRedirect(supabase, next, {
         preserveFallbackForAdmin: isPasswordReset,
       });
-      return redirectWithSessionCookies(origin, destination, sessionCookies);
+      const showWelcome =
+        !isPasswordReset &&
+        (destination.startsWith("/dashboard") || destination.startsWith("/admin"));
+      return redirectWithSessionCookies(origin, destination, sessionCookies, {
+        welcome: showWelcome,
+      });
     }
 
     console.error("Auth callback exchangeCodeForSession error:", error.message);
@@ -122,7 +139,12 @@ export async function GET(request: NextRequest) {
       const destination = await resolvePostAuthRedirect(supabase, next, {
         preserveFallbackForAdmin: isPasswordReset,
       });
-      return redirectWithSessionCookies(origin, destination, sessionCookies);
+      const showWelcome =
+        !isPasswordReset &&
+        (destination.startsWith("/dashboard") || destination.startsWith("/admin"));
+      return redirectWithSessionCookies(origin, destination, sessionCookies, {
+        welcome: showWelcome,
+      });
     }
 
     console.error("Auth callback verifyOtp error:", error.message);

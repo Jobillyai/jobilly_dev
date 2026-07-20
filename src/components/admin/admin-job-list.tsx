@@ -9,6 +9,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import {
+  Check,
+  Copy,
   ExternalLink,
   FileText,
   MapPin,
@@ -92,7 +94,20 @@ function AdminJobDetailModal({
   const isAppliedView = viewMode === "applied";
   const listingUrl = getCleanJobListingUrl(job.jobUrl, job.source);
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [jdCopied, setJdCopied] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
+
+  async function copyJobDescription() {
+    if (!job.jdText) return;
+    try {
+      await navigator.clipboard.writeText(job.jdText);
+      setJdCopied(true);
+      window.setTimeout(() => setJdCopied(false), 2000);
+    } catch {
+      setJdCopied(false);
+    }
+  }
+
   async function handleResumeFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -305,7 +320,19 @@ function AdminJobDetailModal({
           ) : null}
 
           <section className={styles.modalSection}>
-            <h3 className={styles.sectionTitle}>Job description</h3>
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>Job description</h3>
+              {job.jdText ? (
+                <button
+                  type="button"
+                  className={styles.copyJdBtn}
+                  onClick={() => void copyJobDescription()}
+                >
+                  {jdCopied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
+                  {jdCopied ? "Copied" : "Copy JD"}
+                </button>
+              ) : null}
+            </div>
             {job.jdText ? (
               <div className={styles.jdPanel}>
                 <div className={styles.jdText}>{job.jdText}</div>

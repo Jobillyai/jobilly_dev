@@ -605,6 +605,37 @@
   color: var(--jb-admin-accent);
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.sectionHeader .sectionTitle {
+  margin: 0;
+}
+
+.copyJdBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: var(--jb-radius-sm);
+  border: 1px solid rgba(56, 182, 255, 0.28);
+  background: var(--jb-admin-elevated-mid);
+  color: var(--jb-admin-accent);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.copyJdBtn:hover {
+  background: var(--jb-admin-accent-soft);
+}
+
 .jdPanel {
   max-height: none;
   overflow: auto;
@@ -621,6 +652,8 @@
   color: var(--jb-ink-secondary);
   white-space: pre-wrap;
   word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .jdEmpty {

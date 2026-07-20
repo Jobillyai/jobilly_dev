@@ -197,6 +197,37 @@
   color: var(--jb-portal-accent-indigo);
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+
+.sectionHeader .sectionTitle {
+  margin: 0;
+}
+
+.copyJdBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--jb-portal-alert-border);
+  background: var(--jb-portal-jd-panel-bg);
+  color: var(--jb-portal-accent-indigo);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.copyJdBtn:hover {
+  filter: brightness(0.97);
+}
+
 .jdPanel {
   max-height: min(70vh, 720px);
   overflow: auto;
@@ -213,6 +244,8 @@
   color: var(--jb-ink-secondary);
   white-space: pre-wrap;
   word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .jdEmpty {

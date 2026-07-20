@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ROUTE_LOADING_START } from "@/lib/route-loading";
+import { LoadingOverlay } from "./loading-overlay";
 import styles from "./route-loader.module.css";
 
 const SHOW_DELAY_MS = 120;
@@ -114,13 +115,19 @@ export function RouteLoader() {
     };
   }, [pathname]);
 
+  if (!active) {
+    return null;
+  }
+
   return (
-    <div
-      className={`${styles.progressTrack} ${active ? styles.progressActive : ""}`}
-      aria-hidden={!active}
-      aria-busy={active}
-    >
-      <div className={styles.progressBar} />
-    </div>
+    <>
+      <div
+        className={`${styles.progressTrack} ${styles.progressActive}`}
+        aria-hidden
+      >
+        <div className={styles.progressBar} />
+      </div>
+      <LoadingOverlay label="Loading page" size={300} />
+    </>
   );
 }

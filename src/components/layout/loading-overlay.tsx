@@ -12,7 +12,7 @@ type LoadingOverlayProps = {
 export function LoadingOverlay({
   label = "Loading Jobilly.ai",
   fixed = true,
-  size = 160,
+  size = 280,
 }: LoadingOverlayProps) {
   return (
     <div

@@ -31,16 +31,53 @@
 .intelligenceAnalyzing { color: #0b5f8f; background: rgba(56, 182, 255, .14); border: 1px solid rgba(56, 182, 255, .35); }
 .intelligenceLoading {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   margin: 0 0 12px;
   padding: 12px 14px;
   border-radius: 12px;
   background: rgba(56, 182, 255, .1);
   border: 1px solid rgba(56, 182, 255, .24);
 }
-.intelligenceLoadingText { margin: 0; font-size: 12px; line-height: 1.5; color: var(--jb-ink-secondary); }
-.intelligenceLoadingText strong { color: var(--jb-ink); }
+.intelligenceProgressBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+.intelligenceProgressMeta {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.intelligenceLoadingText { margin: 0; flex: 1; font-size: 12px; line-height: 1.5; color: var(--jb-ink-secondary); }
+.intelligenceLoadingText strong { display: block; color: var(--jb-ink); margin-bottom: 2px; }
+.intelligenceProgressPct {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #0b5f8f;
+  font-variant-numeric: tabular-nums;
+}
+.intelligenceProgressTrack {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+.intelligenceProgressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5170ff 0%, #38b6ff 55%, #5ec5ff 100%);
+  background-size: 200% 100%;
+  transition: width 0.25s ease-out;
+  animation: intelligenceProgressShimmer 1.4s linear infinite;
+}
+@keyframes intelligenceProgressShimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
 .intelligenceActions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .intelligenceActions button, .fileAction { min-height: 38px; padding: 8px 12px; border: 1px solid var(--jb-border); border-radius: 10px; background: var(--jb-input-bg); color: var(--jb-ink); font: inherit; font-size: 12px; font-weight: 700; }
 .intelligenceActions button, .fileAction { cursor: pointer; }

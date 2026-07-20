@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { TAB_SESSION_COOKIE_NAME, getTabSessionCookieOptions } from "@/lib/auth/supabase-cookies";
+import {
+  POST_AUTH_WELCOME_COOKIE,
+  getPostAuthWelcomeCookieOptions,
+} from "@/lib/auth/post-auth-welcome";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import {
   enforceLoginRateLimits,
@@ -75,6 +79,11 @@ export async function adminLoginAction(
   }
 
   (await cookies()).set(TAB_SESSION_COOKIE_NAME, "1", getTabSessionCookieOptions());
+  (await cookies()).set(
+    POST_AUTH_WELCOME_COOKIE,
+    "1",
+    getPostAuthWelcomeCookieOptions(),
+  );
   redirect("/admin");
 }
 

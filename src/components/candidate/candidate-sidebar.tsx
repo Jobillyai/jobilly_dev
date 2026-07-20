@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Loader2, LogOut } from "lucide-react";
+import { FastLogoutButton } from "@/components/auth/fast-logout-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   CANDIDATE_NAV_ITEMS,
@@ -58,6 +60,19 @@ export function CandidateSidebar({ unreadApplications = 0 }: CandidateSidebarPro
 
       <div className={styles.sidebarFooter}>
         <ThemeToggle compact />
+        <FastLogoutButton
+          className={styles.signOutBtn}
+          redirectTo="/login"
+          pendingLabel={
+            <>
+              <Loader2 size={18} strokeWidth={2} className={styles.spin} aria-hidden />
+              <span>Logging out…</span>
+            </>
+          }
+        >
+          <LogOut size={18} strokeWidth={2} aria-hidden />
+          <span>Log out</span>
+        </FastLogoutButton>
       </div>
     </aside>
   );

@@ -74,9 +74,12 @@
 
 .sidebarFooter {
   display: flex;
-  align-items: center;
-  padding: 8px 10px 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 16px 4px 0;
   margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .navLink,
@@ -100,9 +103,30 @@
 }
 
 .navLink:hover,
-.signOutBtn:hover {
+.signOutBtn:hover:not(:disabled) {
   background: var(--jb-admin-sidebar-hover);
   color: #e2e8f0;
+}
+
+.signOutBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.signOutBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: candidateSidebarSpin 0.8s linear infinite;
+}
+
+@keyframes candidateSidebarSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .navLinkActive {
@@ -192,12 +216,7 @@
 }
 
 .signOutBtn {
-  color: var(--jb-ink-muted);
-}
-
-.signOutBtn:hover {
-  background: var(--jb-danger-soft);
-  color: var(--jb-danger);
+  color: var(--jb-admin-sidebar-text);
 }
 
 @media (max-width: 900px) {

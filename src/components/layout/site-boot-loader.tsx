@@ -1,16 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import styles from "./site-boot-loader.module.css";
 
 const MIN_VISIBLE_MS = 2200;
 const FADE_MS = 900;
 
 export function SiteBootLoader() {
-  const [visible, setVisible] = useState(true);
+  const pathname = usePathname();
+  const [visible, setVisible] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
+    // Only on the marketing welcome page — not every site reload.
+    if (pathname !== "/") {
+      setVisible(false);
+      setFadeOut(false);
+      return;
+    }
+
+    setVisible(true);
+    setFadeOut(false);
     const startedAt = performance.now();
     let fadeTimer: number | undefined;
     let hideTimer: number | undefined;
@@ -49,7 +60,7 @@ export function SiteBootLoader() {
       if (fadeTimer) window.clearTimeout(fadeTimer);
       if (hideTimer) window.clearTimeout(hideTimer);
     };
-  }, []);
+  }, [pathname]);
 
   if (!visible) {
     return null;

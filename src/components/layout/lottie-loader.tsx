@@ -11,7 +11,7 @@ type LottieLoaderProps = {
 };
 
 export function LottieLoader({
-  size = 160,
+  size = 280,
   className,
   label = "Loading Jobilly.ai",
 }: LottieLoaderProps) {

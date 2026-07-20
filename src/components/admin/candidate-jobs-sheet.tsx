@@ -209,6 +209,8 @@ export function CandidateJobsSheet({
   const [sendingDigestEmail, setSendingDigestEmail] = useState(false);
   const [resumeIntelligence, setResumeIntelligence] = useState(initialResumeIntelligence);
   const [intelligencePending, setIntelligencePending] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisStage, setAnalysisStage] = useState("Preparing…");
 
   const refreshAllJobs = useCallback(async () => {
     const result = await loadAllCandidatePipelineJobsAction(
@@ -817,6 +819,38 @@ export function CandidateJobsSheet({
   const isAnalyzingResume =
     intelligencePending || resumeIntelligence.analysis?.status === "processing";
 
+  useEffect(() => {
+    if (!isAnalyzingResume) {
+      setAnalysisProgress(0);
+      setAnalysisStage("Preparing…");
+      return;
+    }
+
+    const stages = [
+      { at: 0, label: "Reading resume text…" },
+      { at: 15, label: "Extracting roles and skills…" },
+      { at: 35, label: "Classifying job category with Gemini…" },
+      { at: 58, label: "Building search keywords…" },
+      { at: 78, label: "Finalizing resume intelligence…" },
+    ] as const;
+
+    setAnalysisProgress(3);
+    setAnalysisStage(stages[0].label);
+    const startedAt = Date.now();
+
+    const timer = window.setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      // Ease toward ~92% over ~50s (Gemini often takes 15–45s).
+      const t = Math.min(1, elapsed / 50_000);
+      const next = Math.min(92, Math.round(3 + 89 * (1 - (1 - t) ** 1.55)));
+      setAnalysisProgress(next);
+      const stage = [...stages].reverse().find((item) => next >= item.at) ?? stages[0];
+      setAnalysisStage(stage.label);
+    }, 200);
+
+    return () => window.clearInterval(timer);
+  }, [isAnalyzingResume]);
+
   const controlsHint = isAppliedView
     ? "Undo apply to return a job to the pipeline."
     : canScrape
@@ -847,7 +881,7 @@ export function CandidateJobsSheet({
               }
             >
               {isAnalyzingResume
-                ? "Analyzing…"
+                ? `Analyzing… ${analysisProgress}%`
                 : resumeIntelligence.analysis?.status === "completed"
                   ? "Ready to search"
                   : resumeIntelligence.analysis?.status ?? "No analysis"}
@@ -855,11 +889,29 @@ export function CandidateJobsSheet({
           </div>
           {isAnalyzingResume ? (
             <div className={styles.intelligenceLoading} role="status" aria-live="polite">
-              <span className={styles.toolbarSpinner} aria-hidden />
-              <p className={styles.intelligenceLoadingText}>
-                <strong>Analyzing resume with Gemini…</strong> Extracting role, skills, and
-                search keywords. This usually takes 15–45 seconds.
-              </p>
+              <div className={styles.intelligenceProgressBlock}>
+                <div className={styles.intelligenceProgressMeta}>
+                  <span className={styles.toolbarSpinner} aria-hidden />
+                  <p className={styles.intelligenceLoadingText}>
+                    <strong>{analysisStage}</strong>
+                    <span> Usually 15–45 seconds — keep this tab open.</span>
+                  </p>
+                  <span className={styles.intelligenceProgressPct}>{analysisProgress}%</span>
+                </div>
+                <div
+                  className={styles.intelligenceProgressTrack}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={analysisProgress}
+                  role="progressbar"
+                  aria-label="Resume intelligence progress"
+                >
+                  <div
+                    className={styles.intelligenceProgressFill}
+                    style={{ width: `${analysisProgress}%` }}
+                  />
+                </div>
+              </div>
             </div>
           ) : !resumeIntelligence.analysis ? (
             <p className={styles.intelligenceError}>

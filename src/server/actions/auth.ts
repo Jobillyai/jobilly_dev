@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { TAB_SESSION_COOKIE_NAME, getTabSessionCookieOptions } from "@/lib/auth/supabase-cookies";
+import {
+  POST_AUTH_WELCOME_COOKIE,
+  getPostAuthWelcomeCookieOptions,
+} from "@/lib/auth/post-auth-welcome";
 import { getRequestAppOrigin } from "@/lib/auth/app-origin";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
@@ -93,6 +97,24 @@ export async function signupAction(
   );
   const loginDestination = `/login?signup=success&next=${encodeURIComponent(next)}`;
 
+  async function completeSignupWithSession() {
+    const supabase = await createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (signInError) {
+      redirect(loginDestination);
+    }
+    (await cookies()).set(TAB_SESSION_COOKIE_NAME, "1", getTabSessionCookieOptions());
+    (await cookies()).set(
+      POST_AUTH_WELCOME_COOKIE,
+      "1",
+      getPostAuthWelcomeCookieOptions(),
+    );
+    redirect(next);
+  }
+
   if (shouldAutoConfirmSignup()) {
     const admin = createAdminClient();
     const { data: created, error: createError } = await admin.auth.admin.createUser({
@@ -110,7 +132,7 @@ export async function signupAction(
       await ensurePublicUserRecord(created.user);
     }
 
-    redirect(loginDestination);
+    await completeSignupWithSession();
   }
 
   const supabase = await createClient();
@@ -131,6 +153,17 @@ export async function signupAction(
 
   if (data.user) {
     await ensurePublicUserRecord(data.user);
+  }
+
+  // Confirmed immediately (session present) — same welcome splash as login.
+  if (data.session) {
+    (await cookies()).set(TAB_SESSION_COOKIE_NAME, "1", getTabSessionCookieOptions());
+    (await cookies()).set(
+      POST_AUTH_WELCOME_COOKIE,
+      "1",
+      getPostAuthWelcomeCookieOptions(),
+    );
+    redirect(next);
   }
 
   redirect(loginDestination);
@@ -190,11 +223,21 @@ export async function loginAction(
 
     if (isAdminPortalRole(profile?.role)) {
       (await cookies()).set(TAB_SESSION_COOKIE_NAME, "1", getTabSessionCookieOptions());
+      (await cookies()).set(
+        POST_AUTH_WELCOME_COOKIE,
+        "1",
+        getPostAuthWelcomeCookieOptions(),
+      );
       redirect("/admin");
     }
   }
 
   (await cookies()).set(TAB_SESSION_COOKIE_NAME, "1", getTabSessionCookieOptions());
+  (await cookies()).set(
+    POST_AUTH_WELCOME_COOKIE,
+    "1",
+    getPostAuthWelcomeCookieOptions(),
+  );
   redirect(next);
 }
 
