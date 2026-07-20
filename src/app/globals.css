@@ -107,6 +107,11 @@
   --jb-sidebar-shadow: 4px 0 24px rgba(15, 23, 42, 0.03);
   --jb-loader-overlay: rgba(255, 255, 255, 0.92);
   --jb-color-scheme: light;
+  --jb-scrollbar-size: 6px;
+  --jb-scrollbar-track: transparent;
+  --jb-scrollbar-thumb: #111111;
+  --jb-scrollbar-thumb-hover: #111111;
+  --jb-scrollbar-thumb-active: #111111;
 
   --jb-pipeline-surface: linear-gradient(165deg, #ffffff 0%, #f8f9ff 48%, #edf4ff 100%);
   --jb-pipeline-header: rgba(255, 255, 255, 0.72);
@@ -251,6 +256,10 @@
   --jb-sidebar-shadow: 4px 0 24px rgba(0, 0, 0, 0.28);
   --jb-loader-overlay: rgba(15, 17, 23, 0.96);
   --jb-color-scheme: dark;
+  --jb-scrollbar-track: transparent;
+  --jb-scrollbar-thumb: #f4f4f5;
+  --jb-scrollbar-thumb-hover: #f4f4f5;
+  --jb-scrollbar-thumb-active: #f4f4f5;
 
   --jb-pipeline-surface: linear-gradient(165deg, #161820 0%, #182038 48%, #101624 100%);
   --jb-pipeline-header: rgba(18, 20, 28, 0.9);
@@ -327,4 +336,35 @@
     overflow-x: clip;
     max-width: 100vw;
   }
+}
+
+/* Simple thin scrollbar — transparent track */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--jb-scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: var(--jb-scrollbar-size);
+  height: var(--jb-scrollbar-size);
+  background: transparent;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track-piece,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--jb-scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
