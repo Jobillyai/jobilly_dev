@@ -8,6 +8,7 @@ import { createClient } from "@/server/db/supabase-server";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { sendCareerAdvisoryMeetInvite } from "@/server/services/send-career-advisory-invite";
 import { sendCareerAdvisorySubmissionAck } from "@/server/services/send-career-advisory-ack";
+import { upsertCareerAdvisoryServiceRequest } from "@/server/services/service-requests";
 import { ensurePublicUserRecord } from "@/server/services/ensure-public-user";
 import type { CandidateCareerAdvisoryIntake } from "@/server/services/career-advisory-intake";
 import {
@@ -261,6 +262,19 @@ export async function submitCareerAdvisoryAction(
     }
   }
 
+  await upsertCareerAdvisoryServiceRequest({
+    candidateUserId: authData.user.id,
+    firstName: parsed.data.firstName,
+    lastName: parsed.data.lastName,
+    email: parsed.data.email,
+    phone: formattedPhone,
+    branch: parsed.data.branch,
+    interestedTechnology: parsed.data.interestedTechnology,
+    graduationDetails: parsed.data.graduationDetails,
+    sessionScheduledAt: sessionStart.toISOString(),
+    assignedMentorId: candidateProfile?.assigned_employee_id ?? null,
+  });
+
   if (!mentor) {
     const ackResult = await sendCareerAdvisorySubmissionAck({
       candidateId: authData.user.id,
@@ -288,6 +302,7 @@ export async function submitCareerAdvisoryAction(
       updatedAt,
     });
 
+    revalidatePath("/admin/requests");
     revalidatePath("/admin");
     revalidatePath("/admin/candidates");
     revalidatePath("/admin/calendar");
@@ -353,6 +368,7 @@ export async function submitCareerAdvisoryAction(
     updatedAt,
   });
 
+  revalidatePath("/admin/requests");
   revalidatePath("/admin");
   revalidatePath("/admin/candidates");
   revalidatePath("/admin/calendar");

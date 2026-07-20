@@ -410,6 +410,18 @@
   letter-spacing: 0.02em;
 }
 
+.searchRoleBadge {
+  display: inline-flex;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--jb-ink-secondary);
+  background: rgba(56, 182, 255, 0.12);
+  border: 1px solid rgba(56, 182, 255, 0.22);
+}
+
 .sourceIndeed {
   background: #2164f3;
   color: #ffffff;

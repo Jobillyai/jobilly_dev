@@ -34,8 +34,8 @@ export default async function AdminServiceRequestsPage() {
           title="Service requests"
           subtitle={
             isManager
-              ? "New candidate signups and contact form submissions appear here. Assign each new signup to a mentor admin."
-              : "Requests assigned to you by the manager. Mark them closed when resolved."
+              ? "New candidate signups, unassigned career advisory bookings, and contact form submissions. Assign mentors to new signups and advisory sessions."
+              : "Career advisory sessions booked by your assigned candidates. Add meeting remarks and mark closed to send an update to your manager."
           }
         />
 

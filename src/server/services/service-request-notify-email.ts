@@ -18,10 +18,17 @@ function resendFromAddress(): string {
 
 function buildHtml(input: NotifyManagerInput, adminUrl: string): string {
   const isNewCandidate = input.requestType === "new_candidate";
-  const title = isNewCandidate ? "New candidate signup" : "New service request";
+  const isCareerAdvisory = input.requestType === "career_advisory";
+  const title = isNewCandidate
+    ? "New candidate signup"
+    : isCareerAdvisory
+      ? "Career advisory booking"
+      : "New service request";
   const intro = isNewCandidate
     ? "A candidate just signed up on Jobilly.ai. Assign a mentor admin to support their job search and applications."
-    : "A visitor submitted the contact form on Jobilly.ai.";
+    : isCareerAdvisory
+      ? "A candidate booked a career advisory session but does not have a mentor assigned yet."
+      : "A visitor submitted the contact form on Jobilly.ai.";
 
   return `
     <div style="font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#0a1628;max-width:560px;">
@@ -58,9 +65,12 @@ export async function notifyManagersOfServiceRequest(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
   const adminUrl = `${appUrl}/admin/requests`;
   const isNewCandidate = input.requestType === "new_candidate";
+  const isCareerAdvisory = input.requestType === "career_advisory";
   const subject = isNewCandidate
     ? `New candidate signup — assign mentor for ${input.firstName} ${input.lastName}`
-    : `New contact request — ${input.firstName} ${input.lastName}`;
+    : isCareerAdvisory
+      ? `Career advisory booking — assign mentor for ${input.firstName} ${input.lastName}`
+      : `New contact request — ${input.firstName} ${input.lastName}`;
 
   const resend = new Resend(resendApiKey);
   const { error } = await resend.emails.send({

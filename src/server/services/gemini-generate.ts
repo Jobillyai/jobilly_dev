@@ -1,8 +1,10 @@
 import "server-only";
 
 const DEFAULT_MODELS = [
-  "gemini-2.5-flash",
+  "gemini-3.5-flash",
   "gemini-3-flash-preview",
+  "gemini-2.0-flash",
+  "gemini-flash-latest",
   "gemini-flash-lite-latest",
 ] as const;
 

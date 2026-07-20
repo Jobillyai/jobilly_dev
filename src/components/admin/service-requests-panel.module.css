@@ -125,6 +125,11 @@
   color: #0e7490;
 }
 
+.badgeAdvisory {
+  background: rgba(124, 58, 237, 0.1);
+  color: #6d28d9;
+}
+
 .enquiry {
   margin: 0 0 12px;
   font-size: 14px;
@@ -137,6 +142,46 @@
   margin: 0 0 12px;
   font-size: 13px;
   color: var(--jb-ink-secondary);
+}
+
+.remarksBlock,
+.mentorCloseBlock {
+  margin: 0 0 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--jb-admin-surface-muted);
+  border: 1px solid var(--jb-admin-card-border);
+}
+
+.remarksLabel,
+.remarksFieldLabel {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--jb-ink-muted);
+}
+
+.remarksText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--jb-admin-ink);
+  white-space: pre-wrap;
+}
+
+.remarksInput {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--jb-admin-card-border);
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: inherit;
+  resize: vertical;
+  background: var(--jb-admin-elevated-mid);
 }
 
 .actions {

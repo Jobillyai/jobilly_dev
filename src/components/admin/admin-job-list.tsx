@@ -15,13 +15,14 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { RESUME_TAILOR_EXTERNAL_URL } from "@/lib/admin/apply-for-jobs-paths";
 import {
   formatJobSourceLabel,
   getCleanJobListingUrl,
   resolveJobSource,
 } from "@/server/services/job-market-search";
 import type { CandidateJobListing, JobListingViewMode } from "@/server/services/candidate-jobs";
-import { formatJobFreshnessLabel } from "@/server/services/job-role-cache";
+import { formatJobFreshnessLabel, formatSearchRoleLabel } from "@/server/services/job-role-cache";
 import { isPostedWithinDays } from "@/lib/job-posted-date";
 import styles from "./admin-job-list.module.css";
 
@@ -55,7 +56,9 @@ function sourceBadgeClass(source: string, jobUrl: string): string {
 
 type AdminJobListProps = {
   jobs: CandidateJobListing[];
+  candidateId: string;
   viewMode: JobListingViewMode;
+  showSearchRole?: boolean;
   onToggleSelected: (jobId: string, selected: boolean) => void;
   onToggleApplied: (jobId: string, applied: boolean) => void;
   onUploadApplicationResume: (
@@ -69,6 +72,7 @@ type AdminJobListProps = {
 
 type AdminJobDetailModalProps = {
   job: CandidateJobListing;
+  candidateId: string;
   viewMode: JobListingViewMode;
   onClose: () => void;
   onToggleSelected: (jobId: string, selected: boolean) => void;
@@ -78,6 +82,7 @@ type AdminJobDetailModalProps = {
 
 function AdminJobDetailModal({
   job,
+  candidateId,
   viewMode,
   onClose,
   onToggleSelected,
@@ -229,6 +234,17 @@ function AdminJobDetailModal({
                 <ExternalLink size={14} aria-hidden />
                 View job listing
               </a>
+              {RESUME_TAILOR_EXTERNAL_URL ? (
+                <a
+                  href={RESUME_TAILOR_EXTERNAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.jobLink}
+                >
+                  <ExternalLink size={14} aria-hidden />
+                  Resume dashboard
+                </a>
+              ) : null}
               {job.applyUrl ? (
                 <a
                   href={job.applyUrl}
@@ -350,10 +366,11 @@ function companyInitials(company: string): string {
 type AdminJobCardProps = {
   job: CandidateJobListing;
   viewMode: JobListingViewMode;
+  showSearchRole?: boolean;
   onOpen: () => void;
 };
 
-function AdminJobCard({ job, viewMode, onOpen }: AdminJobCardProps) {
+function AdminJobCard({ job, viewMode, showSearchRole = false, onOpen }: AdminJobCardProps) {
   const isAppliedView = viewMode === "applied";
 
   return (
@@ -383,6 +400,11 @@ function AdminJobCard({ job, viewMode, onOpen }: AdminJobCardProps) {
         >
           {formatJobSourceLabel(job.source, job.jobUrl)}
         </span>
+        {showSearchRole && job.searchRole ? (
+          <span className={styles.searchRoleBadge}>
+            {formatSearchRoleLabel(job.searchRole)}
+          </span>
+        ) : null}
       </div>
 
       <p className={styles.cardLocation}>
@@ -413,7 +435,9 @@ function AdminJobCard({ job, viewMode, onOpen }: AdminJobCardProps) {
 
 export function AdminJobList({
   jobs,
+  candidateId,
   viewMode,
+  showSearchRole = false,
   onToggleSelected,
   onToggleApplied,
   onUploadApplicationResume,
@@ -429,6 +453,7 @@ export function AdminJobList({
             key={job.id}
             job={job}
             viewMode={viewMode}
+            showSearchRole={showSearchRole}
             onOpen={() => setOpenJobId(job.id)}
           />
         ))}
@@ -437,6 +462,7 @@ export function AdminJobList({
       {openJob ? (
         <AdminJobDetailModal
           job={openJob}
+          candidateId={candidateId}
           viewMode={viewMode}
           onClose={() => setOpenJobId(null)}
           onToggleSelected={onToggleSelected}

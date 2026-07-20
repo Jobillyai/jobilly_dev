@@ -10,6 +10,7 @@ import {
 import {
   assignCandidateToMentor,
   assignServiceRequestToMentor,
+  closeCareerAdvisoryServiceRequest,
   listMentorAdmins,
   listServiceRequests,
   updateServiceRequestStatus,
@@ -143,6 +144,39 @@ export async function updateServiceRequestStatusAction(
   const result = await updateServiceRequestStatus(
     requestId,
     status,
+    toStaffContext(admin),
+  );
+
+  if (result.error) {
+    return { error: result.error };
+  }
+
+  revalidatePath("/admin/requests");
+  return { success: true };
+}
+
+const closeAdvisorySchema = z.object({
+  requestId: z.string().uuid(),
+  remarks: z.string().min(10, "Add meeting remarks before closing."),
+});
+
+export async function closeCareerAdvisoryServiceRequestAction(
+  requestId: string,
+  remarks: string,
+): Promise<{ error?: string; success?: true }> {
+  const admin = await getAdminUser();
+  if (!admin) {
+    return { error: "Unauthorized" };
+  }
+
+  const parsed = closeAdvisorySchema.safeParse({ requestId, remarks });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid request." };
+  }
+
+  const result = await closeCareerAdvisoryServiceRequest(
+    parsed.data.requestId,
+    parsed.data.remarks,
     toStaffContext(admin),
   );
 

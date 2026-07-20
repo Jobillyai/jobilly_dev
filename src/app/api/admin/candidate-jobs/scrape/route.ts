@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { revalidateApplyForJobsCandidatePages } from "@/lib/admin/apply-for-jobs-paths";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
@@ -161,9 +162,7 @@ export async function POST(request: Request) {
       ? scrapeResult.scrapeErrors.join(" ")
       : undefined;
 
-  revalidatePath(`/admin/candidates/${candidateId}/jobs`);
-  revalidatePath(`/admin/candidates/${candidateId}/jobs/applied`);
-  revalidatePath("/admin/jobs");
+  revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
 
   if (scrapeResult.fatalError && jobs.length === 0) {
     return NextResponse.json(

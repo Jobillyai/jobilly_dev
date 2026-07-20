@@ -1,7 +1,9 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { TAB_SESSION_COOKIE_NAME, getTabSessionCookieOptions } from "@/lib/auth/supabase-cookies";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import {
   enforceLoginRateLimits,
@@ -72,11 +74,13 @@ export async function adminLoginAction(
     return { error: "This account does not have admin portal access." };
   }
 
+  (await cookies()).set(TAB_SESSION_COOKIE_NAME, "1", getTabSessionCookieOptions());
   redirect("/admin");
 }
 
 export async function adminLogoutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  (await cookies()).delete(TAB_SESSION_COOKIE_NAME);
   redirect("/admin/login");
 }

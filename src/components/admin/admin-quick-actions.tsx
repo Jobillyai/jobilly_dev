@@ -7,6 +7,7 @@ import {
   Settings,
   Users,
 } from "lucide-react";
+import { ADMIN_APPLY_FOR_JOBS_HREF } from "@/lib/admin/apply-for-jobs-paths";
 import styles from "@/app/admin/admin.module.css";
 
 const quickActions = [
@@ -18,7 +19,7 @@ const quickActions = [
     tone: "blue" as const,
   },
   {
-    href: "/admin/jobs",
+    href: ADMIN_APPLY_FOR_JOBS_HREF,
     label: "Job listings",
     description: "Search and apply for assigned candidates.",
     icon: Briefcase,
@@ -61,7 +62,7 @@ type AdminQuickActionsProps = {
 export function AdminQuickActions({ showJobApply = true }: AdminQuickActionsProps) {
   const actions = showJobApply
     ? quickActions
-    : quickActions.filter((action) => action.href !== "/admin/jobs");
+    : quickActions.filter((action) => action.href !== ADMIN_APPLY_FOR_JOBS_HREF);
 
   return (
     <section className={styles.quickSection}>

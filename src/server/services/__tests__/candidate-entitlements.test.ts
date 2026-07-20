@@ -12,7 +12,7 @@ beforeAll(async () => {
   ));
 });
 
-describe("resume tailoring plan entitlement", () => {
+describe("managed applications plan entitlement", () => {
   it.each([
     [null, false],
     ["mock-interviews", false],

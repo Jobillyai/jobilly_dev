@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import AppShell from "@/components/layout/app-shell";
+import { BrowserSessionGuard } from "@/components/auth/browser-session-guard";
 import { RouteLoader } from "@/components/layout/route-loader";
 import { SiteBootLoader } from "@/components/layout/site-boot-loader";
 import { SiteFooterShell } from "@/components/layout/site-footer-shell";
@@ -48,6 +49,7 @@ export default function RootLayout({
           <TRPCProvider>
             <SiteBootLoader />
             <RouteLoader />
+            <BrowserSessionGuard />
             <div className="flex min-h-screen min-w-0 flex-col">
               <AppShell>{children}</AppShell>
               <SiteFooterShell />

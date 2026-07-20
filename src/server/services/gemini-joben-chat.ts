@@ -3,7 +3,7 @@ import {
   type JobenChatTurn,
 } from "@/lib/joben/joben-prompt";
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.5-flash";
 
 /** Tried in order when the previous model is rate-limited or unavailable.
  *  Each model has its own free-tier quota bucket, so falling back keeps

@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   listCandidatePreviousSearchesAction,
-  loadCandidateAppliedJobsAction,
-  loadCandidateJobsForRoleAction,
+  loadAllCandidatePipelineJobsAction,
   loadPreviousSearchJobsAction,
   prepareCandidateJobSearchAction,
   sendCandidateApplicationsDigestAction,
@@ -33,6 +32,7 @@ import type {
 } from "@/server/services/candidate-jobs";
 import {
   countJobsMatchingFreshnessFilter,
+  formatSearchRoleLabel,
   jobMatchesFreshnessFilter,
   normalizeSearchRole,
   type JobFreshnessFilter,
@@ -203,40 +203,29 @@ export function CandidateJobsSheet({
   );
   const [previousSearches, setPreviousSearches] = useState(initialPreviousSearches);
   const [selectedPreviousSearch, setSelectedPreviousSearch] = useState("");
+  const [previousRoleFilter, setPreviousRoleFilter] = useState<string | null>(null);
   const [loadingPrevious, setLoadingPrevious] = useState(false);
   const [isBackgroundScraping, setIsBackgroundScraping] = useState(false);
   const [sendingDigestEmail, setSendingDigestEmail] = useState(false);
   const [resumeIntelligence, setResumeIntelligence] = useState(initialResumeIntelligence);
   const [intelligencePending, setIntelligencePending] = useState(false);
-  const skipRoleReloadRef = useRef(false);
-  const lastSearchRoleRef = useRef<string | null>(null);
 
-  const refreshJobsForRole = useCallback(async () => {
-    if (isAppliedView) {
-      const result = await loadCandidateAppliedJobsAction(candidateId);
-      if (result && "success" in result && result.success) {
-        setJobs(result.jobs);
-      }
-      return;
-    }
-
-    const role = interestedRole.trim();
-    if (!role) {
-      return;
-    }
-
-    const result = await loadCandidateJobsForRoleAction(candidateId, role, "pipeline");
+  const refreshAllJobs = useCallback(async () => {
+    const result = await loadAllCandidatePipelineJobsAction(
+      candidateId,
+      isAppliedView ? "applied" : "pipeline",
+    );
     if (result && "success" in result && result.success) {
-      setJobs((current) => mergeJobListings(current, result.jobs));
+      setJobs(result.jobs);
     }
-  }, [candidateId, interestedRole, isAppliedView]);
+  }, [candidateId, isAppliedView]);
 
   useScrapedJobsLiveUpdates({
     candidateId,
     searchRole: interestedRole.trim() || null,
     enabled: Boolean(candidateId && interestedRole.trim() && !isAppliedView),
     scrapeActive: isBackgroundScraping,
-    onRefresh: refreshJobsForRole,
+    onRefresh: refreshAllJobs,
   });
 
   useEffect(() => {
@@ -247,6 +236,7 @@ export function CandidateJobsSheet({
     );
     setMessage(null);
     setSelectedPreviousSearch("");
+    setPreviousRoleFilter(null);
     setSourceFilter("all");
     setFreshnessFilter("all");
     setJobSort("best_match");
@@ -254,8 +244,6 @@ export function CandidateJobsSheet({
       resumeSearchTerms(initialResumeIntelligence.analysis) ||
       suggestJobSearchKeywords(defaultInterestedRole),
     );
-    skipRoleReloadRef.current = false;
-    lastSearchRoleRef.current = null;
   }, [
     candidateId,
     initialJobs,
@@ -268,49 +256,13 @@ export function CandidateJobsSheet({
     const activeScrape = readActiveScrapeSession(candidateId);
     if (activeScrape) {
       setIsBackgroundScraping(true);
-      void refreshJobsForRole();
+      void refreshAllJobs();
     }
-  }, [candidateId, refreshJobsForRole]);
+  }, [candidateId, refreshAllJobs]);
 
   useEffect(() => {
     setExperienceLevelInput(experienceLevelFromYears(candidateExperienceYears) ?? "");
   }, [candidateExperienceYears, candidateId]);
-
-  useEffect(() => {
-    if (isAppliedView) {
-      return;
-    }
-
-    const role = interestedRole.trim();
-
-    if (!role) {
-      return;
-    }
-
-    if (skipRoleReloadRef.current) {
-      skipRoleReloadRef.current = false;
-      return;
-    }
-
-    const normalizedRole = normalizeSearchRole(role);
-    if (lastSearchRoleRef.current === normalizedRole) {
-      return;
-    }
-
-    const timer = window.setTimeout(async () => {
-      setLoadingStored(true);
-      try {
-        const result = await loadCandidateJobsForRoleAction(candidateId, role, "pipeline");
-        if (result && "success" in result && result.success) {
-          setJobs(result.jobs);
-        }
-      } finally {
-        setLoadingStored(false);
-      }
-    }, 450);
-
-    return () => window.clearTimeout(timer);
-  }, [candidateId, interestedRole, isAppliedView]);
 
   async function refreshPreviousSearchesList() {
     const result = await listCandidatePreviousSearchesAction(candidateId);
@@ -323,6 +275,8 @@ export function CandidateJobsSheet({
     setSelectedPreviousSearch(storedSearchRole);
 
     if (!storedSearchRole) {
+      setPreviousRoleFilter(null);
+      setMessage(null);
       return;
     }
 
@@ -330,6 +284,9 @@ export function CandidateJobsSheet({
     setMessage(null);
 
     try {
+      const normalizedRole = normalizeSearchRole(storedSearchRole);
+      setPreviousRoleFilter(normalizedRole);
+
       const result = await loadPreviousSearchJobsAction(
         candidateId,
         storedSearchRole,
@@ -339,18 +296,15 @@ export function CandidateJobsSheet({
       if (result && "error" in result && result.error) {
         setMessageKind("error");
         setMessage(result.error);
+        setPreviousRoleFilter(null);
         return;
       }
 
       if (result && "success" in result && result.success) {
-        skipRoleReloadRef.current = true;
-        lastSearchRoleRef.current = result.searchRole;
-        setInterestedRole(result.label);
-        setKeywordsInput(suggestJobSearchKeywords(result.label));
-        setJobs(result.jobs);
+        setJobs((current) => mergeJobListings(current, result.jobs));
         setMessageKind("info");
         setMessage(
-          `Loaded ${result.jobs.length} stored job${result.jobs.length === 1 ? "" : "s"} from previous search "${result.label}".`,
+          `Showing all stored jobs below, filtered to "${result.label}" (${result.jobs.length} job${result.jobs.length === 1 ? "" : "s"}). Clear the filter to see every search.`,
         );
       }
     } finally {
@@ -417,6 +371,7 @@ export function CandidateJobsSheet({
       jobsWithMatch
         .filter(
           (job) =>
+            (!previousRoleFilter || job.searchRole === previousRoleFilter) &&
             jobListingMatchesSource(job.source, sourceFilter, job.jobUrl, job.location) &&
             (isAppliedView || jobMatchesFreshnessFilter(job.postedAt, freshnessFilter)) &&
             jobMatchesSkillFilter(job, activeSkills),
@@ -441,7 +396,7 @@ export function CandidateJobsSheet({
             timestamp(b.postedAt) - timestamp(a.postedAt)
           );
         }),
-    [jobsWithMatch, sourceFilter, freshnessFilter, activeSkills, isAppliedView, jobSort],
+    [jobsWithMatch, previousRoleFilter, sourceFilter, freshnessFilter, activeSkills, isAppliedView, jobSort],
   );
 
   const sourceCounts = useMemo(() => countJobsBySource(jobs), [jobs]);
@@ -490,8 +445,6 @@ export function CandidateJobsSheet({
 
     setMessage(null);
     setPendingSource(sourceMode);
-    skipRoleReloadRef.current = true;
-    lastSearchRoleRef.current = normalizeSearchRole(role);
 
     let backgroundScrapeStarted = false;
 
@@ -578,7 +531,7 @@ export function CandidateJobsSheet({
               return;
             }
 
-            await refreshJobsForRole();
+            await refreshAllJobs();
 
             const warnings = [
               ...new Set(
@@ -976,7 +929,7 @@ export function CandidateJobsSheet({
               <button
                 type="button"
                 className={styles.searchBtn}
-                onClick={() => (isAppliedView ? void refreshJobsForRole() : handleSearch("all"))}
+                onClick={() => (isAppliedView ? void refreshAllJobs() : handleSearch("all"))}
                 disabled={loadingPreviousSearch}
               >
                 {isAppliedView
@@ -1060,13 +1013,13 @@ export function CandidateJobsSheet({
               <select
                 id="previousSearch"
                 value={selectedPreviousSearch}
-                onChange={(event) => handlePreviousSearchChange(event.target.value)}
+                onChange={(event) => void handlePreviousSearchChange(event.target.value)}
                 className={styles.fieldSelect}
                 disabled={loadingPreviousSearch}
               >
                 <option value="">
                   {previousSearches.length > 0
-                    ? "Load a previous search…"
+                    ? "All previous searches"
                     : "No previous searches yet"}
                 </option>
                 {previousSearches.map((entry) => (
@@ -1197,6 +1150,9 @@ export function CandidateJobsSheet({
             <p className={styles.filterSummary}>
               Showing {filteredJobs.length} of {jobs.length} job
               {jobs.length === 1 ? "" : "s"}
+              {previousRoleFilter
+                ? ` · ${formatSearchRoleLabel(previousRoleFilter)} search`
+                : ""}
               {sourceFilter !== "all" ||
               (!isAppliedView && freshnessFilter !== "all") ||
               keywordsInput.trim()
@@ -1284,7 +1240,9 @@ export function CandidateJobsSheet({
       ) : (
         <AdminJobList
           jobs={filteredJobs}
+          candidateId={candidateId}
           viewMode={isAppliedView ? "applied" : "pipeline"}
+          showSearchRole={!isAppliedView}
           onToggleSelected={handleToggleSelected}
           onToggleApplied={handleToggleApplied}
           onUploadApplicationResume={handleUploadApplicationResume}

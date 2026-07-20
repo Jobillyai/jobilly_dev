@@ -1,3 +1,7 @@
+import {
+  adminApplyForJobsCandidatePath,
+  adminApplyForJobsAppliedPath,
+} from "@/lib/admin/apply-for-jobs-paths";
 import Link from "next/link";
 import type { Route } from "next";
 import styles from "./candidate-jobs-nav.module.css";
@@ -13,8 +17,8 @@ export function CandidateJobsNav({
   appliedCount,
   active,
 }: CandidateJobsNavProps) {
-  const basePath = `/admin/candidates/${candidateId}/jobs` as Route;
-  const appliedPath = `/admin/candidates/${candidateId}/jobs/applied` as Route;
+  const basePath = adminApplyForJobsCandidatePath(candidateId) as Route;
+  const appliedPath = adminApplyForJobsAppliedPath(candidateId) as Route;
 
   return (
     <nav className={styles.nav} aria-label="Job views">

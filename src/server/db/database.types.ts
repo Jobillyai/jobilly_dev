@@ -395,7 +395,7 @@ export type Database = {
       service_requests: {
         Row: {
           id: string;
-          request_type: "contact" | "new_candidate";
+          request_type: "contact" | "new_candidate" | "career_advisory";
           candidate_user_id: string | null;
           first_name: string;
           last_name: string;
@@ -406,12 +406,15 @@ export type Database = {
           assigned_mentor_id: string | null;
           assigned_at: string | null;
           assigned_by: string | null;
+          session_scheduled_at: string | null;
+          meeting_remarks: string | null;
+          submitted_to_manager_at: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
-          request_type?: "contact" | "new_candidate";
+          request_type?: "contact" | "new_candidate" | "career_advisory";
           candidate_user_id?: string | null;
           first_name: string;
           last_name: string;
@@ -422,6 +425,9 @@ export type Database = {
           assigned_mentor_id?: string | null;
           assigned_at?: string | null;
           assigned_by?: string | null;
+          session_scheduled_at?: string | null;
+          meeting_remarks?: string | null;
+          submitted_to_manager_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

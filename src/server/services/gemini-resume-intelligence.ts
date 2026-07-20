@@ -17,8 +17,10 @@ export const RESUME_INTELLIGENCE_PROMPT_VERSION = "2026-07-v1";
 export const RESUME_INTELLIGENCE_SCHEMA_VERSION = "2026-07-v1";
 
 const RESUME_MODELS = [
-  "gemini-2.5-flash",
+  "gemini-3.5-flash",
   "gemini-3-flash-preview",
+  "gemini-2.0-flash",
+  "gemini-flash-latest",
   "gemini-flash-lite-latest",
 ] as const;
 

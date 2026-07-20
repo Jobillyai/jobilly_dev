@@ -2,9 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 import {
+  closeCareerAdvisoryServiceRequestAction,
   assignServiceRequestAction,
   updateServiceRequestStatusAction,
 } from "@/server/actions/service-requests";
+import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
 import type {
   MentorOption,
   ServiceRequestRow,
@@ -31,6 +33,9 @@ function requestTypeLabel(type: ServiceRequestRow["requestType"]): string {
   if (type === "new_candidate") {
     return "New signup";
   }
+  if (type === "career_advisory") {
+    return "Career advisory";
+  }
   return "Contact";
 }
 
@@ -56,6 +61,9 @@ export function ServiceRequestsPanel({
   const [selectedMentor, setSelectedMentor] = useState<Record<string, string>>(
     {},
   );
+  const [meetingRemarks, setMeetingRemarks] = useState<Record<string, string>>(
+    {},
+  );
 
   const openCount = useMemo(
     () => rows.filter((row) => row.status === "open").length,
@@ -66,6 +74,10 @@ export function ServiceRequestsPanel({
       rows.filter(
         (row) => row.requestType === "new_candidate" && row.status === "open",
       ).length,
+    [rows],
+  );
+  const advisoryCount = useMemo(
+    () => rows.filter((row) => row.requestType === "career_advisory").length,
     [rows],
   );
 
@@ -114,7 +126,9 @@ export function ServiceRequestsPanel({
         setMessage(
           assignedRequest?.requestType === "new_candidate"
             ? "Mentor assigned. The candidate is now linked to this mentor admin."
-            : "Request assigned to mentor.",
+            : assignedRequest?.requestType === "career_advisory"
+              ? "Mentor assigned for the career advisory session."
+              : "Request assigned to mentor.",
         );
       }
     });
@@ -139,12 +153,48 @@ export function ServiceRequestsPanel({
     });
   }
 
+  function handleCloseAdvisory(requestId: string) {
+    const remarks = meetingRemarks[requestId]?.trim() ?? "";
+    if (remarks.length < 10) {
+      setMessageKind("error");
+      setMessage("Add meeting remarks (at least a few sentences) before closing.");
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await closeCareerAdvisoryServiceRequestAction(
+        requestId,
+        remarks,
+      );
+      if (result.error) {
+        setMessageKind("error");
+        setMessage(result.error);
+        return;
+      }
+
+      setRows((current) =>
+        current.map((row) =>
+          row.id === requestId
+            ? {
+                ...row,
+                status: "closed",
+                meetingRemarks: remarks,
+                submittedToManagerAt: new Date().toISOString(),
+              }
+            : row,
+        ),
+      );
+      setMessageKind("success");
+      setMessage("Session closed and meeting remarks sent to your manager.");
+    });
+  }
+
   if (rows.length === 0) {
     return (
       <div className={styles.empty}>
         {isManager
-          ? "No requests yet. New candidate signups and contact form submissions will appear here."
-          : "No requests assigned to you yet."}
+          ? "No requests yet. New candidate signups, career advisory bookings without a mentor, and contact form submissions will appear here."
+          : "No career advisory bookings assigned to you yet. When a candidate on your roster books a session, it will appear here."}
       </div>
     );
   }
@@ -158,7 +208,12 @@ export function ServiceRequestsPanel({
             ? ` · ${newSignupCount} new signup${newSignupCount === 1 ? "" : "s"} need mentor`
             : ""}
         </p>
-      ) : null}
+      ) : (
+        <p className={styles.summary}>
+          {advisoryCount} career advisory booking{advisoryCount === 1 ? "" : "s"}{" "}
+          assigned to you
+        </p>
+      )}
 
       {message ? (
         <p
@@ -170,113 +225,159 @@ export function ServiceRequestsPanel({
       ) : null}
 
       <div className={styles.list}>
-        {rows.map((request) => (
-          <article key={request.id} className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div>
-                <div className={styles.titleRow}>
-                  <h3 className={styles.name}>
-                    {request.firstName} {request.lastName}
-                  </h3>
-                  <span
-                    className={`${styles.badge} ${
-                      request.requestType === "new_candidate"
-                        ? styles.badgeSignup
-                        : styles.badgeContact
-                    }`}
-                  >
-                    {requestTypeLabel(request.requestType)}
-                  </span>
+        {rows.map((request) => {
+          const sessionLabel = request.sessionScheduledAt
+            ? formatSessionDateTimeFromIso(request.sessionScheduledAt, "staff")
+            : null;
+
+          return (
+            <article key={request.id} className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div>
+                  <div className={styles.titleRow}>
+                    <h3 className={styles.name}>
+                      {request.firstName} {request.lastName}
+                    </h3>
+                    <span
+                      className={`${styles.badge} ${
+                        request.requestType === "new_candidate"
+                          ? styles.badgeSignup
+                          : request.requestType === "career_advisory"
+                            ? styles.badgeAdvisory
+                            : styles.badgeContact
+                      }`}
+                    >
+                      {requestTypeLabel(request.requestType)}
+                    </span>
+                  </div>
+                  <p className={styles.meta}>
+                    {request.email}
+                    {request.requestType === "contact" ? ` · ${request.phone}` : ""}
+                  </p>
+                  {sessionLabel ? (
+                    <p className={styles.meta}>
+                      Session: <strong>{sessionLabel}</strong>
+                    </p>
+                  ) : null}
+                  <p className={styles.metaMuted}>
+                    Submitted {formatDate(request.createdAt)}
+                  </p>
                 </div>
-                <p className={styles.meta}>
-                  {request.email}
-                  {request.requestType === "contact" ? ` · ${request.phone}` : ""}
+                <span
+                  className={`${styles.badge} ${
+                    request.status === "open"
+                      ? styles.badgeOpen
+                      : request.status === "assigned"
+                        ? styles.badgeAssigned
+                        : styles.badgeClosed
+                  }`}
+                >
+                  {statusLabel(request.status)}
+                </span>
+              </div>
+
+              <p className={styles.enquiry}>{request.enquiry}</p>
+
+              {request.assignedMentorId ? (
+                <p className={styles.assignee}>
+                  Assigned to:{" "}
+                  <strong>
+                    {request.assignedMentorName || request.assignedMentorEmail}
+                  </strong>
+                  {request.assignedAt
+                    ? ` · ${formatDate(request.assignedAt)}`
+                    : ""}
                 </p>
-                <p className={styles.metaMuted}>
-                  Submitted {formatDate(request.createdAt)}
-                </p>
-              </div>
-              <span
-                className={`${styles.badge} ${
-                  request.status === "open"
-                    ? styles.badgeOpen
-                    : request.status === "assigned"
-                      ? styles.badgeAssigned
-                      : styles.badgeClosed
-                }`}
-              >
-                {statusLabel(request.status)}
-              </span>
-            </div>
+              ) : null}
 
-            <p className={styles.enquiry}>{request.enquiry}</p>
+              {request.meetingRemarks ? (
+                <div className={styles.remarksBlock}>
+                  <p className={styles.remarksLabel}>Meeting remarks</p>
+                  <p className={styles.remarksText}>{request.meetingRemarks}</p>
+                  {request.submittedToManagerAt ? (
+                    <p className={styles.metaMuted}>
+                      Sent to manager {formatDate(request.submittedToManagerAt)}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
 
-            {request.assignedMentorId ? (
-              <p className={styles.assignee}>
-                Assigned to:{" "}
-                <strong>
-                  {request.assignedMentorName || request.assignedMentorEmail}
-                </strong>
-                {request.assignedAt
-                  ? ` · ${formatDate(request.assignedAt)}`
-                  : ""}
-              </p>
-            ) : null}
+              {isManager && request.status !== "closed" ? (
+                <div className={styles.actions}>
+                  <select
+                    value={selectedMentor[request.id] ?? request.assignedMentorId ?? ""}
+                    onChange={(event) =>
+                      setSelectedMentor((current) => ({
+                        ...current,
+                        [request.id]: event.target.value,
+                      }))
+                    }
+                    className={styles.select}
+                    disabled={pending}
+                    aria-label={`Assign mentor for ${request.firstName}`}
+                  >
+                    <option value="">Assign mentor…</option>
+                    {mentors.map((mentor) => (
+                      <option key={mentor.id} value={mentor.id}>
+                        {mentor.name} ({mentor.email})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className={styles.primaryBtn}
+                    onClick={() => handleAssign(request.id)}
+                    disabled={pending}
+                  >
+                    Assign
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.secondaryBtn}
+                    onClick={() => handleClose(request.id)}
+                    disabled={pending}
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : null}
 
-            {isManager && request.status !== "closed" ? (
-              <div className={styles.actions}>
-                <select
-                  value={selectedMentor[request.id] ?? request.assignedMentorId ?? ""}
-                  onChange={(event) =>
-                    setSelectedMentor((current) => ({
-                      ...current,
-                      [request.id]: event.target.value,
-                    }))
-                  }
-                  className={styles.select}
-                  disabled={pending}
-                  aria-label={`Assign mentor for ${request.firstName}`}
-                >
-                  <option value="">Assign mentor…</option>
-                  {mentors.map((mentor) => (
-                    <option key={mentor.id} value={mentor.id}>
-                      {mentor.name} ({mentor.email})
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className={styles.primaryBtn}
-                  onClick={() => handleAssign(request.id)}
-                  disabled={pending}
-                >
-                  Assign
-                </button>
-                <button
-                  type="button"
-                  className={styles.secondaryBtn}
-                  onClick={() => handleClose(request.id)}
-                  disabled={pending}
-                >
-                  Close
-                </button>
-              </div>
-            ) : null}
-
-            {!isManager && request.status === "assigned" ? (
-              <div className={styles.actions}>
-                <button
-                  type="button"
-                  className={styles.secondaryBtn}
-                  onClick={() => handleClose(request.id)}
-                  disabled={pending}
-                >
-                  Mark closed
-                </button>
-              </div>
-            ) : null}
-          </article>
-        ))}
+              {!isManager &&
+              request.requestType === "career_advisory" &&
+              request.status === "assigned" ? (
+                <div className={styles.mentorCloseBlock}>
+                  <label className={styles.remarksFieldLabel} htmlFor={`remarks-${request.id}`}>
+                    Meeting remarks for your manager
+                  </label>
+                  <textarea
+                    id={`remarks-${request.id}`}
+                    className={styles.remarksInput}
+                    rows={4}
+                    value={meetingRemarks[request.id] ?? ""}
+                    onChange={(event) =>
+                      setMeetingRemarks((current) => ({
+                        ...current,
+                        [request.id]: event.target.value,
+                      }))
+                    }
+                    placeholder="Summarize what you covered, recommended next steps, and any follow-ups."
+                    disabled={pending}
+                  />
+                  <div className={styles.actions}>
+                    <button
+                      type="button"
+                      className={styles.primaryBtn}
+                      onClick={() => handleCloseAdvisory(request.id)}
+                      disabled={pending}
+                    >
+                      Mark closed & send to manager
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
       </div>
     </div>
   );

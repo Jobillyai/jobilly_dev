@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { startRouteLoading } from "@/lib/route-loading";
 import { asAppRoute } from "@/lib/app-route";
+import { clearBrowserTabSession } from "@/lib/auth/supabase-cookies";
 import { createClient } from "@/server/db/supabase-browser";
 
 export function useFastLogout(redirectTo: string) {
@@ -15,6 +16,7 @@ export function useFastLogout(redirectTo: string) {
     startTransition(async () => {
       router.replace(asAppRoute(redirectTo));
       const supabase = createClient();
+      clearBrowserTabSession();
       await supabase.auth.signOut();
       router.refresh();
     });

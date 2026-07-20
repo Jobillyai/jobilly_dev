@@ -1,11 +1,11 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
+import { applySessionCookiesToSet, attachTabSessionCookie, TAB_SESSION_COOKIE_NAME } from "@/lib/auth/supabase-cookies";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
 
 function routeNeedsValidatedUser(pathname: string): boolean {
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname === "/resume_dashboard.html") {
     return true;
   }
   if (pathname === "/login" || pathname === "/signup") {
@@ -21,7 +21,7 @@ function routeNeedsAuthCheck(pathname: string): boolean {
   if (pathname === "/login" || pathname === "/signup") {
     return true;
   }
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname === "/resume_dashboard.html") {
     return true;
   }
   return pathname === "/";
@@ -31,13 +31,22 @@ function routeNeedsRole(pathname: string, isLoggedIn: boolean): boolean {
   if (!isLoggedIn) {
     return false;
   }
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname === "/resume_dashboard.html") {
     return true;
   }
   if (pathname === "/login" || pathname === "/signup") {
     return true;
   }
   return pathname === "/";
+}
+
+function redirectWithTabSession(
+  url: URL,
+  isLoggedIn: boolean,
+): NextResponse {
+  const redirectResponse = NextResponse.redirect(url);
+  attachTabSessionCookie(redirectResponse, isLoggedIn);
+  return redirectResponse;
 }
 
 export async function middleware(request: NextRequest) {
@@ -48,8 +57,15 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
-      const loginPath = pathname.startsWith("/admin") ? "/admin/login" : "/login";
+    if (
+      pathname.startsWith("/dashboard") ||
+      pathname.startsWith("/admin") ||
+      pathname === "/resume_dashboard.html"
+    ) {
+      const loginPath =
+        pathname.startsWith("/admin") || pathname === "/resume_dashboard.html"
+          ? "/admin/login"
+          : "/login";
       return NextResponse.redirect(new URL(loginPath, request.url));
     }
     return response;
@@ -99,6 +115,13 @@ export async function middleware(request: NextRequest) {
     userId = session?.user?.id ?? null;
   }
 
+  const hasTabSession = request.cookies.has(TAB_SESSION_COOKIE_NAME);
+  if (isLoggedIn && !hasTabSession) {
+    await supabase.auth.signOut();
+    isLoggedIn = false;
+    userId = null;
+  }
+
   let userRole: string | null = null;
   if (routeNeedsRole(pathname, isLoggedIn) && userId) {
     const { data: profile } = await supabase
@@ -112,19 +135,20 @@ export async function middleware(request: NextRequest) {
   const isAdmin = isAdminPortalRole(userRole);
   const isAdminLogin = pathname === "/admin/login";
   const isAdminRoute = pathname.startsWith("/admin");
+  const isResumeDashboard = pathname === "/resume_dashboard.html";
   const isAuthEntryPage = pathname === "/login" || pathname === "/signup";
   const isProtectedPage = pathname.startsWith("/dashboard");
 
-  if (isAdminRoute && !isAdminLogin && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+  if ((isAdminRoute || isResumeDashboard) && !isAdminLogin && !isLoggedIn) {
+    return redirectWithTabSession(new URL("/admin/login", request.url), false);
   }
 
-  if (isAdminRoute && !isAdminLogin && isLoggedIn && !isAdmin) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  if ((isAdminRoute || isResumeDashboard) && !isAdminLogin && isLoggedIn && !isAdmin) {
+    return redirectWithTabSession(new URL("/dashboard", request.url), true);
   }
 
   if (isAdminLogin && isLoggedIn && isAdmin) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+    return redirectWithTabSession(new URL("/admin", request.url), true);
   }
 
   if (isProtectedPage && !isLoggedIn) {
@@ -134,7 +158,7 @@ export async function middleware(request: NextRequest) {
       "next",
       sanitizeCandidateRedirectPath(requestedPath),
     );
-    return NextResponse.redirect(loginUrl);
+    return redirectWithTabSession(loginUrl, false);
   }
 
   if (isAuthEntryPage && isLoggedIn) {
@@ -142,13 +166,14 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.searchParams.get("next"),
     );
     const redirectUrl = new URL(isAdmin ? "/admin" : candidateNext, request.url);
-    return NextResponse.redirect(redirectUrl);
+    return redirectWithTabSession(redirectUrl, true);
   }
 
   if (pathname === "/" && isLoggedIn && isAdmin) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+    return redirectWithTabSession(new URL("/admin", request.url), true);
   }
 
+  attachTabSessionCookie(response, isLoggedIn);
   return response;
 }
 

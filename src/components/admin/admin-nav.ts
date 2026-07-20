@@ -13,7 +13,7 @@ import {
 type AdminNavHref =
   | "/admin"
   | "/admin/candidates"
-  | "/admin/jobs"
+  | "/admin/apply_for_jobs/jobs"
   | "/admin/requests"
   | "/admin/tasks"
   | "/admin/calendar"
@@ -50,7 +50,7 @@ export const ADMIN_NAV_ITEMS = [
     managerOnly: false,
   },
   {
-    href: "/admin/jobs",
+    href: "/admin/apply_for_jobs/jobs",
     label: "Apply for jobs",
     mobileLabel: "Jobs",
     icon: Briefcase,
@@ -121,6 +121,9 @@ export function getAdminNavItems(options: {
 export function isAdminNavActive(pathname: string, href: AdminNavHref, exact: boolean): boolean {
   if (exact) {
     return pathname === href;
+  }
+  if (href === "/admin/apply_for_jobs/jobs") {
+    return pathname === href || pathname.startsWith(`${href}/`);
   }
   return pathname.startsWith(href);
 }

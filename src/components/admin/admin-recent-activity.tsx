@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { adminApplyForJobsCandidatePath } from "@/lib/admin/apply-for-jobs-paths";
 import type {
   AdminRecentCandidate,
   AdminRecentSubmission,
@@ -71,7 +72,7 @@ export function AdminRecentActivity({
                     </Link>
                     {showJobApplyLinks && candidate.hasManagedApplications ? (
                       <Link
-                        href={`/admin/candidates/${candidate.id}/jobs`}
+                        href={adminApplyForJobsCandidatePath(candidate.id)}
                         className={styles.recentLinkPrimary}
                       >
                         Jobs

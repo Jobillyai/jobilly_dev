@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  revalidateApplyForJobsCandidatePages,
+} from "@/lib/admin/apply-for-jobs-paths";
+import {
   getAdminUser,
   staffCanAccessJobApplyPortal,
   staffCanScrapeJobs,
@@ -20,6 +23,7 @@ import {
 import {
   getCandidatePreviousSearches,
   getCandidateAppliedJobListings,
+  getCandidateJobListings,
   loadCandidateJobsForRole,
   loadCandidateJobsForStoredRole,
   setAppliedJobResume,
@@ -114,7 +118,7 @@ export async function uploadCandidateBaseResumeAction(candidateId: string, formD
         buffer,
       });
     } catch (analysisError) {
-      revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+      revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
       return {
         success: true as const,
         warning:
@@ -123,7 +127,7 @@ export async function uploadCandidateBaseResumeAction(candidateId: string, formD
             : "Resume uploaded, but analysis failed. Use Retry analysis.",
       };
     }
-    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+    revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
     revalidatePath("/admin/candidates");
     return { success: true as const };
   } catch (error) {
@@ -144,7 +148,7 @@ export async function uploadResumeTxtOverrideAction(candidateId: string, formDat
       contentType: file.type,
       buffer: Buffer.from(await file.arrayBuffer()),
     });
-    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+    revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
     return { success: true as const };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Could not analyze TXT override." };
@@ -156,7 +160,7 @@ export async function removeResumeTxtOverrideAction(candidateId: string) {
   if ("error" in access) return access;
   try {
     await removeAdminTxtOverride(candidateId, access.admin.id);
-    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+    revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
     return { success: true as const };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Could not remove TXT override." };
@@ -168,7 +172,7 @@ export async function retryResumeIntelligenceAction(candidateId: string) {
   if ("error" in access) return access;
   try {
     await invalidateAndAnalyzeResume(candidateId);
-    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+    revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
     return { success: true as const };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Resume analysis failed." };
@@ -248,6 +252,33 @@ export async function loadPreviousSearchJobsAction(
     label: result.label,
     cacheStatus: result.cacheStatus,
   };
+}
+
+export async function loadAllCandidatePipelineJobsAction(
+  candidateId: string,
+  viewMode: JobListingViewMode = "pipeline",
+): Promise<
+  | { error: string }
+  | { success: true; jobs: CandidateJobListing[] }
+> {
+  const admin = await getAdminUser();
+  if (!admin) {
+    return { error: "Unauthorized" };
+  }
+
+  const staff = toStaffContext(admin);
+  const portalError = assertJobApplyPortalAccess(staff);
+  if (portalError) {
+    return { error: portalError };
+  }
+
+  const candidate = await getManagedApplicationsCandidateById(candidateId, staff);
+  if (!candidate) {
+    return { error: "Candidate not found" };
+  }
+
+  const jobs = await getCandidateJobListings(candidateId, null, { viewMode });
+  return { success: true, jobs };
 }
 
 export async function loadCandidateJobsForRoleAction(
@@ -452,7 +483,7 @@ export async function toggleCandidateJobSelectedAction(
     return { error: "Could not update job selection" };
   }
 
-  revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+  revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
   return { success: true };
 }
 
@@ -482,9 +513,7 @@ export async function toggleCandidateJobAppliedAction(
     return { error: "Could not update application status" };
   }
 
-  revalidatePath(`/admin/candidates/${candidateId}/jobs`);
-  revalidatePath(`/admin/candidates/${candidateId}/jobs/applied`);
-  revalidatePath("/admin/jobs");
+  revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
   revalidatePath("/dashboard/applications");
   revalidatePath("/dashboard");
   return { success: true };
@@ -551,7 +580,7 @@ export async function uploadAppliedJobResumeAction(
 
     const downloadUrl = await createSignedResumeUrl(saved.storagePath);
 
-    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
+    revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
     revalidatePath("/dashboard/applications");
 
     return {

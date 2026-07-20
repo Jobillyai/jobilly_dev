@@ -1,7 +1,9 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { TAB_SESSION_COOKIE_NAME, getTabSessionCookieOptions } from "@/lib/auth/supabase-cookies";
 import { getRequestAppOrigin } from "@/lib/auth/app-origin";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
@@ -187,15 +189,18 @@ export async function loginAction(
       .maybeSingle();
 
     if (isAdminPortalRole(profile?.role)) {
+      (await cookies()).set(TAB_SESSION_COOKIE_NAME, "1", getTabSessionCookieOptions());
       redirect("/admin");
     }
   }
 
+  (await cookies()).set(TAB_SESSION_COOKIE_NAME, "1", getTabSessionCookieOptions());
   redirect(next);
 }
 
 export async function logoutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  (await cookies()).delete(TAB_SESSION_COOKIE_NAME);
   redirect("/login");
 }

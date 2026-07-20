@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
+import { applySessionCookiesToSet, attachTabSessionCookie } from "@/lib/auth/supabase-cookies";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import { sanitizeInternalRedirectPath } from "@/lib/auth/safe-redirect";
 import { ensurePublicUserRecord } from "@/server/services/ensure-public-user";
@@ -45,6 +45,7 @@ function redirectWithSessionCookies(
   applySessionCookiesToSet(cookiesToSet, (name, value, options) =>
     response.cookies.set(name, value, options),
   );
+  attachTabSessionCookie(response, true);
   response.cookies.delete(RESET_FLOW_COOKIE);
   return response;
 }

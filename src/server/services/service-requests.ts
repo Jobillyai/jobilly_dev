@@ -1,9 +1,12 @@
+import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import { createClient } from "@/server/db/supabase-server";
 import type { StaffContext } from "@/lib/auth/admin";
+import { notifyManagersOfAdvisoryMeetingRemarks } from "@/server/services/service-request-advisory-email";
+import { notifyManagersOfServiceRequest } from "@/server/services/service-request-notify-email";
 import { sendCareerAdvisoryMeetInvite } from "@/server/services/send-career-advisory-invite";
 
-export type ServiceRequestType = "contact" | "new_candidate";
+export type ServiceRequestType = "contact" | "new_candidate" | "career_advisory";
 
 export type ServiceRequestStatus = "open" | "assigned" | "closed";
 
@@ -22,6 +25,9 @@ export type ServiceRequestRow = {
   assignedMentorEmail: string | null;
   assignedAt: string | null;
   assignedBy: string | null;
+  sessionScheduledAt: string | null;
+  meetingRemarks: string | null;
+  submittedToManagerAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -46,6 +52,9 @@ type DbRow = {
   assigned_mentor_id: string | null;
   assigned_at: string | null;
   assigned_by: string | null;
+  session_scheduled_at: string | null;
+  meeting_remarks: string | null;
+  submitted_to_manager_at: string | null;
   created_at: string;
   updated_at: string;
   mentor?: {
@@ -70,6 +79,9 @@ function mapRow(row: DbRow): ServiceRequestRow {
     assignedMentorEmail: row.mentor?.email ?? null,
     assignedAt: row.assigned_at,
     assignedBy: row.assigned_by,
+    sessionScheduledAt: row.session_scheduled_at,
+    meetingRemarks: row.meeting_remarks,
+    submittedToManagerAt: row.submitted_to_manager_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -106,20 +118,135 @@ export async function createServiceRequest(input: {
   return { id: data.id };
 }
 
+function buildCareerAdvisoryEnquiry(input: {
+  branch: string;
+  interestedTechnology: string;
+  graduationDetails: string;
+  sessionScheduledAt: string;
+}): string {
+  const sessionLabel =
+    formatSessionDateTimeFromIso(input.sessionScheduledAt, "staff") ??
+    input.sessionScheduledAt;
+
+  return [
+    `Career advisory session booked for ${sessionLabel}.`,
+    `Branch: ${input.branch}`,
+    `Technology: ${input.interestedTechnology}`,
+    `Education: ${input.graduationDetails}`,
+    "Conduct the session, add meeting remarks, then mark closed to notify your manager.",
+  ].join("\n");
+}
+
+export async function upsertCareerAdvisoryServiceRequest(input: {
+  candidateUserId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  branch: string;
+  interestedTechnology: string;
+  graduationDetails: string;
+  sessionScheduledAt: string;
+  assignedMentorId: string | null;
+}): Promise<void> {
+  const admin = createAdminClient();
+  const now = new Date().toISOString();
+  const enquiry = buildCareerAdvisoryEnquiry(input);
+
+  const { data: existing } = await admin
+    .from("service_requests")
+    .select("id, assigned_mentor_id, status")
+    .eq("request_type", "career_advisory")
+    .eq("candidate_user_id", input.candidateUserId)
+    .in("status", ["open", "assigned"])
+    .maybeSingle();
+
+  const baseFields = {
+    request_type: "career_advisory" as const,
+    candidate_user_id: input.candidateUserId,
+    first_name: input.firstName.trim(),
+    last_name: input.lastName.trim(),
+    email: input.email.trim().toLowerCase(),
+    phone: input.phone.trim(),
+    enquiry,
+    session_scheduled_at: input.sessionScheduledAt,
+    updated_at: now,
+  };
+
+  if (existing) {
+    const updatePayload = {
+      ...baseFields,
+      ...(input.assignedMentorId
+        ? {
+            assigned_mentor_id: input.assignedMentorId,
+            status: "assigned" as const,
+            ...(existing.assigned_mentor_id ? {} : { assigned_at: now }),
+          }
+        : { status: "open" as const }),
+    };
+
+    const { error } = await admin
+      .from("service_requests")
+      .update(updatePayload)
+      .eq("id", existing.id);
+
+    if (error) {
+      console.error("upsertCareerAdvisoryServiceRequest update error:", error);
+    }
+    return;
+  }
+
+  const { data: created, error } = await admin
+    .from("service_requests")
+    .insert({
+      ...baseFields,
+      status: input.assignedMentorId ? "assigned" : "open",
+      assigned_mentor_id: input.assignedMentorId,
+      assigned_at: input.assignedMentorId ? now : null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !created) {
+    console.error("upsertCareerAdvisoryServiceRequest insert error:", error);
+    return;
+  }
+
+  if (!input.assignedMentorId) {
+    const managerEmails = await listManagerEmails();
+    void notifyManagersOfServiceRequest({
+      requestId: created.id,
+      requestType: "career_advisory",
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: input.email,
+      phone: input.phone,
+      enquiry,
+      managerEmails,
+    });
+  }
+}
+
 export async function listServiceRequests(
   staff: StaffContext,
 ): Promise<ServiceRequestRow[]> {
+  if (staff.role === "admin") {
+    await syncMentorCareerAdvisoryRequests(staff.userId);
+  }
+
   const supabase = await createClient();
 
   let query = supabase
     .from("service_requests")
     .select(
-      "id, request_type, candidate_user_id, first_name, last_name, email, phone, enquiry, status, assigned_mentor_id, assigned_at, assigned_by, created_at, updated_at",
+      "id, request_type, candidate_user_id, first_name, last_name, email, phone, enquiry, status, assigned_mentor_id, assigned_at, assigned_by, session_scheduled_at, meeting_remarks, submitted_to_manager_at, created_at, updated_at",
     )
     .order("created_at", { ascending: false });
 
   if (staff.role === "admin") {
-    query = query.eq("assigned_mentor_id", staff.userId);
+    query = query
+      .eq("request_type", "career_advisory")
+      .eq("assigned_mentor_id", staff.userId);
   }
 
   const { data, error } = await query;
@@ -163,6 +290,59 @@ export async function listServiceRequests(
       mentor: mentor ?? null,
     });
   });
+}
+
+async function syncMentorCareerAdvisoryRequests(mentorId: string): Promise<void> {
+  const admin = createAdminClient();
+
+  const { data: profiles } = await admin
+    .from("candidate_profiles")
+    .select("user_id")
+    .eq("assigned_employee_id", mentorId);
+
+  const candidateIds = (profiles ?? []).map((row) => row.user_id);
+  if (candidateIds.length === 0) {
+    return;
+  }
+
+  const { data: intakes } = await admin
+    .from("career_advisory_intakes")
+    .select(
+      "candidate_id, name, email, phone, branch, interested_technology, graduation_details, session_scheduled_at",
+    )
+    .in("candidate_id", candidateIds)
+    .not("session_scheduled_at", "is", null);
+
+  for (const intake of intakes ?? []) {
+    const { data: activeRequest } = await admin
+      .from("service_requests")
+      .select("id")
+      .eq("request_type", "career_advisory")
+      .eq("candidate_user_id", intake.candidate_id)
+      .in("status", ["open", "assigned"])
+      .maybeSingle();
+
+    if (activeRequest || !intake.session_scheduled_at) {
+      continue;
+    }
+
+    const nameParts = intake.name.trim().split(/\s+/);
+    const firstName = nameParts[0] ?? "Candidate";
+    const lastName = nameParts.slice(1).join(" ");
+
+    await upsertCareerAdvisoryServiceRequest({
+      candidateUserId: intake.candidate_id,
+      firstName,
+      lastName,
+      email: intake.email,
+      phone: intake.phone ?? "—",
+      branch: intake.branch ?? "",
+      interestedTechnology: intake.interested_technology ?? "",
+      graduationDetails: intake.graduation_details ?? "",
+      sessionScheduledAt: intake.session_scheduled_at,
+      assignedMentorId: mentorId,
+    });
+  }
 }
 
 export async function countOpenNewCandidateSignups(): Promise<number> {
@@ -247,7 +427,8 @@ export async function assignServiceRequestToMentor(
   }
 
   if (
-    request.request_type === "new_candidate" &&
+    (request.request_type === "new_candidate" ||
+      request.request_type === "career_advisory") &&
     request.candidate_user_id
   ) {
     const { data: existingProfile } = await admin
@@ -501,28 +682,100 @@ export async function updateServiceRequestStatus(
   status: ServiceRequestStatus,
   staff: StaffContext,
 ): Promise<{ error?: string }> {
-  if (staff.role === "admin" && status !== "closed") {
-    return { error: "Mentors can only mark assigned requests as closed." };
+  if (staff.role === "admin") {
+    return {
+      error:
+        "Mentors can only close career advisory bookings with meeting remarks.",
+    };
   }
 
   const supabase = await createClient();
   const now = new Date().toISOString();
 
-  let query = supabase
+  const { error } = await supabase
     .from("service_requests")
     .update({ status, updated_at: now })
     .eq("id", requestId);
-
-  if (staff.role === "admin") {
-    query = query.eq("assigned_mentor_id", staff.userId);
-  }
-
-  const { error } = await query;
 
   if (error) {
     console.error("updateServiceRequestStatus error:", error);
     return { error: "Could not update request status." };
   }
+
+  return {};
+}
+
+export async function closeCareerAdvisoryServiceRequest(
+  requestId: string,
+  remarks: string,
+  staff: StaffContext,
+): Promise<{ error?: string }> {
+  if (staff.role !== "admin") {
+    return { error: "Only mentor admins can close advisory requests." };
+  }
+
+  const trimmedRemarks = remarks.trim();
+  if (trimmedRemarks.length < 10) {
+    return { error: "Add at least a few sentences of meeting remarks." };
+  }
+
+  const supabase = await createClient();
+  const { data: request, error: fetchError } = await supabase
+    .from("service_requests")
+    .select(
+      "id, request_type, first_name, last_name, email, status, assigned_mentor_id, session_scheduled_at",
+    )
+    .eq("id", requestId)
+    .maybeSingle();
+
+  if (fetchError || !request) {
+    return { error: "Request was not found." };
+  }
+
+  if (request.request_type !== "career_advisory") {
+    return { error: "This request cannot be closed from the mentor inbox." };
+  }
+
+  if (request.assigned_mentor_id !== staff.userId) {
+    return { error: "This advisory request is not assigned to you." };
+  }
+
+  if (request.status === "closed") {
+    return { error: "This request is already closed." };
+  }
+
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("service_requests")
+    .update({
+      status: "closed",
+      meeting_remarks: trimmedRemarks,
+      submitted_to_manager_at: now,
+      updated_at: now,
+    })
+    .eq("id", requestId)
+    .eq("assigned_mentor_id", staff.userId);
+
+  if (error) {
+    console.error("closeCareerAdvisoryServiceRequest error:", error);
+    return { error: "Could not close this request." };
+  }
+
+  const admin = createAdminClient();
+  const { data: mentorUser } = await admin
+    .from("users")
+    .select("name, email")
+    .eq("id", staff.userId)
+    .maybeSingle();
+
+  void notifyManagersOfAdvisoryMeetingRemarks({
+    candidateName: `${request.first_name} ${request.last_name}`.trim(),
+    candidateEmail: request.email,
+    mentorName: mentorUser?.name ?? mentorUser?.email ?? "Mentor admin",
+    mentorEmail: mentorUser?.email ?? "",
+    sessionScheduledAt: request.session_scheduled_at,
+    remarks: trimmedRemarks,
+  });
 
   return {};
 }

@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
+import { Loader2, LogOut } from "lucide-react";
+import { FastLogoutButton } from "@/components/auth/fast-logout-button";
 import { getAdminNavItems, isAdminNavActive } from "@/components/admin/admin-nav";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { usePrefetchRoutes } from "@/lib/use-prefetch-routes";
 import styles from "./admin-sidebar.module.css";
 
@@ -57,6 +60,23 @@ export function AdminSidebar({
           );
         })}
       </nav>
+
+      <div className={styles.sidebarFooter}>
+        <ThemeToggle compact />
+        <FastLogoutButton
+          className={styles.logoutBtn}
+          redirectTo="/admin/login"
+          pendingLabel={
+            <>
+              <Loader2 size={18} strokeWidth={2} className={styles.spin} aria-hidden />
+              <span>Logging out…</span>
+            </>
+          }
+        >
+          <LogOut size={18} strokeWidth={2} aria-hidden />
+          <span>Log out</span>
+        </FastLogoutButton>
+      </div>
     </aside>
   );
 }

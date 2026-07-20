@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { ADMIN_APPLY_FOR_JOBS_HREF } from "@/lib/admin/apply-for-jobs-paths";
 import { z } from "zod";
 import { premiumPlans } from "@/lib/candidate-services";
 import { getSessionUser } from "@/lib/auth/session";
@@ -97,7 +98,7 @@ export async function completeMockCheckoutAction(
   revalidatePath("/dashboard/plans");
   revalidatePath("/dashboard/applications");
   revalidatePath("/admin/candidates");
-  revalidatePath("/admin/jobs");
+  revalidatePath(ADMIN_APPLY_FOR_JOBS_HREF);
 
   return {
     success: true,
