@@ -63,7 +63,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 
 /** First scrape for a candidate+role looks back this many days. */
-export const FIRST_SCRAPE_WINDOW_DAYS = 15;
+export const FIRST_SCRAPE_WINDOW_DAYS = 7;
 const MAX_SCRAPE_WINDOW_MS = FIRST_SCRAPE_WINDOW_DAYS * DAY_MS;
 /**
  * Overlap added to incremental windows so listings posted right around the
@@ -76,16 +76,16 @@ export type ScrapeWindow = {
   windowMs: number;
   /** Window as whole seconds — LinkedIn `f_TPR=r{seconds}` filter. */
   seconds: number;
-  /** Window as whole days (1–15) — Indeed `fromage={days}` filter. */
+  /** Window as whole days (1–7) — Indeed `fromage={days}` filter. */
   days: number;
 };
 
 /**
  * How far back a scrape should look for new postings.
  *
- * - No successful scrape yet → the full first-scrape window (15 days).
+ * - No successful scrape yet → the full first-scrape window (7 days).
  * - Otherwise → time since the last successful scrape plus a small overlap,
- *   capped at 15 days. This naturally covers logout→login gaps, overnight
+ *   capped at 7 days. This naturally covers logout→login gaps, overnight
  *   idle time, and weekends: the next scrape simply spans everything since
  *   the last successful one, so no posting window is skipped.
  */

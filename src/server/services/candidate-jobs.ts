@@ -293,27 +293,34 @@ async function appendJobsForRole(
   );
 
   let updated = 0;
-  for (const job of jobsToRefresh) {
-    const { error } = await supabase
-      .from("scraped_jobs")
-      .update({
-        apply_url: job.applyUrl ?? null,
-        jd_text: job.jdText,
-        relevance_score: job.relevanceScore,
-        posted_at: job.postedAt,
-        scraped_at: scrapedAt,
-        location: job.location,
-        source: job.source,
-      })
-      .eq("candidate_id", candidateId)
-      .eq("search_role", searchRole)
-      .eq("job_url", job.jobUrl);
+  if (jobsToRefresh.length > 0) {
+    const refreshResults = await Promise.all(
+      jobsToRefresh.map(async (job) => {
+        const { error } = await supabase
+          .from("scraped_jobs")
+          .update({
+            apply_url: job.applyUrl ?? null,
+            jd_text: job.jdText,
+            relevance_score: job.relevanceScore,
+            posted_at: job.postedAt,
+            scraped_at: scrapedAt,
+            location: job.location,
+            source: job.source,
+          })
+          .eq("candidate_id", candidateId)
+          .eq("search_role", searchRole)
+          .eq("job_url", job.jobUrl);
 
-    if (error) {
-      return { inserted, updated, error: error.message };
+        return error?.message ?? null;
+      }),
+    );
+
+    const firstError = refreshResults.find((message) => message);
+    if (firstError) {
+      return { inserted, updated, error: firstError };
     }
 
-    updated += 1;
+    updated = jobsToRefresh.length;
   }
 
   return { inserted, updated };

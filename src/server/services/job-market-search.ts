@@ -256,7 +256,7 @@ export function isJobrightListing(
 
 const DEFAULT_POSTED_WITHIN_SECONDS = 7 * 24 * 60 * 60;
 
-/** Time-window filter for a scrape (first scrape = 15 days, then since last run). */
+/** Time-window filter for a scrape (first scrape = 7 days, then since last run). */
 export type JobPostedWithin = {
   seconds: number;
   days: number;
@@ -573,8 +573,8 @@ export async function searchIndeedJobs(input: {
         }
       : {}),
     saveOnlyUniqueItems: true,
-    parseCompanyDetails: true,
-  });
+    parseCompanyDetails: false,
+  }, 120);
 
   if ("error" in result) {
     return { error: result.error };
@@ -620,10 +620,10 @@ export async function searchLinkedInJobs(input: {
       ...(typeof input.maxItems === "number"
         ? { count: Math.max(10, input.maxItems) }
         : {}),
-      scrapeCompany: true,
+      scrapeCompany: false,
       splitByLocation: false,
     },
-    240,
+    120,
   );
 
   if ("error" in result) {

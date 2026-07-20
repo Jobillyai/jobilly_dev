@@ -30,7 +30,9 @@ export const AMBIGUOUS_CATEGORY_CLASSIFICATION_FAILED =
 export async function classifyJobsForStrictIntent(
   jobs: JobListing[],
   intent: StrictJobIntent,
+  options?: { useGemini?: boolean },
 ): Promise<{ accepted: ClassifiedMarketJob[]; rejectedCount: number; error?: string }> {
+  const useGemini = options?.useGemini !== false;
   const accepted: ClassifiedMarketJob[] = [];
   const ambiguous: Array<{ job: JobListing; index: number }> = [];
   let rejectedCount = 0;
@@ -63,10 +65,19 @@ export async function classifyJobsForStrictIntent(
     return { accepted, rejectedCount };
   }
 
+  // Fast path: skip Gemini and drop ambiguous titles (local rules only).
+  if (!useGemini) {
+    return {
+      accepted,
+      rejectedCount: rejectedCount + ambiguous.length,
+    };
+  }
+
   const compact = ambiguous.map(({ job, index }) => ({
     index,
     title: job.role,
     description: job.jdText.slice(0, 2500),
+    company: job.company,
   }));
 
   const prompt = `Classify each job into exactly one occupational category: ${JOB_CATEGORY_IDS.join(", ")}.

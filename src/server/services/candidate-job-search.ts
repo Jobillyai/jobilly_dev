@@ -207,13 +207,20 @@ export async function scrapeJobsForCandidate(
     location,
     sources,
     postedWithin: options?.postedWithin,
-    includeFortune500: true,
+    // Cap per-source volume so Apify finishes faster.
+    maxItemsPerSource: 30,
+    // Fortune-500 second pass is expensive; keep it off the hot path.
+    includeFortune500: false,
   });
 
   const roleForFilter = interestedRole?.trim() || candidate.jobSearchRole?.trim() || position;
 
+  // Local category rules only on the scrape path — skip Gemini so results
+  // return without waiting on a second AI round-trip.
   const classified = options?.strictIntent
-    ? await classifyJobsForStrictIntent(apifyResult.jobs, options.strictIntent)
+    ? await classifyJobsForStrictIntent(apifyResult.jobs, options.strictIntent, {
+        useGemini: false,
+      })
     : null;
   let rejectedCount = classified?.rejectedCount ?? 0;
   const categoryGated: Array<
