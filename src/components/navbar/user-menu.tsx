@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { logoutAction } from "@/server/actions/auth";
-import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
+import { FastLogoutButton } from "@/components/auth/fast-logout-button";
 import type { SessionUser } from "@/lib/auth/session";
 import { formatDisplayName } from "@/lib/format-display-name";
 import styles from "./navbar.module.css";
@@ -11,14 +10,14 @@ import styles from "./navbar.module.css";
 type UserMenuProps = {
   user: SessionUser;
   profileHref?: "/dashboard/profile" | "/admin/profile";
-  logoutActionFn?: typeof logoutAction;
+  logoutRedirect?: "/login" | "/admin/login";
   showLogout?: boolean;
 };
 
 export function UserMenu({
   user,
   profileHref = "/dashboard/profile",
-  logoutActionFn = logoutAction,
+  logoutRedirect = "/login",
   showLogout = true,
 }: UserMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -100,11 +99,14 @@ export function UserMenu({
             Edit profile
           </Link>
           {showLogout && (
-            <LogoutForm action={logoutActionFn}>
-              <LogoutSubmitButton className={styles.userDropdownItemLogout} role="menuitem">
-                Log out
-              </LogoutSubmitButton>
-            </LogoutForm>
+            <FastLogoutButton
+              redirectTo={logoutRedirect}
+              className={styles.userDropdownItemLogout}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+            >
+              Log out
+            </FastLogoutButton>
           )}
         </div>
       )}

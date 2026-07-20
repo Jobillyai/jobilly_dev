@@ -8,8 +8,6 @@ import { ThemeScript } from "@/components/theme/theme-script";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import "./globals.css";
 
-export const dynamic = "force-dynamic";
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

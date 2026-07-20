@@ -6,9 +6,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/server/db/supabase-browser";
-import { logoutAction } from "@/server/actions/auth";
-import { adminLogoutAction } from "@/server/actions/admin-auth";
-import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
+import { FastLogoutButton } from "@/components/auth/fast-logout-button";
 import type { SessionUser } from "@/lib/auth/session";
 import type { AdminUser } from "@/lib/auth/admin";
 import { JobillyLogo } from "@/components/brand/jobilly-logo";
@@ -164,7 +162,7 @@ export function AppNavbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isAdminRoute = pathname.startsWith("/admin") && !pathname.startsWith("/admin/login");
   const profileHref = isAdminRoute ? "/admin/profile" : "/dashboard/profile";
-  const logoutActionFn = isAdminRoute ? adminLogoutAction : logoutAction;
+  const logoutRedirect = isAdminRoute ? "/admin/login" : "/login";
   const onPortal = pathname.startsWith("/dashboard") || isAdminRoute;
   const showPortalLink = Boolean(user) && !onPortal && homeHref !== "/";
 
@@ -193,9 +191,11 @@ export function AppNavbar({
     const supabase = createClient();
 
     async function syncUser() {
-      const { data } = await supabase.auth.getUser();
-      if (data.user?.email) {
-        setUser(toSessionUser(data.user));
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setUser(toSessionUser(session.user));
       } else {
         setUser(null);
       }
@@ -239,14 +239,15 @@ export function AppNavbar({
             <UserMenu
               user={user}
               profileHref={profileHref}
-              logoutActionFn={logoutActionFn}
+              logoutRedirect={logoutRedirect}
               showLogout={false}
             />
-            <LogoutForm action={logoutActionFn}>
-              <LogoutSubmitButton className={`${styles.navBtnGhost} ${styles.navLogoutBtn}`}>
-                Log out
-              </LogoutSubmitButton>
-            </LogoutForm>
+            <FastLogoutButton
+              redirectTo={logoutRedirect}
+              className={`${styles.navBtnGhost} ${styles.navLogoutBtn}`}
+            >
+              Log out
+            </FastLogoutButton>
           </div>
         ) : (
           <>

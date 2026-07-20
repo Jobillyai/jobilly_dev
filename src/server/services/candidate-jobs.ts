@@ -33,9 +33,8 @@ import { createSignedResumeUrl } from "@/server/services/resume-storage";
 import { JOB_CLASSIFIER_VERSION, type StrictJobIntent } from "@/lib/job-category-taxonomy";
 import { getConfirmedStrictIntent } from "@/server/services/resume-intelligence";
 import {
-  mergeJobSearchKeywords,
+  resolveSkillMatchKeywords,
   keywordIntentFingerprint,
-  parseJobSearchKeywords,
 } from "@/lib/job-keyword-match";
 
 export type JobListingViewMode = "pipeline" | "applied";
@@ -569,16 +568,14 @@ export async function runCandidateJobScrapeForSources(input: {
 }> {
   const intent = await getConfirmedStrictIntent(input.candidate.id);
   const searchRole = normalizeSearchRole(intent.canonicalSearchTitle);
-  const mergedKeywords = mergeJobSearchKeywords(
-    parseJobSearchKeywords(input.searchKeywords),
-    intent.searchKeywords,
+  const skillKeywords = resolveSkillMatchKeywords(
+    input.searchKeywords,
+    intent.skills,
   );
-  const runtimeIntent = {
-    ...intent,
-    searchKeywords: mergedKeywords,
-    intentFingerprint: keywordIntentFingerprint(intent.intentFingerprint, mergedKeywords),
-  };
-  const searchKeywords = mergedKeywords.join(", ");
+  const runtimeFingerprint = keywordIntentFingerprint(
+    intent.intentFingerprint,
+    skillKeywords,
+  );
 
   // Windowed scraping: the first scrape for a candidate+role looks back 15
   // days; each later scrape only covers the gap since that source's last
@@ -589,7 +586,7 @@ export async function runCandidateJobScrapeForSources(input: {
     searchRole,
     input.sources,
     input.db,
-    runtimeIntent.intentFingerprint,
+    runtimeFingerprint,
   );
   const lastScrapedBySource = new Map(
     cacheStatus.map((entry) => [entry.source, entry.lastScrapedAt]),
@@ -614,9 +611,9 @@ export async function runCandidateJobScrapeForSources(input: {
         input.interestedRole,
         {
           experienceYears: input.candidate.experienceYears,
-          searchKeywords,
+          searchKeywords: input.searchKeywords,
           postedWithin,
-          strictIntent: runtimeIntent,
+          strictIntent: intent,
         },
       );
 
@@ -651,7 +648,9 @@ export async function runCandidateJobScrapeForSources(input: {
     }),
   );
 
-  const scrapeErrors = results.flatMap((result) => result.scrapeErrors);
+  const scrapeErrors = [
+    ...new Set(results.flatMap((result) => result.scrapeErrors)),
+  ];
   const newJobsAdded = results.reduce((sum, result) => sum + result.newJobsAdded, 0);
   const fatalError = results.find((result) => result.fatalError)?.fatalError;
   const rejectedCount = results.reduce((sum, result) => sum + result.rejectedCount, 0);
@@ -718,14 +717,12 @@ export async function refreshCandidateJobListings(
     };
   }
   const searchRole = normalizeSearchRole(intent.canonicalSearchTitle);
-  const mergedKeywords = mergeJobSearchKeywords(
-    parseJobSearchKeywords(options?.searchKeywords),
-    intent.searchKeywords,
-  );
-  const searchKeywords = mergedKeywords.join(", ");
+  const adminSkillsInput = options?.searchKeywords;
+  const skillKeywords = resolveSkillMatchKeywords(adminSkillsInput, intent.skills);
+  const searchKeywords = skillKeywords.join(", ");
   const runtimeFingerprint = keywordIntentFingerprint(
     intent.intentFingerprint,
-    mergedKeywords,
+    skillKeywords,
   );
   const searchTerms = buildCandidateSearchTerms(
     candidate,
@@ -766,7 +763,7 @@ export async function refreshCandidateJobListings(
       adminUserId,
       sources: sourcesToScrape,
       interestedRole: roleInput,
-      searchKeywords,
+      searchKeywords: adminSkillsInput,
       db,
     });
     scrapeErrors.push(...scrapeResult.scrapeErrors);

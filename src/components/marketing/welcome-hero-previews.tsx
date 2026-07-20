@@ -20,12 +20,12 @@ const applyFields = [
   { label: "Full name", value: "Priya Sharma" },
   { label: "Email", value: "priya@email.com" },
   { label: "Résumé", value: "priya_sharma_v4.pdf" },
-  { label: "Why this role?", value: "Tailored to job description…" },
+  { label: "Why this role?", value: "Aligned with job description…" },
 ] as const;
 
 const applications = [
   { company: "Google", role: "Software Engineer", status: "submitted" as const, time: "2h ago" },
-  { company: "Amazon", role: "SDE II", status: "tailoring" as const, time: "Now" },
+  { company: "Amazon", role: "SDE II", status: "preparing" as const, time: "Now" },
   { company: "Airbnb", role: "Frontend Developer", status: "queued" as const, time: "3h ago" },
   { company: "SAP", role: "Cloud Consultant", status: "interview" as const, time: "Tomorrow" },
 ];
@@ -192,7 +192,7 @@ export function ApplicationsHeroPreview() {
                         carouselStyles[`status_${row.status}`]
                       }`}
                     >
-                      {row.status === "tailoring" ? (
+                      {row.status === "preparing" ? (
                         <Loader2 size={11} className={carouselStyles.spin} />
                       ) : row.status === "submitted" ? (
                         <CheckCircle2 size={11} />
@@ -203,8 +203,8 @@ export function ApplicationsHeroPreview() {
                       )}
                       {row.status === "submitted"
                         ? "Submitted"
-                        : row.status === "tailoring"
-                          ? "Tailoring"
+                        : row.status === "preparing"
+                          ? "Preparing"
                           : row.status === "interview"
                             ? "Interview"
                             : "Queued"}

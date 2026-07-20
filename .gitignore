@@ -36,3 +36,9 @@ next-env.d.ts
 # supabase local dev
 /supabase/.branches
 /supabase/.temp
+
+# local doc/temp artifacts
+.architecture-plan-extract.txt
+.tmp-docx-extract/
+.tmp-layout.css
+architecture-plan.zip

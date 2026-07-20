@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { adminLogoutAction } from "@/server/actions/admin-auth";
 import type { AdminUser } from "@/lib/auth/admin";
 import { UserMenu } from "@/components/navbar/user-menu";
 import styles from "@/components/navbar/navbar.module.css";
@@ -41,7 +40,7 @@ export function AdminNavbar({ user }: AdminNavbarProps) {
             <UserMenu
               user={user}
               profileHref="/admin/profile"
-              logoutActionFn={adminLogoutAction}
+              logoutRedirect="/admin/login"
               showLogout={false}
             />
           </div>

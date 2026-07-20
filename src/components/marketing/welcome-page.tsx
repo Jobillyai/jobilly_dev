@@ -112,7 +112,7 @@ export function WelcomePage() {
               <p>
                 We keep everything in one portal so you are not juggling tabs,
                 spreadsheets, and scattered PDFs. And when you are ready for managed
-                apply, our team searches roles, tailors resumes, and tracks every
+                apply, our team searches roles, prepares application materials, and tracks every
                 application — you stay in control from your dashboard.
               </p>
             </div>

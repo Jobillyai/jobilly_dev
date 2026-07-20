@@ -7,7 +7,10 @@ import type { AdminCandidate } from "@/server/services/admin-dashboard";
 import type { MentorOption } from "@/server/services/service-requests";
 import { formatDisplayName } from "@/lib/format-display-name";
 import { formatExperienceYears } from "@/lib/format-experience-years";
-import { formatCandidateGender } from "@/lib/candidate-profile-options";
+import {
+  formatCandidateGender,
+  formatCandidateVisaStatus,
+} from "@/lib/candidate-profile-options";
 import { getPremiumPlan } from "@/lib/candidate-services";
 import { resolveCandidateJobRole } from "@/server/services/candidate-job-role";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
@@ -269,6 +272,12 @@ function CandidateRow({
                 <>
                   <dt>Location</dt>
                   <dd>{candidate.location}</dd>
+                </>
+              ) : null}
+              {candidate.visaStatus ? (
+                <>
+                  <dt>Visa status</dt>
+                  <dd>{formatCandidateVisaStatus(candidate.visaStatus)}</dd>
                 </>
               ) : null}
               {candidate.profileEducation ? (

@@ -4,7 +4,17 @@ import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
 
-function routeNeedsAuthValidation(pathname: string): boolean {
+function routeNeedsValidatedUser(pathname: string): boolean {
+  if (pathname.startsWith("/admin")) {
+    return true;
+  }
+  if (pathname === "/login" || pathname === "/signup") {
+    return true;
+  }
+  return pathname === "/";
+}
+
+function routeNeedsAuthCheck(pathname: string): boolean {
   if (pathname.startsWith("/dashboard")) {
     return true;
   }
@@ -64,15 +74,23 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const needsAuthValidation = routeNeedsAuthValidation(pathname);
+  const needsAuthCheck = routeNeedsAuthCheck(pathname);
 
   let isLoggedIn = false;
   let userId: string | null = null;
 
-  if (needsAuthValidation) {
-    const { data } = await supabase.auth.getUser();
-    isLoggedIn = !!data.user;
-    userId = data.user?.id ?? null;
+  if (needsAuthCheck) {
+    if (routeNeedsValidatedUser(pathname)) {
+      const { data } = await supabase.auth.getUser();
+      isLoggedIn = !!data.user;
+      userId = data.user?.id ?? null;
+    } else {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      isLoggedIn = !!session?.user;
+      userId = session?.user?.id ?? null;
+    }
   } else {
     const {
       data: { session },

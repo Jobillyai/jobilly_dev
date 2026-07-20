@@ -1,7 +1,48 @@
-.routeLoaderRoot {
+.progressTrack {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 3px;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 
-.routeLoaderVisible {
-  pointer-events: none;
+.progressActive {
+  opacity: 1;
+}
+
+.progressBar {
+  height: 100%;
+  width: 35%;
+  background: linear-gradient(90deg, #5170ff, #38b6ff);
+  border-radius: 0 2px 2px 0;
+  transform: translateX(-100%);
+  animation: routeProgress 0.9s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(56, 182, 255, 0.45);
+}
+
+@keyframes routeProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(180%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressBar {
+    animation: none;
+    width: 100%;
+    transform: none;
+    opacity: 0.85;
+  }
 }

@@ -109,7 +109,7 @@
 
 @media (max-width: 768px) {
   .main {
-    padding: 56px 16px 40px;
+    padding: 16px 16px 24px;
   }
 
   .topBar {
@@ -130,6 +130,6 @@
 
 @media (max-width: 380px) {
   .main {
-    padding: 52px 12px 36px;
+    padding: 12px 12px 36px;
   }
 }

@@ -6,12 +6,34 @@ export const CANDIDATE_GENDER_OPTIONS = [
   { value: "other", label: "Other" },
 ] as const;
 
+export const CANDIDATE_VISA_STATUS_OPTIONS = [
+  { value: "", label: "Not set" },
+  { value: "us_citizen", label: "US Citizen" },
+  { value: "green_card", label: "Green Card / Permanent Resident" },
+  { value: "h1b", label: "H-1B" },
+  { value: "opt_cpt", label: "OPT / CPT (F-1)" },
+  { value: "l1", label: "L-1" },
+  { value: "tn", label: "TN Visa" },
+  { value: "ead", label: "EAD / Other work authorization" },
+  { value: "needs_sponsorship", label: "Requires visa sponsorship" },
+  { value: "not_authorized", label: "Not authorized to work in the US" },
+] as const;
+
 export function formatCandidateGender(value: string | null | undefined): string {
   if (!value) {
     return "—";
   }
 
   const match = CANDIDATE_GENDER_OPTIONS.find((option) => option.value === value);
+  return match?.label ?? value;
+}
+
+export function formatCandidateVisaStatus(value: string | null | undefined): string {
+  if (!value) {
+    return "—";
+  }
+
+  const match = CANDIDATE_VISA_STATUS_OPTIONS.find((option) => option.value === value);
   return match?.label ?? value;
 }
 

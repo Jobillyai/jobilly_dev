@@ -4,6 +4,15 @@
   background: var(--jb-admin-canvas);
 }
 
+@media (max-width: 900px) {
+  .adminShell {
+    min-height: 100dvh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+}
+
 .adminBody {
   display: flex;
   flex: 1;
@@ -14,4 +23,15 @@
   flex: 1;
   min-width: 0;
   overflow-x: hidden;
+}
+
+@media (max-width: 900px) {
+  .adminContent {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
 }

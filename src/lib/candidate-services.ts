@@ -47,8 +47,7 @@ export const premiumPlans: PremiumPlan[] = [
     includes: [
       "Dedicated Jobilly team with human oversight",
       "Indeed & LinkedIn job matching for your target role",
-      "Resume tailored for each application",
-      "ATS-matched resumes for every role",
+      "Application resume prepared for each role",
       "Quality-checked applications — no spray-and-pray",
       "Applied roles tracked in your candidate portal",
       "Progress updates from your Jobilly team",
@@ -68,7 +67,7 @@ export const premiumPlans: PremiumPlan[] = [
       "Everything in Mock Interviews",
       "Everything in Job Applications",
       "Voice mock interviews + managed apply support",
-      "Resume tailored and ATS-optimized per role",
+      "Application resume prepared per role",
       "Indeed & LinkedIn matching with human oversight",
       "Full visibility in your candidate portal",
       "One subscription — complete graduate-to-hired path",
@@ -187,7 +186,7 @@ export const candidateServices: CandidateService[] = [
     highlights: [
       "Indeed & LinkedIn job matching",
       "Applied roles in your portal",
-      "Resume tailored per application",
+      "Application resume prepared per role",
       "Human recruiter oversight",
       "Real-time application updates",
     ],

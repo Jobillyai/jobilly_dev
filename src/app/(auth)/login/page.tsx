@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
+import { startRouteLoading } from "@/lib/route-loading";
+import { asAppRoute } from "@/lib/app-route";
 import { loginAction, type LoginState } from "@/server/actions/auth";
 import { lookupMemberIdByEmailAction } from "@/server/actions/member-id";
 import { LoginMemberIdPreview } from "@/components/auth/login-member-id-preview";
@@ -16,6 +18,7 @@ import styles from "@/components/auth/auth-page.module.css";
 const initialState: LoginState = {};
 
 export default function LoginPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const next = sanitizeCandidateRedirectPath(searchParams.get("next"));
   const confirmationError =
@@ -35,6 +38,10 @@ export default function LoginPage() {
   const [memberId, setMemberId] = useState<string | null>(null);
   const [memberIdLoading, setMemberIdLoading] = useState(false);
 
+  useEffect(() => {
+    router.prefetch(asAppRoute(next));
+  }, [router, next]);
+
   async function handleEmailBlur(event: React.FocusEvent<HTMLInputElement>) {
     const email = event.target.value.trim();
     if (!email.includes("@")) {
@@ -52,6 +59,7 @@ export default function LoginPage() {
   }
 
   function handleSubmit(formData: FormData) {
+    startRouteLoading();
     startTransition(async () => {
       try {
         const result = await loginAction(state, formData);

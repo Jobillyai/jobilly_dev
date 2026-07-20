@@ -1,5 +1,5 @@
-import { adminLogoutAction } from "@/server/actions/admin-auth";import { JobillyLogo } from "@/components/brand/jobilly-logo";
-import { LogoutForm, LogoutSubmitButton } from "@/components/auth/logout-form";
+import { JobillyLogo } from "@/components/brand/jobilly-logo";
+import { FastLogoutButton } from "@/components/auth/fast-logout-button";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
 import { formatDisplayName } from "@/lib/format-display-name";
 import styles from "./admin-top-navbar.module.css";
@@ -33,9 +33,9 @@ export function AdminTopNavbar({
           <span className={styles.userName}>{displayName}</span>
           {memberId ? <MemberIdBadge memberId={memberId} size="sm" /> : null}
         </div>
-        <LogoutForm action={adminLogoutAction}>
-          <LogoutSubmitButton className={styles.logoutBtn}>Log out</LogoutSubmitButton>
-        </LogoutForm>
+        <FastLogoutButton className={styles.logoutBtn} redirectTo="/admin/login">
+          Log out
+        </FastLogoutButton>
       </div>
     </header>
   );

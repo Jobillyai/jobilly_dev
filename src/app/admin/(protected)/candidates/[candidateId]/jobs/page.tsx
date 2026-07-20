@@ -98,7 +98,6 @@ export default async function AdminCandidateJobsPage({
           <CandidateJobsSheet
             key={candidate.id}
             candidateId={candidate.id}
-            candidateName={displayName}
             candidateExperienceYears={candidate.experienceYears}
             defaultInterestedRole={defaultInterestedRole}
             initialJobs={jobs}

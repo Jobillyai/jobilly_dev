@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ROUTE_LOADING_START } from "@/lib/route-loading";
-import { LoadingOverlay } from "./loading-overlay";
 import styles from "./route-loader.module.css";
+
+const SHOW_DELAY_MS = 120;
 
 function isInternalNavigationLink(anchor: HTMLAnchorElement) {
   if (anchor.target === "_blank" || anchor.hasAttribute("download")) {
@@ -26,7 +27,6 @@ function isInternalNavigationLink(anchor: HTMLAnchorElement) {
       return false;
     }
 
-    // Hash-only changes on the current page are not route navigations.
     if (url.pathname === window.location.pathname && url.hash) {
       return false;
     }
@@ -39,15 +39,15 @@ function isInternalNavigationLink(anchor: HTMLAnchorElement) {
 
 export function RouteLoader() {
   const pathname = usePathname();
-  const [loading, setLoading] = useState(false);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [active, setActive] = useState(false);
+  const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousPathRef = useRef(pathname);
 
   function clearTimers() {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
+    if (showTimerRef.current) {
+      clearTimeout(showTimerRef.current);
+      showTimerRef.current = null;
     }
     if (safetyTimerRef.current) {
       clearTimeout(safetyTimerRef.current);
@@ -57,27 +57,20 @@ export function RouteLoader() {
 
   function startLoading() {
     clearTimers();
-    setLoading(true);
+    showTimerRef.current = setTimeout(() => {
+      setActive(true);
+      showTimerRef.current = null;
+    }, SHOW_DELAY_MS);
 
     safetyTimerRef.current = setTimeout(() => {
-      setLoading(false);
+      setActive(false);
       safetyTimerRef.current = null;
     }, 12000);
   }
 
-  function stopLoading(delay = 120) {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
-    }
-
-    hideTimerRef.current = setTimeout(() => {
-      setLoading(false);
-      hideTimerRef.current = null;
-      if (safetyTimerRef.current) {
-        clearTimeout(safetyTimerRef.current);
-        safetyTimerRef.current = null;
-      }
-    }, delay);
+  function stopLoading() {
+    clearTimers();
+    setActive(false);
   }
 
   useEffect(() => {
@@ -93,10 +86,7 @@ export function RouteLoader() {
     }
 
     window.addEventListener(ROUTE_LOADING_START, handleRouteLoadingStart);
-
-    return () => {
-      window.removeEventListener(ROUTE_LOADING_START, handleRouteLoadingStart);
-    };
+    return () => window.removeEventListener(ROUTE_LOADING_START, handleRouteLoadingStart);
   }, []);
 
   useEffect(() => {
@@ -118,7 +108,6 @@ export function RouteLoader() {
     }
 
     document.addEventListener("click", handleDocumentClick, true);
-
     return () => {
       document.removeEventListener("click", handleDocumentClick, true);
       clearTimers();
@@ -127,11 +116,11 @@ export function RouteLoader() {
 
   return (
     <div
-      className={`${styles.routeLoaderRoot} ${loading ? styles.routeLoaderVisible : ""}`}
-      aria-hidden={!loading}
-      aria-busy={loading}
+      className={`${styles.progressTrack} ${active ? styles.progressActive : ""}`}
+      aria-hidden={!active}
+      aria-busy={active}
     >
-      {loading ? <LoadingOverlay /> : null}
+      <div className={styles.progressBar} />
     </div>
   );
 }

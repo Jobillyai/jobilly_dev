@@ -9,11 +9,11 @@
 .contentInner {
   position: relative;
   z-index: 1;
-  min-height: 100%;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .contentInner {
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    /* Clear fixed bottom tab bar so the last cards stay fully visible */
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   }
 }

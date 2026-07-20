@@ -6,6 +6,7 @@ import { combineFirstLastName } from "@/lib/format-person-name";
 import { parseExperienceYears } from "@/lib/format-experience-years";
 import {
   CANDIDATE_GENDER_OPTIONS,
+  CANDIDATE_VISA_STATUS_OPTIONS,
   parseGraduationYear,
 } from "@/lib/candidate-profile-options";
 import {
@@ -49,6 +50,7 @@ async function ensureAvatarsBucket() {
 }
 
 const genderValues = CANDIDATE_GENDER_OPTIONS.map((option) => option.value);
+const visaStatusValues = CANDIDATE_VISA_STATUS_OPTIONS.map((option) => option.value);
 
 function buildEducationSummary(input: {
   specialization?: string;
@@ -77,6 +79,14 @@ const profileSchema = z.object({
     .optional()
     .transform((value) => value?.trim() ?? "")
     .refine((value) => (genderValues as string[]).includes(value), "Select a valid gender option"),
+  visaStatus: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() ?? "")
+    .refine(
+      (value) => (visaStatusValues as string[]).includes(value),
+      "Select a valid visa status option",
+    ),
   graduationCollege: z.string().max(200).optional(),
   graduationYear: z
     .string()
@@ -135,6 +145,7 @@ export type ProfileState = {
       | "careerGoals"
       | "experienceYears"
       | "gender"
+      | "visaStatus"
       | "graduationCollege"
       | "graduationYear"
       | "specialization"
@@ -277,6 +288,7 @@ export async function updateProfileAction(
     careerGoals: formData.get("careerGoals") || undefined,
     experienceYears: formData.get("experienceYears")?.toString() || undefined,
     gender: formData.get("gender")?.toString() ?? "",
+    visaStatus: formData.get("visaStatus")?.toString() ?? "",
     graduationCollege: formData.get("graduationCollege") || undefined,
     graduationYear: formData.get("graduationYear")?.toString() || undefined,
     specialization: formData.get("specialization") || undefined,
@@ -295,6 +307,7 @@ export async function updateProfileAction(
       "careerGoals",
       "experienceYears",
       "gender",
+      "visaStatus",
       "graduationCollege",
       "graduationYear",
       "specialization",
@@ -327,6 +340,7 @@ export async function updateProfileAction(
     careerGoals,
     experienceYears,
     gender,
+    visaStatus,
     graduationCollege,
     graduationYear,
     specialization,
@@ -396,6 +410,7 @@ export async function updateProfileAction(
       career_goals: careerGoals || null,
       experience_years: experienceYears,
       gender: gender || null,
+      visa_status: visaStatus || null,
       graduation_college: graduationCollege || null,
       graduation_year: graduationYear,
       specialization: specialization || null,

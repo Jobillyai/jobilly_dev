@@ -1,6 +1,7 @@
 import "server-only";
 import {createHash,randomUUID} from "crypto";
 import {JOB_CLASSIFIER_VERSION,JOB_TAXONOMY_VERSION,type JobCategoryId,type StrictJobIntent} from "@/lib/job-category-taxonomy";
+import {mergeResumeSkillsIntoSearchKeywords} from "@/lib/job-keyword-match";
 import {createAdminClient} from "@/server/db/supabase-admin";
 import {extractResumeTextFromBuffer} from "@/server/services/resume-text-extract";
 import {classifyResumeIntent,RESUME_INTELLIGENCE_PROMPT_VERSION,RESUME_INTELLIGENCE_SCHEMA_VERSION} from "@/server/services/gemini-resume-intelligence";
@@ -63,11 +64,12 @@ export async function invalidateAndAnalyzeResume(candidateId:string){
  }catch(e){await admin.from("candidate_resume_analysis").update({status:"failed",error_message:e instanceof Error?e.message:"Resume analysis failed.",updated_at:new Date().toISOString()}).eq("candidate_id",candidateId).eq("generation_token",token);throw e}
 }
 export async function getResumeIntelligence(candidateId:string){
- const admin=createAdminClient();const [{data:sources},{data:analysis},{data:categories}]=await Promise.all([admin.from("candidate_resume_sources").select("*").eq("candidate_id",candidateId),admin.from("candidate_resume_analysis").select("*").eq("candidate_id",candidateId).maybeSingle(),admin.from("job_categories").select("*").eq("active",true).order("label")]);
- return {sources:sources??[],analysis,categories:categories??[]};
+ const admin=createAdminClient();const [{data:sources},{data:analysis}]=await Promise.all([admin.from("candidate_resume_sources").select("*").eq("candidate_id",candidateId),admin.from("candidate_resume_analysis").select("*").eq("candidate_id",candidateId).maybeSingle()]);
+ return {sources:sources??[],analysis};
 }
 export async function getConfirmedStrictIntent(candidateId:string):Promise<StrictJobIntent>{
  const {data,error}=await createAdminClient().from("candidate_resume_analysis").select("*").eq("candidate_id",candidateId).eq("status","completed").maybeSingle();if(error)throw new Error(error.message);
  if(!data?.category_id||!data.canonical_search_title)throw new Error("Resume analysis must identify a job category and search title before scraping.");
- return {canonicalSearchTitle:data.canonical_search_title,targetRoles:data.target_roles,categoryId:data.category_id as JobCategoryId,searchKeywords:data.search_keywords,acceptedTitlePatterns:data.accepted_title_patterns,excludedCategoryIds:data.excluded_category_ids as JobCategoryId[],intentFingerprint:hash([data.source_fingerprint,data.category_id,data.canonical_search_title,data.target_roles.join("|"),data.search_keywords.join("|"),JOB_CLASSIFIER_VERSION].join(":"))};
+ const searchKeywords=mergeResumeSkillsIntoSearchKeywords(data.skills,data.search_keywords);
+ return {canonicalSearchTitle:data.canonical_search_title,targetRoles:data.target_roles,categoryId:data.category_id as JobCategoryId,skills:data.skills,searchKeywords,acceptedTitlePatterns:data.accepted_title_patterns,excludedCategoryIds:data.excluded_category_ids as JobCategoryId[],intentFingerprint:hash([data.source_fingerprint,data.category_id,data.canonical_search_title,data.target_roles.join("|"),data.skills.join("|"),searchKeywords.join("|"),JOB_CLASSIFIER_VERSION].join(":"))};
 }

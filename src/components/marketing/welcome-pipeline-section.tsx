@@ -42,9 +42,9 @@ const stages: PipelineStage[] = [
     step: "02",
     slug: "prep",
     title: "Prepare",
-    headline: "A résumé rewritten for each role.",
+    headline: "Application materials ready for each role.",
     description:
-      "Your profile lives in one hub. Jobilly tailors materials per application — keyword-aligned, ATS-safe, and reviewed by your mentor before anything goes out.",
+      "Your profile lives in one hub. Jobilly prepares materials per application — keyword-aligned and reviewed by your mentor before anything goes out.",
   },
   {
     id: "apply",
@@ -62,7 +62,7 @@ const stages: PipelineStage[] = [
     title: "Track",
     headline: "Every application, one calm pipeline.",
     description:
-      "Submitted, tailoring, interview, reply — every status lands in your candidate portal so your inbox stops being a graveyard of threads.",
+      "Submitted, preparing, interview, reply — every status lands in your candidate portal so your inbox stops being a graveyard of threads.",
   },
 ];
 
@@ -95,7 +95,7 @@ const applyFields = [
 
 const trackerRows = [
   { company: "Google", role: "Software Engineer", status: "Submitted", tone: "green" as const },
-  { company: "Amazon", role: "SDE II", status: "Tailoring résumé", tone: "blue" as const },
+  { company: "Amazon", role: "SDE II", status: "Preparing application", tone: "blue" as const },
   { company: "Airbnb", role: "Frontend Developer", status: "Interview", tone: "amber" as const },
   { company: "SAP", role: "Cloud Consultant", status: "Queued", tone: "muted" as const },
 ];
@@ -174,7 +174,7 @@ function PreparePreview({ active }: { active: boolean }) {
 
   return (
     <div className={styles.previewStack}>
-      <p className={styles.previewLabel}>Résumé tailoring · per role</p>
+      <p className={styles.previewLabel}>Application resume · per role</p>
       <ul className={styles.resumeList}>
         {resumeChanges.map((change, index) => (
           <li
@@ -432,7 +432,7 @@ export function WelcomePipelineSection() {
             ))}
           </div>
           <p className={styles.lead}>
-            Advisory, tailored résumés, managed applications, and live tracking — discover
+            Advisory, application prep, managed applications, and live tracking — discover
             your path, prep your materials, apply with our team, and watch every submission
             land in one calm workspace.
           </p>

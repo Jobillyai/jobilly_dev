@@ -40,34 +40,16 @@ type AppliedJobRowProps = {
   job: AppliedJobListItem;
   expanded: boolean;
   onToggle: () => void;
-  variant: "candidate" | "admin";
-  onUndoApply?: (jobId: string) => void;
-  onResumeUpload?: (jobId: string, file: File) => void;
-  uploadingResumeJobId?: string | null;
 };
 
-function AppliedJobRow({
-  job,
-  expanded,
-  onToggle,
-  variant,
-  onUndoApply,
-  onResumeUpload,
-  uploadingResumeJobId,
-}: AppliedJobRowProps) {
+function AppliedJobRow({ job, expanded, onToggle }: AppliedJobRowProps) {
   const detailsId = `application-details-${job.id}`;
-  const isAdmin = variant === "admin";
   const [resumePending, startResumeTransition] = useTransition();
   const [resumeError, setResumeError] = useState<string | null>(null);
 
   function openApplicationResume() {
     setResumeError(null);
     startResumeTransition(async () => {
-      if (isAdmin && job.applicationResumeDownloadUrl) {
-        window.open(job.applicationResumeDownloadUrl, "_blank", "noopener,noreferrer");
-        return;
-      }
-
       const result = await getApplicationResumeDownloadAction(job.id);
       if ("error" in result) {
         setResumeError(result.error);
@@ -78,9 +60,9 @@ function AppliedJobRow({
     });
   }
 
-  const showResumeAction = isAdmin
-    ? Boolean(job.applicationResumeDownloadUrl || job.hasApplicationResume)
-    : Boolean(job.hasApplicationResume || job.applicationResumeDownloadUrl);
+  const showResumeAction = Boolean(
+    job.hasApplicationResume || job.applicationResumeDownloadUrl,
+  );
 
   return (
     <li
@@ -117,18 +99,16 @@ function AppliedJobRow({
               <span>{resumePending ? "Opening…" : "Application resume"}</span>
             </button>
           ) : null}
-          {!isAdmin ? (
-            <button
-              type="button"
-              className={styles.mockInterviewBtn}
-              disabled
-              aria-disabled="true"
-              title="Coming soon"
-            >
-              <Mic size={16} aria-hidden />
-              <span>Start mock interview</span>
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className={styles.mockInterviewBtn}
+            disabled
+            aria-disabled="true"
+            title="Coming soon"
+          >
+            <Mic size={16} aria-hidden />
+            <span>Start mock interview</span>
+          </button>
           <button
             type="button"
             className={styles.moreBtn}
@@ -154,14 +134,6 @@ function AppliedJobRow({
               ·
             </span>
             <span>{formatJobSourceLabel(job.source, job.jobUrl)}</span>
-            {isAdmin && job.postedAt ? (
-              <>
-                <span className={styles.metaDot} aria-hidden>
-                  ·
-                </span>
-                <span>Posted {formatDate(job.postedAt)}</span>
-              </>
-            ) : null}
           </p>
 
           {job.jobUrl ? (
@@ -181,9 +153,8 @@ function AppliedJobRow({
               </div>
             ) : (
               <p className={styles.jdEmpty}>
-                {isAdmin
-                  ? "No description was captured for this application."
-                  : "No description was captured for this application. Your Jobilly team will share more details if the employer responds."}
+                No description was captured for this application. Your Jobilly team will share
+                more details if the employer responds.
               </p>
             )}
           </section>
@@ -203,42 +174,8 @@ function AppliedJobRow({
           ) : null}
 
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>
-              {isAdmin ? "Resume used" : "Application resume"}
-            </h2>
-            {isAdmin ? (
-              <div className={styles.adminResumeControl}>
-                {job.applicationResumeDownloadUrl ? (
-                  <button
-                    type="button"
-                    className={styles.resumeLink}
-                    onClick={openApplicationResume}
-                    disabled={resumePending}
-                  >
-                    <FileText size={16} aria-hidden />
-                    <span>{job.applicationResumeFileName ?? "View resume"}</span>
-                  </button>
-                ) : (
-                  <span className={styles.resumeMissing}>No resume attached yet</span>
-                )}
-                <label className={styles.resumeUploadBtn}>
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    className={styles.resumeFileInput}
-                    disabled={uploadingResumeJobId === job.id}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file && onResumeUpload) {
-                        onResumeUpload(job.id, file);
-                      }
-                      event.target.value = "";
-                    }}
-                  />
-                  {uploadingResumeJobId === job.id ? "Uploading…" : "Attach resume"}
-                </label>
-              </div>
-            ) : showResumeAction ? (
+            <h2 className={styles.sectionTitle}>Application resume</h2>
+            {showResumeAction ? (
               <div className={styles.candidateResumeBlock}>
                 <button
                   type="button"
@@ -262,18 +199,6 @@ function AppliedJobRow({
               </p>
             )}
           </section>
-
-          {isAdmin && onUndoApply ? (
-            <div className={styles.adminActions}>
-              <button
-                type="button"
-                className={styles.undoApplyBtn}
-                onClick={() => onUndoApply(job.id)}
-              >
-                Undo apply
-              </button>
-            </div>
-          ) : null}
         </div>
       ) : null}
     </li>
@@ -282,26 +207,16 @@ function AppliedJobRow({
 
 type AppliedJobsListProps = {
   applications: AppliedJobListItem[];
-  variant?: "candidate" | "admin";
-  onUndoApply?: (jobId: string) => void;
-  onResumeUpload?: (jobId: string, file: File) => void;
-  uploadingResumeJobId?: string | null;
 };
 
-export function AppliedJobsList({
-  applications,
-  variant = "candidate",
-  onUndoApply,
-  onResumeUpload,
-  uploadingResumeJobId,
-}: AppliedJobsListProps) {
+export function AppliedJobsList({ applications }: AppliedJobsListProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (variant === "candidate" && applications.some((job) => job.isNew)) {
+    if (applications.some((job) => job.isNew)) {
       void markApplicationsViewedAction();
     }
-  }, [applications, variant]);
+  }, [applications]);
 
   function toggleExpanded(id: string) {
     setExpandedIds((current) => {
@@ -323,10 +238,6 @@ export function AppliedJobsList({
           job={job}
           expanded={expandedIds.has(job.id)}
           onToggle={() => toggleExpanded(job.id)}
-          variant={variant}
-          onUndoApply={onUndoApply}
-          onResumeUpload={onResumeUpload}
-          uploadingResumeJobId={uploadingResumeJobId}
         />
       ))}
     </ul>

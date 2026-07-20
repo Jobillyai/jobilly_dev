@@ -78,6 +78,8 @@ export const CANDIDATE_NAV_ITEMS = [
   },
 ] as const satisfies readonly CandidateNavItem[];
 
+export const CANDIDATE_NAV_ROUTES = CANDIDATE_NAV_ITEMS.map((item) => item.href);
+
 export function isCandidateNavActive(
   pathname: string,
   href: CandidateNavHref,

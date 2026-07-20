@@ -18,7 +18,7 @@ export function LogoutForm({ action, className, children }: LogoutFormProps) {
 }
 
 type LogoutSubmitButtonProps = ComponentPropsWithoutRef<"button"> & {
-  pendingLabel?: string;
+  pendingLabel?: ReactNode;
 };
 
 export function LogoutSubmitButton({

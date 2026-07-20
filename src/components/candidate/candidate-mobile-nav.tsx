@@ -4,8 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CANDIDATE_NAV_ITEMS,
+  CANDIDATE_NAV_ROUTES,
   isCandidateNavActive,
 } from "@/components/candidate/candidate-nav";
+import { usePrefetchRoutes } from "@/lib/use-prefetch-routes";
 import styles from "./candidate-mobile-nav.module.css";
 
 type CandidateMobileNavProps = {
@@ -16,6 +18,7 @@ export function CandidateMobileNav({
   unreadApplications = 0,
 }: CandidateMobileNavProps) {
   const pathname = usePathname();
+  usePrefetchRoutes(CANDIDATE_NAV_ROUTES);
 
   return (
     <nav className={styles.bar} aria-label="Mobile candidate navigation">

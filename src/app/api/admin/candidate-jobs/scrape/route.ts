@@ -25,9 +25,8 @@ import {
 import { createClient } from "@/server/db/supabase-server";
 import { getConfirmedStrictIntent } from "@/server/services/resume-intelligence";
 import {
+  resolveSkillMatchKeywords,
   keywordIntentFingerprint,
-  mergeJobSearchKeywords,
-  parseJobSearchKeywords,
 } from "@/lib/job-keyword-match";
 
 export const maxDuration = 300;
@@ -116,13 +115,10 @@ export async function POST(request: Request) {
     );
   }
   const searchRole = normalizeSearchRole(intent.canonicalSearchTitle);
-  const mergedKeywords = mergeJobSearchKeywords(
-    parseJobSearchKeywords(searchKeywords),
-    intent.searchKeywords,
-  );
+  const skillKeywords = resolveSkillMatchKeywords(searchKeywords, intent.skills);
   const runtimeFingerprint = keywordIntentFingerprint(
     intent.intentFingerprint,
-    mergedKeywords,
+    skillKeywords,
   );
 
   const cacheStatus = await getRoleScrapeCacheForSources(

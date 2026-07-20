@@ -27,7 +27,7 @@ export function ShellContent({ children, user, adminUser }: ShellContentProps) {
   const portalTopBar = usesPortalTopBar(pathname, user, adminUser);
 
   if (sidebarShell || portalTopBar || isMinimalAuthRoute(pathname)) {
-    return <div className="min-w-0 w-full max-w-full flex-1">{children}</div>;
+    return <div className="min-w-0 w-full max-w-full flex-1 min-h-0">{children}</div>;
   }
 
   if (isAuthRouteWithNavbar(pathname)) {

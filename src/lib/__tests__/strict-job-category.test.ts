@@ -10,6 +10,7 @@ import {
 } from "@/lib/resume-source-validation";
 import {
   countMatchedJobKeywords,
+  jobMatchesSkillFilter,
   mergeJobSearchKeywords,
   parseJobSearchKeywords,
 } from "@/lib/job-keyword-match";
@@ -22,7 +23,7 @@ import {
 
 const dataIntent:StrictJobIntent={
   canonicalSearchTitle:"Data Technician",targetRoles:["Data Technician"],categoryId:"data_operations_technician",
-  searchKeywords:["data quality","database"],acceptedTitlePatterns:["data technician"],
+  skills:["sql","data quality","database"],searchKeywords:["data quality","database"],acceptedTitlePatterns:["data technician"],
   excludedCategoryIds:["electrical_electronics_technician","mechanical_maintenance_technician"],
   intentFingerprint:"test",
 };
@@ -71,26 +72,32 @@ describe("resume source validation",()=>{
 });
 
 describe("role keyword matching",()=>{
-  it("uses editable comma-separated keywords without requiring every keyword",()=>{
-    const keywords=mergeJobSearchKeywords(
+  it("matches skills in the job description only, not the title",()=>{
+    const skills=mergeJobSearchKeywords(
       parseJobSearchKeywords("Python, FastAPI, Kubernetes"),
       ["python","postgresql"],
     );
-    expect(keywords).toEqual(["python","fastapi","kubernetes","postgresql"]);
-    expect(countMatchedJobKeywords(keywords,{
-      role:"Python Backend Engineer",
-      jdText:"Build FastAPI services deployed with Docker.",
+    expect(skills).toEqual(["python","fastapi","kubernetes","postgresql"]);
+    expect(countMatchedJobKeywords(skills,{
+      jdText:"Build Python FastAPI services deployed with Docker.",
     })).toBe(2);
+    expect(countMatchedJobKeywords(skills,{
+      jdText:"Build FastAPI services deployed with Docker.",
+    })).toBe(1);
   });
 
-  it("ranks a JD with more matching keywords above a weaker JD",()=>{
-    const keywords=["python","fastapi","kubernetes","postgresql"];
-    const strong=countMatchedJobKeywords(keywords,{
-      role:"Backend Engineer",
+  it("skips the two-skill JD gate for Indeed listings",()=>{
+    const skills=["python","sql","tableau"];
+    expect(jobMatchesSkillFilter({source:"indeed",jdText:"Generic analyst role."},skills)).toBe(true);
+    expect(jobMatchesSkillFilter({source:"linkedin",jdText:"Generic analyst role."},skills)).toBe(false);
+  });
+
+  it("ranks a JD with more matching skills above a weaker JD",()=>{
+    const skills=["python","fastapi","kubernetes","postgresql"];
+    const strong=countMatchedJobKeywords(skills,{
       jdText:"Python and FastAPI services using Kubernetes and PostgreSQL.",
     });
-    const weak=countMatchedJobKeywords(keywords,{
-      role:"Backend Engineer",
+    const weak=countMatchedJobKeywords(skills,{
       jdText:"Develop Python services with FastAPI.",
     });
     expect(strong).toBeGreaterThan(weak);

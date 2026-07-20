@@ -10,7 +10,7 @@ import {
 } from "@/server/actions/profile";
 import { PersonNameFields } from "@/components/auth/person-name-fields";
 import { MemberIdBadge } from "@/components/auth/member-id-badge";
-import { CANDIDATE_GENDER_OPTIONS } from "@/lib/candidate-profile-options";
+import { CANDIDATE_GENDER_OPTIONS, CANDIDATE_VISA_STATUS_OPTIONS } from "@/lib/candidate-profile-options";
 import {
   CANDIDATE_LOCATION_OPTIONS,
   resolveTimezoneForLocation,
@@ -77,6 +77,7 @@ export function ProfileForm({
   const [workExperience, setWorkExperience] = useState(profile.workExperience);
   const [location, setLocation] = useState(profile.location);
   const [timezone, setTimezone] = useState(profile.timezone);
+  const [visaStatus, setVisaStatus] = useState(profile.visaStatus);
   const [careerGoals, setCareerGoals] = useState(profile.careerGoals);
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedinUrl);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? "");
@@ -102,6 +103,7 @@ export function ProfileForm({
     setWorkExperience(profile.workExperience);
     setLocation(profile.location);
     setTimezone(profile.timezone);
+    setVisaStatus(profile.visaStatus);
     setCareerGoals(profile.careerGoals);
     setLinkedinUrl(profile.linkedinUrl);
     setAvatarUrl(profile.avatarUrl ?? "");
@@ -375,6 +377,31 @@ export function ProfileForm({
               ) : null}
               {state.fieldErrors?.timezone ? (
                 <p className={styles.fieldError}>{state.fieldErrors.timezone}</p>
+              ) : null}
+            </div>
+
+            <div className={styles.field}>
+              <label htmlFor="visaStatus" className={styles.label}>
+                Visa / work authorization
+              </label>
+              <select
+                id="visaStatus"
+                name="visaStatus"
+                value={visaStatus}
+                onChange={(event) => setVisaStatus(event.target.value)}
+                disabled={!isEditing}
+                className={`${styles.select} ${readOnlyClass} ${
+                  state.fieldErrors?.visaStatus ? styles.selectError : ""
+                }`}
+              >
+                {CANDIDATE_VISA_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value || "unset"} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {state.fieldErrors?.visaStatus ? (
+                <p className={styles.fieldError}>{state.fieldErrors.visaStatus}</p>
               ) : null}
             </div>
           </div>

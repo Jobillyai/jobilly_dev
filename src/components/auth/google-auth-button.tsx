@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { startRouteLoading } from "@/lib/route-loading";
 import styles from "./auth-page.module.css";
 
 type GoogleAuthButtonProps = {
@@ -37,7 +38,7 @@ export function GoogleAuthButton({ label, next }: GoogleAuthButtonProps) {
     : { pathname: "/auth/google" };
   return (
     <div className={styles.googleAuthBlock}>
-      <Link href={href} className={styles.googleBtn}>
+      <Link href={href} className={styles.googleBtn} onClick={startRouteLoading}>
         <GoogleIcon />
         {label}
       </Link>

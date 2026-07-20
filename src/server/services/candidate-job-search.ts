@@ -21,6 +21,8 @@ import { classifyJobsForStrictIntent } from "@/server/services/gemini-job-catego
 import {
   countMatchedJobKeywords,
   keywordCoveragePercent,
+  requiresSkillDescriptionMatch,
+  resolveSkillMatchKeywords,
 } from "@/lib/job-keyword-match";
 
 export type JobSearchResult = {
@@ -176,7 +178,13 @@ export async function scrapeJobsForCandidate(
   },
 ): Promise<{ jobs: JobSearchResult[]; searchQuery: string; errors: string[]; rejectedCount: number }> {
   const experienceYears = options?.experienceYears ?? candidate.experienceYears;
-  const strictKeywords = options?.strictIntent?.searchKeywords ?? [];
+  const queryKeywords = options?.strictIntent?.searchKeywords ?? [];
+  const matchSkills = options?.strictIntent
+    ? resolveSkillMatchKeywords(
+        options.searchKeywords,
+        options.strictIntent.skills,
+      )
+    : [];
   const searchKeywords = options?.searchKeywords;
   const resumeCorpus = buildResumeCorpusForCandidate(candidate, interestedRole);
   const { position, location } = options?.strictIntent
@@ -184,7 +192,7 @@ export async function scrapeJobsForCandidate(
         position: buildStrictSearchPosition(
           options.strictIntent.canonicalSearchTitle,
           options.strictIntent.targetRoles,
-          strictKeywords,
+          queryKeywords,
         ),
         location: JOB_SEARCH_LOCATION,
       }
@@ -220,11 +228,11 @@ export async function scrapeJobsForCandidate(
         strictCategoryConfidence: entry.confidence,
       }))
     : apifyResult.jobs;
-  const keywordMinimum = Math.min(2, strictKeywords.length);
+  const keywordMinimum = Math.min(2, matchSkills.length);
   const keywordGated = categoryGated.filter((job) => {
     if (!options?.strictIntent || keywordMinimum === 0) return true;
-    const matched = countMatchedJobKeywords(strictKeywords, {
-      role: job.role,
+    if (!requiresSkillDescriptionMatch(job.source)) return true;
+    const matched = countMatchedJobKeywords(matchSkills, {
       jdText: job.jdText,
     });
     if (matched < keywordMinimum) {
@@ -243,11 +251,11 @@ export async function scrapeJobsForCandidate(
     .map((job) => {
       const { score } = scoreJobListing(job, resumeCorpus);
       const keywordMatchCount = options?.strictIntent
-        ? countMatchedJobKeywords(strictKeywords, { role: job.role, jdText: job.jdText })
+        ? countMatchedJobKeywords(matchSkills, { jdText: job.jdText })
         : 0;
       const keywordScore = options?.strictIntent
         ? Math.max(
-            keywordCoveragePercent(keywordMatchCount, strictKeywords.length),
+            keywordCoveragePercent(keywordMatchCount, matchSkills.length),
             Math.min(100, keywordMatchCount * 10),
           )
         : score;
@@ -279,7 +287,12 @@ export async function scrapeJobsForCandidate(
   return {
     jobs: ranked,
     searchQuery,
-    errors: [...apifyResult.errors, ...(classified?.error ? [classified.error] : [])],
+    errors: [
+      ...new Set([
+        ...apifyResult.errors,
+        ...(classified?.error ? [classified.error] : []),
+      ]),
+    ],
     rejectedCount,
   };
 }

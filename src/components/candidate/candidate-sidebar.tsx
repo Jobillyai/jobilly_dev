@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   CANDIDATE_NAV_ITEMS,
+  CANDIDATE_NAV_ROUTES,
   isCandidateNavActive,
 } from "@/components/candidate/candidate-nav";
+import { usePrefetchRoutes } from "@/lib/use-prefetch-routes";
 import styles from "./candidate-sidebar.module.css";
 
 type CandidateSidebarProps = {
@@ -17,33 +17,10 @@ type CandidateSidebarProps = {
 
 export function CandidateSidebar({ unreadApplications = 0 }: CandidateSidebarProps) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+  usePrefetchRoutes(CANDIDATE_NAV_ROUTES);
 
   return (
-    <>
-      <button
-        type="button"
-        className={styles.mobileToggle}
-        aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-        aria-expanded={mobileOpen}
-        onClick={() => setMobileOpen((open) => !open)}
-      >
-        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
-      {mobileOpen ? (
-        <div
-          className={styles.backdrop}
-          onClick={() => setMobileOpen(false)}
-          aria-hidden
-        />
-      ) : null}
-      <aside
-        className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`}
-      >
+    <aside className={styles.sidebar}>
       <Link href="/dashboard" className={styles.brand} aria-label="Jobilly.ai home">
         {/* eslint-disable-next-line @next/next/no-img-element -- local brand PNG lockup */}
         <img
@@ -82,7 +59,6 @@ export function CandidateSidebar({ unreadApplications = 0 }: CandidateSidebarPro
       <div className={styles.sidebarFooter}>
         <ThemeToggle compact />
       </div>
-      </aside>
-    </>
+    </aside>
   );
 }

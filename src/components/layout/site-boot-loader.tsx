@@ -4,14 +4,23 @@ import { useEffect, useState } from "react";
 import { LottieLoader } from "./lottie-loader";
 import styles from "./site-boot-loader.module.css";
 
+const BOOT_KEY = "jobilly:booted";
+
 export function SiteBootLoader() {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
+    if (sessionStorage.getItem(BOOT_KEY)) {
+      return;
+    }
+
+    setVisible(true);
+
     function finish() {
+      sessionStorage.setItem(BOOT_KEY, "1");
       setFadeOut(true);
-      window.setTimeout(() => setVisible(false), 280);
+      window.setTimeout(() => setVisible(false), 220);
     }
 
     if (document.readyState === "complete") {
@@ -33,7 +42,7 @@ export function SiteBootLoader() {
       aria-live="polite"
       aria-busy={!fadeOut}
     >
-      <LottieLoader size={220} />
+      <LottieLoader size={180} />
     </div>
   );
 }

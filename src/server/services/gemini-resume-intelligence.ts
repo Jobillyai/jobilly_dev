@@ -1,23 +1,155 @@
 import "server-only";
-import {z} from "zod";
-import {JOB_CATEGORY_IDS,JOB_TAXONOMY_VERSION} from "@/lib/job-category-taxonomy";
-export const RESUME_INTELLIGENCE_PROMPT_VERSION="2026-07-v1";
-export const RESUME_INTELLIGENCE_SCHEMA_VERSION="2026-07-v1";
-const schema=z.object({
- targetRoles:z.array(z.string().min(2).max(100)).min(1).max(8),
- responsibilities:z.array(z.string().min(2).max(240)).max(30),
- skills:z.array(z.string().min(1).max(100)).max(50),
- searchKeywords:z.array(z.string().min(1).max(80)).min(1).max(20),
- canonicalSearchTitle:z.string().min(2).max(100),categoryId:z.enum(JOB_CATEGORY_IDS),
- confidence:z.number().min(0).max(1),acceptedTitlePatterns:z.array(z.string().min(2).max(80)).max(12),
- excludedCategoryIds:z.array(z.enum(JOB_CATEGORY_IDS)).max(12),
+import { z } from "zod";
+import {
+  JOB_CATEGORY_IDS,
+  JOB_CATEGORY_LABELS,
+  JOB_TAXONOMY_VERSION,
+  type JobCategoryId,
+} from "@/lib/job-category-taxonomy";
+import { mergeResumeSkillsIntoSearchKeywords } from "@/lib/job-keyword-match";
+import {
+  geminiGenerateJson,
+  getGeminiApiKey,
+  parseGeminiJsonText,
+} from "@/server/services/gemini-generate";
+
+export const RESUME_INTELLIGENCE_PROMPT_VERSION = "2026-07-v1";
+export const RESUME_INTELLIGENCE_SCHEMA_VERSION = "2026-07-v1";
+
+const RESUME_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-3-flash-preview",
+  "gemini-flash-lite-latest",
+] as const;
+
+const schema = z.object({
+  targetRoles: z.array(z.string().min(2).max(100)).min(1).max(8),
+  responsibilities: z.array(z.string().min(2).max(240)).max(30),
+  skills: z.array(z.string().min(1).max(100)).max(50),
+  searchKeywords: z.array(z.string().min(1).max(80)).min(1).max(60),
+  canonicalSearchTitle: z.string().min(2).max(100),
+  categoryId: z.enum(JOB_CATEGORY_IDS),
+  confidence: z.number().min(0).max(1),
+  acceptedTitlePatterns: z.array(z.string().min(2).max(80)).max(12),
+  excludedCategoryIds: z.array(z.enum(JOB_CATEGORY_IDS)).max(12),
 });
-export type ResumeIntentResult=z.infer<typeof schema>&{model:string};
-function key(){return process.env.GEMINI_API_KEY?.trim()||process.env.GOOGLE_API_KEY?.trim()||null}
-function parse(text:string){return JSON.parse(text.replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/i,"").trim())}
-export async function classifyResumeIntent(input:{resumeText:string;interestedRole?:string|null}):Promise<ResumeIntentResult>{
- const apiKey=key();if(!apiKey)throw new Error("GEMINI_API_KEY is not configured.");
- const prompt=`Classify this resume for a strict occupational job search. JSON only.
+
+const looseSchema = z.object({
+  targetRoles: z.array(z.string()).optional(),
+  responsibilities: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
+  searchKeywords: z.array(z.string()).optional(),
+  canonicalSearchTitle: z.string().optional(),
+  categoryId: z.string().optional(),
+  confidence: z.union([z.number(), z.string()]).optional(),
+  acceptedTitlePatterns: z.array(z.string()).optional(),
+  excludedCategoryIds: z.array(z.string()).optional(),
+});
+
+export type ResumeIntentResult = z.infer<typeof schema> & { model: string };
+
+const CATEGORY_LABEL_TO_ID = Object.fromEntries(
+  Object.entries(JOB_CATEGORY_LABELS).map(([id, label]) => [
+    label.toLowerCase(),
+    id,
+  ]),
+) as Record<string, JobCategoryId>;
+
+function clampStrings(
+  values: string[] | undefined,
+  minLength: number,
+  maxItems: number,
+  maxItemLength?: number,
+): string[] {
+  return (values ?? [])
+    .map((value) => {
+      const trimmed = value.trim();
+      return maxItemLength ? trimmed.slice(0, maxItemLength) : trimmed;
+    })
+    .filter((value) => value.length >= minLength)
+    .slice(0, maxItems);
+}
+
+function normalizeCategoryId(value: string | undefined): JobCategoryId {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return "other";
+
+  const slug = trimmed.toLowerCase().replace(/[\s-]+/g, "_");
+  if ((JOB_CATEGORY_IDS as readonly string[]).includes(slug)) {
+    return slug as JobCategoryId;
+  }
+
+  const fromLabel = CATEGORY_LABEL_TO_ID[trimmed.toLowerCase()];
+  if (fromLabel) return fromLabel;
+
+  return "other";
+}
+
+function normalizeConfidence(value: unknown): number {
+  const parsed =
+    typeof value === "string" ? Number.parseFloat(value) : Number(value);
+  if (!Number.isFinite(parsed)) return 0.5;
+  if (parsed > 1) return Math.min(1, parsed / 100);
+  return Math.min(1, Math.max(0, parsed));
+}
+
+function normalizeResumeIntent(raw: unknown): z.infer<typeof schema> | null {
+  const loose = looseSchema.safeParse(raw);
+  if (!loose.success) return null;
+
+  const skills = clampStrings(loose.data.skills, 1, 50, 100);
+  const searchKeywords = mergeResumeSkillsIntoSearchKeywords(
+    skills,
+    clampStrings(loose.data.searchKeywords, 1, 60, 80),
+  ).slice(0, 60);
+  if (!searchKeywords.length) return null;
+
+  const canonicalSearchTitle = (loose.data.canonicalSearchTitle ?? "")
+    .trim()
+    .slice(0, 100);
+  const targetRoles = clampStrings(loose.data.targetRoles, 2, 8, 100);
+  if (!targetRoles.length && canonicalSearchTitle.length >= 2) {
+    targetRoles.push(canonicalSearchTitle);
+  }
+  if (!targetRoles.length) return null;
+
+  const normalized = {
+    targetRoles,
+    responsibilities: clampStrings(loose.data.responsibilities, 2, 30, 240),
+    skills,
+    searchKeywords,
+    canonicalSearchTitle:
+      canonicalSearchTitle.length >= 2 ? canonicalSearchTitle : targetRoles[0],
+    categoryId: normalizeCategoryId(loose.data.categoryId),
+    confidence: normalizeConfidence(loose.data.confidence),
+    acceptedTitlePatterns: clampStrings(
+      loose.data.acceptedTitlePatterns,
+      2,
+      12,
+      80,
+    ),
+    excludedCategoryIds: Array.from(
+      new Set(
+        (loose.data.excludedCategoryIds ?? []).map((value) =>
+          normalizeCategoryId(value),
+        ),
+      ),
+    ).slice(0, 12),
+  };
+
+  const parsed = schema.safeParse(normalized);
+  return parsed.success ? parsed.data : null;
+}
+
+export async function classifyResumeIntent(input: {
+  resumeText: string;
+  interestedRole?: string | null;
+}): Promise<ResumeIntentResult> {
+  if (!getGeminiApiKey()) {
+    throw new Error("GEMINI_API_KEY is not configured.");
+  }
+
+  const prompt = `Classify this resume for a strict occupational job search. JSON only.
 categoryId must be one of: ${JOB_CATEGORY_IDS.join(", ")}.
 Taxonomy ${JOB_TAXONOMY_VERSION}. Data Center Technician is IT infrastructure.
 Data Technician is data operations. Never merge either with electrical/electronics,
@@ -26,22 +158,41 @@ other and confidence below .70. acceptedTitlePatterns are literal title phrases.
 Shape: {"targetRoles":[],"responsibilities":[],"skills":[],"searchKeywords":[],
 "canonicalSearchTitle":"","categoryId":"","confidence":0,"acceptedTitlePatterns":[],
 "excludedCategoryIds":[]}
-Interested role: ${input.interestedRole?.trim()||"not supplied"}
-Resume: ${input.resumeText.slice(0,50000)}`;
- let message="Resume analysis is temporarily unavailable.";
- for(const model of ["gemini-2.5-flash","gemini-3-flash-preview","gemini-flash-lite-latest"]){
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),45000);
-  try{
-   const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,{
-    method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,
-    body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:.05,maxOutputTokens:4096,responseMimeType:"application/json",...(model.startsWith("gemini-2.5")?{thinkingConfig:{thinkingBudget:0}}:{})}})
-   });
-   if(!response.ok){message=response.status===429?"Resume analysis is rate-limited. Retry shortly.":`Resume analysis failed (${response.status}).`;continue}
-   const body=await response.json() as {candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>};
-   const text=body.candidates?.[0]?.content?.parts?.map(p=>p.text??"").join("");if(!text)continue;
-   const result=schema.safeParse(parse(text));if(!result.success){message="Resume analysis returned an invalid structure.";continue}
-   return {...result.data,model};
-  }catch(error){message=error instanceof Error&&error.name==="AbortError"?"Resume analysis timed out.":"Could not reach resume analysis."}finally{clearTimeout(timer)}
- }
- throw new Error(message);
+skills: concrete tools, languages, frameworks, platforms, and technical competencies
+from the resume (max 50). searchKeywords: must include EVERY skill plus any extra
+role-specific search terms (tools, tech stack, domain phrases) useful for job boards.
+Keep searchKeywords at 60 items or fewer. Keep each responsibility under 240 characters.
+Do not omit skills from searchKeywords.
+Interested role: ${input.interestedRole?.trim() || "not supplied"}
+Resume: ${input.resumeText.slice(0, 50000)}`;
+
+  let lastError = "Resume analysis returned an invalid structure.";
+
+  for (const model of RESUME_MODELS) {
+    const generated = await geminiGenerateJson({
+      prompt,
+      models: [model],
+      temperature: 0.05,
+      maxOutputTokens: 4096,
+    });
+
+    if ("error" in generated) {
+      lastError = generated.error;
+      continue;
+    }
+
+    try {
+      const normalized = normalizeResumeIntent(
+        parseGeminiJsonText(generated.text),
+      );
+      if (normalized) {
+        return { ...normalized, model: generated.model };
+      }
+      console.error(`Resume intent normalization failed (${model}).`);
+    } catch (error) {
+      console.error(`Resume intent JSON parse failed (${model}):`, error);
+    }
+  }
+
+  throw new Error(lastError);
 }

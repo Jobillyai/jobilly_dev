@@ -25,13 +25,22 @@
 .intelligenceHeader h2 { margin: 3px 0 5px; font-size: 20px; color: var(--jb-ink); }
 .intelligenceHeader p { margin: 0; color: var(--jb-ink-muted); font-size: 13px; }
 .intelligenceEyebrow { color: var(--jb-admin-accent-bright); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-.intelligenceReady, .intelligenceNeedsReview { padding: 7px 11px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.intelligenceReady, .intelligenceNeedsReview, .intelligenceAnalyzing { padding: 7px 11px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .intelligenceReady { color: #08765b; background: rgba(52, 211, 153, .16); border: 1px solid rgba(52, 211, 153, .3); }
 .intelligenceNeedsReview { color: var(--jb-admin-accent-bright); background: var(--jb-admin-accent-soft); border: 1px solid rgba(56, 182, 255, .3); }
-.intelligenceGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.intelligenceGrid > div { display: grid; gap: 4px; padding: 11px 12px; border: 1px solid var(--jb-border); border-radius: var(--jb-radius-sm); background: var(--jb-input-bg); }
-.intelligenceGrid strong { color: var(--jb-admin-accent-bright); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
-.intelligenceGrid span { color: var(--jb-ink-secondary); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.intelligenceAnalyzing { color: #0b5f8f; background: rgba(56, 182, 255, .14); border: 1px solid rgba(56, 182, 255, .35); }
+.intelligenceLoading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(56, 182, 255, .1);
+  border: 1px solid rgba(56, 182, 255, .24);
+}
+.intelligenceLoadingText { margin: 0; font-size: 12px; line-height: 1.5; color: var(--jb-ink-secondary); }
+.intelligenceLoadingText strong { color: var(--jb-ink); }
 .intelligenceActions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .intelligenceActions button, .fileAction { min-height: 38px; padding: 8px 12px; border: 1px solid var(--jb-border); border-radius: 10px; background: var(--jb-input-bg); color: var(--jb-ink); font: inherit; font-size: 12px; font-weight: 700; }
 .intelligenceActions button, .fileAction { cursor: pointer; }
@@ -43,7 +52,6 @@
 
 @media (max-width: 720px) {
   .intelligenceHeader { flex-direction: column; }
-  .intelligenceGrid { grid-template-columns: 1fr; }
 }
 
 .controls {
@@ -259,54 +267,6 @@
   padding: 10px 12px;
 }
 
-.resumeViewLink {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 16px;
-  border: 1px solid rgba(56, 182, 255, 0.28);
-  border-radius: var(--jb-radius-sm);
-  background: var(--jb-admin-elevated-strong);
-  color: var(--jb-admin-accent);
-  font-family: var(--jb-font-sans);
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: background 0.2s, border-color 0.2s;
-  white-space: nowrap;
-}
-
-.resumeViewLink:hover {
-  background: var(--jb-admin-accent-soft);
-  border-color: var(--jb-admin-accent);
-}
-
-.resumeMissingLabel {
-  font-size: 13px;
-  color: var(--jb-ink-muted);
-  white-space: nowrap;
-}
-
-.resumeAnalyzeBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 16px;
-  border: 1px dashed rgba(56, 182, 255, 0.28);
-  border-radius: var(--jb-radius-sm);
-  background: var(--jb-admin-elevated-strong);
-  color: var(--jb-admin-accent);
-  font-family: var(--jb-font-sans);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.resumeAnalyzeBtn:hover {
-  background: var(--jb-admin-accent-soft);
-  border-color: var(--jb-admin-accent);
-}
-
 .sendMailBtn {
   display: inline-flex;
   align-items: center;
@@ -381,36 +341,6 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
-.loadingOverlay {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 32px 24px;
-  background: var(--jb-admin-elevated-mid);
-  backdrop-filter: blur(2px);
-  text-align: center;
-}
-
-.loadingTitle {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--jb-ink);
-}
-
-.loadingText {
-  margin: 0;
-  font-size: 13px;
-  color: var(--jb-ink-secondary);
-  max-width: 360px;
-}
-
-.loadingSpinner,
 .toolbarSpinner {
   width: 36px;
   height: 36px;

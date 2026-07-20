@@ -1,88 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useMemo } from "react";
 import { usePathname } from "next/navigation";
-import {
-  Briefcase,
-  Calendar,
-  ClipboardList,
-  Inbox,
-  LayoutDashboard,
-  Menu,
-  ReceiptText,
-  UserCircle,
-  Users,
-  X,
-} from "lucide-react";
+import { getAdminNavItems, isAdminNavActive } from "@/components/admin/admin-nav";
+import { usePrefetchRoutes } from "@/lib/use-prefetch-routes";
 import styles from "./admin-sidebar.module.css";
-
-const navItems = [
-  {
-    href: "/admin" as const,
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    exact: true,
-    jobApplyOnly: false,
-    managerOnly: false,
-  },
-  {
-    href: "/admin/candidates" as const,
-    label: "Candidate Details",
-    icon: Users,
-    exact: false,
-    jobApplyOnly: false,
-    managerOnly: false,
-  },
-  {
-    href: "/admin/jobs" as const,
-    label: "Apply for jobs",
-    icon: Briefcase,
-    exact: false,
-    jobApplyOnly: true,
-    managerOnly: false,
-  },
-  {
-    href: "/admin/requests" as const,
-    label: "Service Requests",
-    icon: Inbox,
-    exact: false,
-    jobApplyOnly: false,
-    managerOnly: false,
-  },
-  {
-    href: "/admin/tasks" as const,
-    label: "Tasks",
-    icon: ClipboardList,
-    exact: false,
-    jobApplyOnly: false,
-    managerOnly: false,
-  },
-  {
-    href: "/admin/calendar" as const,
-    label: "Calendar",
-    icon: Calendar,
-    exact: false,
-    jobApplyOnly: false,
-    managerOnly: false,
-  },
-  {
-    href: "/admin/transactions" as const,
-    label: "Transactions",
-    icon: ReceiptText,
-    exact: false,
-    jobApplyOnly: false,
-    managerOnly: true,
-  },
-  {
-    href: "/admin/profile" as const,
-    label: "My profile",
-    icon: UserCircle,
-    exact: false,
-    jobApplyOnly: false,
-    managerOnly: false,
-  },
-];
 
 type AdminSidebarProps = {
   showJobApplyNav?: boolean;
@@ -94,45 +17,15 @@ export function AdminSidebar({
   showManagerNav = false,
 }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const visibleNavItems = navItems.filter(
-    (item) =>
-      (!item.jobApplyOnly || showJobApplyNav) &&
-      (!item.managerOnly || showManagerNav),
+  const visibleNavItems = getAdminNavItems({ showJobApplyNav, showManagerNav });
+  const navRoutes = useMemo(
+    () => visibleNavItems.map((item) => item.href),
+    [visibleNavItems],
   );
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  function isActive(href: string, exact: boolean) {
-    if (exact) {
-      return pathname === href;
-    }
-    return pathname.startsWith(href);
-  }
+  usePrefetchRoutes(navRoutes);
 
   return (
-    <>
-      <button
-        type="button"
-        className={styles.mobileToggle}
-        aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-        aria-expanded={mobileOpen}
-        onClick={() => setMobileOpen((open) => !open)}
-      >
-        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
-      {mobileOpen ? (
-        <div
-          className={styles.backdrop}
-          onClick={() => setMobileOpen(false)}
-          aria-hidden
-        />
-      ) : null}
-      <aside
-        className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`}
-      >
+    <aside className={styles.sidebar}>
       <Link href="/admin" className={styles.brand} aria-label="Jobilly.ai home">
         {/* eslint-disable-next-line @next/next/no-img-element -- local brand PNG lockup */}
         <img
@@ -148,7 +41,7 @@ export function AdminSidebar({
       <nav className={styles.nav} aria-label="Admin navigation">
         {visibleNavItems.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item.href, item.exact);
+          const active = isAdminNavActive(pathname, item.href, item.exact);
 
           return (
             <Link
@@ -164,7 +57,6 @@ export function AdminSidebar({
           );
         })}
       </nav>
-      </aside>
-    </>
+    </aside>
   );
 }

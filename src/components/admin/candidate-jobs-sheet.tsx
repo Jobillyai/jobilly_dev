@@ -21,7 +21,6 @@ import {
 } from "@/server/actions/candidate-jobs";
 import {
   jobListingMatchesSource,
-  jobMatchesKeywordFilter,
   countJobsBySource,
   JOB_MARKET_SOURCES,
   JOB_MARKET_SOURCE_LABELS,
@@ -56,26 +55,22 @@ import styles from "./candidate-jobs-sheet.module.css";
 import type { Database } from "@/server/db/database.types";
 import {
   countMatchedJobKeywords,
-  keywordCoveragePercent,
-  parseJobSearchKeywords,
+  jobMatchesSkillFilter,
+  resolveSkillMatchKeywords,
 } from "@/lib/job-keyword-match";
 
 type ResumeIntelligenceData = {
   sources: Database["public"]["Tables"]["candidate_resume_sources"]["Row"][];
   analysis: Database["public"]["Tables"]["candidate_resume_analysis"]["Row"] | null;
-  categories: Database["public"]["Tables"]["job_categories"]["Row"][];
 };
 
 function resumeSearchTerms(analysis: ResumeIntelligenceData["analysis"]): string {
   if (!analysis) return "";
-  return [...new Set([...analysis.skills, ...analysis.search_keywords])]
-    .filter(Boolean)
-    .join(", ");
+  return [...new Set(analysis.skills)].filter(Boolean).join(", ");
 }
 
 type CandidateJobsSheetProps = {
   candidateId: string;
-  candidateName: string;
   candidateExperienceYears?: number | null;
   defaultInterestedRole: string;
   initialJobs: CandidateJobListing[];
@@ -182,7 +177,7 @@ export function CandidateJobsSheet({
   viewMode = "pipeline",
   appliedCount = 0,
   candidateResumeMatch,
-  initialResumeIntelligence = { sources: [], analysis: null, categories: [] },
+  initialResumeIntelligence = { sources: [], analysis: null },
 }: CandidateJobsSheetProps) {
   const isAppliedView = viewMode === "applied";
   const router = useRouter();
@@ -197,7 +192,6 @@ export function CandidateJobsSheet({
   const [jobSort, setJobSort] = useState<JobSort>("best_match");
   const [searchSourceMode, setSearchSourceMode] = useState<JobSearchSourceMode>("all");
   const [pendingSource, setPendingSource] = useState<JobSearchSourceMode | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
   const [loadingStored, setLoadingStored] = useState(false);
   const [interestedRole, setInterestedRole] = useState(defaultInterestedRole);
   const [experienceLevelInput, setExperienceLevelInput] = useState<ExperienceLevel | "">(
@@ -374,9 +368,13 @@ export function CandidateJobsSheet({
       }),
     [candidateResumeMatch, interestedRole],
   );
-  const activeKeywords = useMemo(
-    () => parseJobSearchKeywords(keywordsInput),
-    [keywordsInput],
+  const activeSkills = useMemo(
+    () =>
+      resolveSkillMatchKeywords(
+        keywordsInput,
+        resumeIntelligence.analysis?.skills ?? [],
+      ),
+    [keywordsInput, resumeIntelligence.analysis?.skills],
   );
 
   const jobsWithMatch = useMemo(
@@ -387,16 +385,20 @@ export function CandidateJobsSheet({
           company: job.company,
           jdText: job.jdText,
         });
-        const keywordMatchCount = countMatchedJobKeywords(activeKeywords, {
-          role: job.role,
+        const keywordMatchCount = countMatchedJobKeywords(activeSkills, {
           jdText: job.jdText,
         });
         const keywordScore = Math.max(
-          keywordCoveragePercent(keywordMatchCount, activeKeywords.length),
+          keywordMatchCount > 0 && activeSkills.length > 0
+            ? Math.min(
+                100,
+                Math.round((keywordMatchCount / activeSkills.length) * 100),
+              )
+            : 0,
           Math.min(100, keywordMatchCount * 10),
         );
         const combinedScore =
-          activeKeywords.length > 0
+          activeSkills.length > 0
             ? Math.round(keywordScore * 0.9 + score * 0.1)
             : score;
 
@@ -407,7 +409,7 @@ export function CandidateJobsSheet({
           keywordMatchCount,
         };
       }),
-    [activeKeywords, jobs, resumeCorpus],
+    [activeSkills, jobs, resumeCorpus],
   );
 
   const filteredJobs = useMemo(
@@ -417,7 +419,7 @@ export function CandidateJobsSheet({
           (job) =>
             jobListingMatchesSource(job.source, sourceFilter, job.jobUrl, job.location) &&
             (isAppliedView || jobMatchesFreshnessFilter(job.postedAt, freshnessFilter)) &&
-            jobMatchesKeywordFilter(job, keywordsInput),
+            jobMatchesSkillFilter(job, activeSkills),
         )
         .sort((a, b) => {
           if (isAppliedView) {
@@ -439,7 +441,7 @@ export function CandidateJobsSheet({
             timestamp(b.postedAt) - timestamp(a.postedAt)
           );
         }),
-    [jobsWithMatch, sourceFilter, freshnessFilter, keywordsInput, isAppliedView, jobSort],
+    [jobsWithMatch, sourceFilter, freshnessFilter, activeSkills, isAppliedView, jobSort],
   );
 
   const sourceCounts = useMemo(() => countJobsBySource(jobs), [jobs]);
@@ -578,9 +580,13 @@ export function CandidateJobsSheet({
 
             await refreshJobsForRole();
 
-            const warnings = outcomes
-              .map(({ result }) => result.warning)
-              .filter(Boolean) as string[];
+            const warnings = [
+              ...new Set(
+                outcomes
+                  .map(({ result }) => result.warning)
+                  .filter(Boolean) as string[],
+              ),
+            ];
             const infos = outcomes
               .map(({ result }) => result.info)
               .filter(Boolean) as string[];
@@ -636,9 +642,6 @@ export function CandidateJobsSheet({
       setMessage("Job search failed. Please try again.");
     } finally {
       if (!backgroundScrapeStarted) {
-        if (!canScrape) {
-          setIsSearching(false);
-        }
         setPendingSource(null);
       }
     }
@@ -656,9 +659,19 @@ export function CandidateJobsSheet({
     }
   }
 
+  function markIntelligenceProcessing() {
+    setResumeIntelligence((current) => ({
+      ...current,
+      analysis: current.analysis
+        ? { ...current.analysis, status: "processing", error_message: null }
+        : current.analysis,
+    }));
+  }
+
   async function handleTxtOverride(file: File | undefined) {
     if (!file) return;
     setIntelligencePending(true);
+    markIntelligenceProcessing();
     setMessage(null);
     const data = new FormData();
     data.set("resumeTxt", file);
@@ -677,6 +690,7 @@ export function CandidateJobsSheet({
   async function handleBaseResume(file: File | undefined) {
     if (!file) return;
     setIntelligencePending(true);
+    markIntelligenceProcessing();
     setMessage(null);
     const data = new FormData();
     data.set("baseResume", file);
@@ -711,6 +725,7 @@ export function CandidateJobsSheet({
 
   async function handleRetryIntelligence() {
     setIntelligencePending(true);
+    markIntelligenceProcessing();
     const result = await retryResumeIntelligenceAction(candidateId);
     if (result && "error" in result && result.error) {
       setMessageKind("error");
@@ -846,7 +861,8 @@ export function CandidateJobsSheet({
   const loadingPreviousSearch = loadingPrevious;
   const scrapeInProgress = isBackgroundScraping;
   const searchRequestInFlight = pendingSource !== null;
-  const showMentorLoading = isSearching && !canScrape;
+  const isAnalyzingResume =
+    intelligencePending || resumeIntelligence.analysis?.status === "processing";
 
   const controlsHint = isAppliedView
     ? "Undo apply to return a job to the pipeline."
@@ -870,35 +886,39 @@ export function CandidateJobsSheet({
             </div>
             <span
               className={
-                resumeIntelligence.analysis?.status === "completed"
-                  ? styles.intelligenceReady
-                  : styles.intelligenceNeedsReview
+                isAnalyzingResume
+                  ? styles.intelligenceAnalyzing
+                  : resumeIntelligence.analysis?.status === "completed"
+                    ? styles.intelligenceReady
+                    : styles.intelligenceNeedsReview
               }
             >
-              {resumeIntelligence.analysis?.status === "completed"
-                ? "Ready to search"
-                : resumeIntelligence.analysis?.status ?? "No analysis"}
+              {isAnalyzingResume
+                ? "Analyzing…"
+                : resumeIntelligence.analysis?.status === "completed"
+                  ? "Ready to search"
+                  : resumeIntelligence.analysis?.status ?? "No analysis"}
             </span>
           </div>
-          {resumeIntelligence.analysis ? (
-            <>
-              <div className={styles.intelligenceGrid}>
-                <div><strong>Target roles</strong><span>{resumeIntelligence.analysis.target_roles.join(", ") || "—"}</span></div>
-                <div><strong>Canonical search</strong><span>{resumeIntelligence.analysis.canonical_search_title || "—"}</span></div>
-                <div><strong>Skills</strong><span>{resumeIntelligence.analysis.skills.join(", ") || "—"}</span></div>
-                <div><strong>Keywords</strong><span>{resumeIntelligence.analysis.search_keywords.join(", ") || "—"}</span></div>
-                <div><strong>Responsibilities</strong><span>{resumeIntelligence.analysis.responsibilities.join(" · ") || "—"}</span></div>
-                <div><strong>Analysis confidence (informational)</strong><span>{resumeIntelligence.analysis.confidence == null ? "—" : `${Math.round(resumeIntelligence.analysis.confidence * 100)}%`}</span></div>
-              </div>
-              {resumeIntelligence.analysis.error_message ? (
-                <p className={styles.intelligenceError}>{resumeIntelligence.analysis.error_message}</p>
-              ) : null}
-            </>
-          ) : (
+          {isAnalyzingResume ? (
+            <div className={styles.intelligenceLoading} role="status" aria-live="polite">
+              <span className={styles.toolbarSpinner} aria-hidden />
+              <p className={styles.intelligenceLoadingText}>
+                <strong>Analyzing resume with Gemini…</strong> Extracting role, skills, and
+                search keywords. This usually takes 15–45 seconds.
+              </p>
+            </div>
+          ) : !resumeIntelligence.analysis ? (
             <p className={styles.intelligenceError}>
               Upload a current PDF or DOCX from the candidate profile, then retry analysis.
             </p>
-          )}
+          ) : resumeIntelligence.analysis.error_message ? (
+            <p className={styles.intelligenceError}>{resumeIntelligence.analysis.error_message}</p>
+          ) : resumeIntelligence.analysis.status === "completed" ? (
+            <p className={styles.intelligenceNotice}>
+              Analysis fills the role and keywords below automatically.
+            </p>
+          ) : null}
           <div className={styles.intelligenceActions}>
             <label className={styles.fileAction}>
               {resumeIntelligence.sources.some((source) => source.source_kind === "base_resume")
@@ -928,7 +948,7 @@ export function CandidateJobsSheet({
               </button>
             ) : null}
             <button type="button" onClick={() => void handleRetryIntelligence()} disabled={intelligencePending}>
-              Retry analysis
+              {intelligencePending ? "Analyzing…" : "Retry analysis"}
             </button>
           </div>
         </section>
@@ -963,7 +983,7 @@ export function CandidateJobsSheet({
                   ? loadingStored
                     ? "Loading…"
                     : "Refresh applied jobs"
-                  : showMentorLoading
+                  : loadingStored
                     ? "Loading…"
                     : "Refresh stored jobs"}
               </button>
@@ -1014,7 +1034,7 @@ export function CandidateJobsSheet({
             </div>
             <div className={styles.fieldWide}>
               <label htmlFor="searchKeywords" className={styles.fieldLabel}>
-                Role-based keywords
+                Resume skills
               </label>
               <textarea
                 id="searchKeywords"
@@ -1023,12 +1043,14 @@ export function CandidateJobsSheet({
                 onChange={(event) => {
                   setKeywordsInput(event.target.value);
                 }}
-                placeholder="Generated from resume skills and keywords. Add or edit comma-separated keywords."
+                placeholder="Generated from resume skills. Add or edit comma-separated skills."
                 className={`${styles.fieldInput} ${styles.keywordsTextarea}`}
                 disabled={loadingPreviousSearch}
               />
               <span className={styles.fieldHelp}>
-                Review, remove, or add comma-separated keywords before searching.
+                LinkedIn jobs must match at least two skills in the description (title is
+                ignored). Indeed jobs skip that rule.
+                Review, remove, or add comma-separated skills before searching.
               </span>
             </div>
             <div className={styles.fieldHistory}>
@@ -1222,13 +1244,6 @@ export function CandidateJobsSheet({
           </div>
         )}
 
-        {showMentorLoading && (
-          <div className={styles.loadingOverlay} role="status" aria-live="polite">
-            <span className={styles.loadingSpinner} aria-hidden />
-            <p className={styles.loadingTitle}>Loading stored jobs…</p>
-          </div>
-        )}
-
       {jobs.length === 0 ? (
         <div className={styles.empty}>
           <p>
@@ -1245,7 +1260,7 @@ export function CandidateJobsSheet({
         <div className={styles.empty}>
           <p>
             {keywordsInput.trim()
-              ? `No jobs match your keywords (“${keywordsInput.trim()}”). Clear keywords or adjust source filters.`
+              ? `No jobs match at least two skills in the description (“${keywordsInput.trim()}”). Clear skills or adjust source filters.`
               : sourceFilter !== "all" || (!isAppliedView && freshnessFilter !== "all")
                 ? isAppliedView
                   ? "No jobs match the selected source filter."
@@ -1261,7 +1276,7 @@ export function CandidateJobsSheet({
                   setKeywordsInput("");
                 }}
               >
-                Clear keywords
+                Clear skills
               </button>
             </div>
           ) : null}

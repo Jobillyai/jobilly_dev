@@ -33,7 +33,7 @@
     box-shadow 0.2s;
 }
 
-.logoutBtn:hover {
+.logoutBtn:hover:not(:disabled) {
   color: var(--jb-brand);
   background: var(--jb-brand-soft);
   border-color: var(--jb-brand-border);

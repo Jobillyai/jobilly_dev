@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getAdminUser, staffIsManager, toStaffContext } from "@/lib/auth/admin";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminMobileHeader } from "@/components/admin/admin-mobile-header";
+import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
 import shellStyles from "@/components/admin/admin-shell.module.css";
 import portalStyles from "@/components/admin/admin-portal-content.module.css";
 
@@ -26,8 +28,13 @@ export default async function ProtectedAdminLayout({
         showManagerNav={staffIsManager(staff)}
       />
       <div className={`${shellStyles.adminContent} ${portalStyles.content}`}>
+        <AdminMobileHeader />
         <div className={portalStyles.contentInner}>{children}</div>
       </div>
+      <AdminMobileNav
+        showJobApplyNav={!staffIsManager(staff)}
+        showManagerNav={staffIsManager(staff)}
+      />
     </div>
   );
 }

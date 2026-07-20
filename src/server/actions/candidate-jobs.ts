@@ -10,11 +10,8 @@ import {
 import { parseExperienceYears } from "@/lib/format-experience-years";
 import { getManagedApplicationsCandidateById } from "@/server/services/admin-dashboard";
 import {
-  scrapeSingleCandidateJobs,
   updateCandidateJobSearchRole,
   updateCandidateExperienceYears,
-  type BulkJobScrapeResult,
-  type BulkScrapeCandidateResult,
 } from "@/server/services/bulk-job-scrape";
 import {
   JOB_MARKET_SOURCES,
@@ -25,7 +22,6 @@ import {
   getCandidateAppliedJobListings,
   loadCandidateJobsForRole,
   loadCandidateJobsForStoredRole,
-  refreshCandidateJobListings,
   setAppliedJobResume,
   setCandidateJobApplied,
   setCandidateJobSelected,
@@ -34,10 +30,6 @@ import {
   type PreviousSearchRole,
 } from "@/server/services/candidate-jobs";
 import type { RoleScrapeCacheStatus } from "@/server/services/job-role-cache";
-import {
-  analyzeCandidateResumeBuffer,
-  analyzeCandidateResumeOnFile,
-} from "@/server/services/candidate-resume-analyze";
 import { sendCandidateApplicationsDigest } from "@/server/services/run-daily-applications-digest";
 import {
   createSignedResumeUrl,
@@ -62,20 +54,6 @@ function sourcesFromMode(mode: JobSearchSourceMode): JobMarketSource[] {
   }
   return [mode];
 }
-
-type JobSearchSuccess = {
-  success: true;
-  count: number;
-  jobs: CandidateJobListing[];
-  searchTerms: string[];
-  searchQuery: string;
-  searchRole: string;
-  cacheStatus: RoleScrapeCacheStatus[];
-  scrapeCalled: boolean;
-  newJobsAdded: number;
-  info?: string;
-  warning?: string;
-};
 
 function managerJobApplyError(): string {
   return "Managers cannot use the job apply portal.";
@@ -448,239 +426,6 @@ export async function loadCandidateAppliedJobsAction(
   return { success: true, jobs };
 }
 
-export async function refreshCandidateJobsAction(
-  candidateId: string,
-  sourceMode: JobSearchSourceMode = "all",
-  interestedRole?: string,
-  experienceYearsInput?: string | number | null,
-  searchKeywords?: string | null,
-): Promise<{ error: string } | JobSearchSuccess> {
-  const sources = sourcesFromMode(sourceMode);
-  const admin = await getAdminUser();
-  if (!admin) {
-    return { error: "Unauthorized" };
-  }
-
-  const staff = toStaffContext(admin);
-  const portalError = assertJobApplyPortalAccess(staff);
-  if (portalError) {
-    return { error: portalError };
-  }
-
-  let candidate = await getManagedApplicationsCandidateById(candidateId, staff);
-  if (!candidate) {
-    return { error: "Candidate not found" };
-  }
-
-  const role = interestedRole?.trim();
-  const canScrape = staffCanScrapeJobs(staff);
-
-  if (canScrape) {
-    if (role) {
-      const saveRole = await updateCandidateJobSearchRole(candidateId, role);
-      if (saveRole.error) {
-        return { error: saveRole.error };
-      }
-    }
-
-    if (experienceYearsInput !== undefined) {
-      const experienceYears =
-        typeof experienceYearsInput === "number"
-          ? experienceYearsInput
-          : parseExperienceYears(experienceYearsInput);
-      const saveExperience = await updateCandidateExperienceYears(
-        candidateId,
-        experienceYears,
-      );
-      if (saveExperience.error) {
-        return { error: saveExperience.error };
-      }
-    }
-
-    const refreshed = await getManagedApplicationsCandidateById(candidateId, staff);
-    if (refreshed) {
-      candidate = refreshed;
-    }
-  }
-
-  const result = await refreshCandidateJobListings(
-    candidate,
-    admin.id,
-    sources,
-    role || undefined,
-    {
-      allowScrape: canScrape,
-      forceScrape: false,
-      searchKeywords: searchKeywords?.trim() || null,
-    },
-  );
-
-  revalidatePath(`/admin/candidates/${candidateId}/jobs`);
-  revalidatePath(`/admin/candidates/${candidateId}/jobs/applied`);
-  revalidatePath("/admin/jobs");
-  revalidatePath("/dashboard/jobs");
-
-  if (result.error && result.jobs.length === 0) {
-    return { error: result.error };
-  }
-
-  return {
-    success: true,
-    count: result.jobs.length,
-    jobs: result.jobs,
-    searchTerms: result.searchTerms,
-    searchQuery: result.searchQuery,
-    searchRole: result.searchRole,
-    cacheStatus: result.cacheStatus,
-    scrapeCalled: result.scrapeCalled,
-    newJobsAdded: result.newJobsAdded,
-    info: result.info,
-    warning: result.warning ?? result.error,
-  };
-}
-
-export async function updateCandidateJobRoleAction(
-  candidateId: string,
-  jobSearchRole: string,
-): Promise<{ error: string } | { success: true }> {
-  const admin = await getAdminUser();
-  if (!admin) {
-    return { error: "Unauthorized" };
-  }
-
-  if (!staffCanScrapeJobs(toStaffContext(admin))) {
-    return { error: "Only assigned admins can edit candidate job roles." };
-  }
-
-  const candidate = await getManagedApplicationsCandidateById(
-    candidateId,
-    toStaffContext(admin),
-  );
-  if (!candidate) {
-    return { error: "Candidate not found" };
-  }
-
-  const result = await updateCandidateJobSearchRole(candidateId, jobSearchRole);
-  if (result.error) {
-    return { error: result.error };
-  }
-
-  revalidatePath("/admin/jobs");
-  revalidatePath(`/admin/candidates/${candidateId}/jobs`);
-
-  return { success: true };
-}
-
-export async function updateCandidateExperienceYearsAction(
-  candidateId: string,
-  experienceYears: number | null,
-): Promise<{ error: string } | { success: true }> {
-  const admin = await getAdminUser();
-  if (!admin) {
-    return { error: "Unauthorized" };
-  }
-
-  if (!staffCanScrapeJobs(toStaffContext(admin))) {
-    return { error: "Only assigned admins can edit candidate experience." };
-  }
-
-  const candidate = await getManagedApplicationsCandidateById(
-    candidateId,
-    toStaffContext(admin),
-  );
-  if (!candidate) {
-    return { error: "Candidate not found" };
-  }
-
-  const result = await updateCandidateExperienceYears(candidateId, experienceYears);
-  if (result.error) {
-    return { error: result.error };
-  }
-
-  revalidatePath("/admin/jobs");
-  revalidatePath(`/admin/candidates/${candidateId}/jobs`);
-  revalidatePath("/dashboard/jobs");
-
-  return { success: true };
-}
-
-export async function scrapeSingleCandidateJobsAction(
-  candidateId: string,
-  interestedRole?: string,
-  experienceYearsInput?: string | number | null,
-): Promise<{ error: string } | { success: true; result: BulkScrapeCandidateResult }> {
-  const admin = await getAdminUser();
-  if (!admin) {
-    return { error: "Unauthorized" };
-  }
-
-  if (!staffCanScrapeJobs(toStaffContext(admin))) {
-    return { error: "Only assigned admins can run job searches." };
-  }
-
-  const candidate = await getManagedApplicationsCandidateById(
-    candidateId,
-    toStaffContext(admin),
-  );
-  if (!candidate) {
-    return { error: "Candidate not found" };
-  }
-
-  const role = interestedRole?.trim();
-  if (role) {
-    const saveResult = await updateCandidateJobSearchRole(candidateId, role);
-    if (saveResult.error) {
-      return { error: saveResult.error };
-    }
-  }
-
-  const experienceYears =
-    experienceYearsInput === undefined
-      ? candidate.experienceYears
-      : typeof experienceYearsInput === "number"
-        ? experienceYearsInput
-        : parseExperienceYears(experienceYearsInput);
-
-  if (experienceYearsInput !== undefined) {
-    const saveExperience = await updateCandidateExperienceYears(
-      candidateId,
-      experienceYears,
-    );
-    if (saveExperience.error) {
-      return { error: saveExperience.error };
-    }
-  }
-
-  const result = await scrapeSingleCandidateJobs(
-    {
-      ...candidate,
-      jobSearchRole: role ?? candidate.jobSearchRole,
-      experienceYears: experienceYears ?? candidate.experienceYears,
-    },
-    admin.id,
-    role,
-  );
-
-  revalidatePath("/admin/jobs");
-  revalidatePath(`/admin/candidates/${candidateId}/jobs`);
-  revalidatePath("/dashboard/jobs");
-
-  if (result.error && !result.scrapeCalled && result.newJobsAdded === 0) {
-    return { error: result.error };
-  }
-
-  return { success: true, result };
-}
-
-export async function scrapeAllCandidatesJobsAction(): Promise<
-  { error: string } | { success: true; result: BulkJobScrapeResult }
-> {
-  return {
-    error:
-      "Bulk scraping is disabled. Search jobs from each assigned candidate's job sheet (once every 3 hours per role).",
-  };
-}
-
 export async function toggleCandidateJobSelectedAction(
   candidateId: string,
   jobId: string,
@@ -821,15 +566,6 @@ export async function uploadAppliedJobResumeAction(
   }
 }
 
-export type CandidateResumeAnalysisResult = {
-  success?: true;
-  fileName?: string;
-  downloadUrl?: string;
-  resumeText?: string;
-  wordCount?: number;
-  error?: string;
-};
-
 async function authorizeCandidateAccess(
   candidateId: string,
 ): Promise<
@@ -858,86 +594,6 @@ async function authorizeCandidateAccess(
   }
 
   return { admin, candidate };
-}
-
-export async function uploadAndAnalyzeCandidateResumeAction(
-  candidateId: string,
-  formData: FormData,
-): Promise<CandidateResumeAnalysisResult> {
-  const access = await authorizeCandidateAccess(candidateId);
-  if ("error" in access) {
-    return { error: access.error };
-  }
-
-  const file = formData.get("resume");
-  if (!(file instanceof File) || file.size === 0) {
-    return { error: "Choose a PDF or Word resume to upload." };
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    return { error: "Resume must be 5 MB or smaller." };
-  }
-
-  if (!(RESUME_MIME_TYPES as readonly string[]).includes(file.type)) {
-    return { error: "Use a PDF or Word document (.pdf, .doc, .docx)." };
-  }
-
-  const interestedRole = String(formData.get("interestedRole") ?? "").trim() || null;
-
-  try {
-    const analysis = await analyzeCandidateResumeBuffer({
-      candidateId,
-      fileBuffer: Buffer.from(await file.arrayBuffer()),
-      fileName: file.name,
-      contentType: file.type,
-      interestedRole,
-      saveToProfile: true,
-    });
-
-    revalidatePath(`/admin/candidates/${candidateId}/jobs`);
-    revalidatePath(`/admin/candidates/${candidateId}/jobs/applied`);
-
-    return {
-      success: true,
-      fileName: analysis.fileName,
-      downloadUrl: analysis.downloadUrl,
-      resumeText: analysis.resumeText,
-      wordCount: analysis.wordCount,
-    };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Could not analyze resume.",
-    };
-  }
-}
-
-export async function analyzeCandidateResumeOnFileAction(
-  candidateId: string,
-  interestedRole?: string | null,
-): Promise<CandidateResumeAnalysisResult> {
-  const access = await authorizeCandidateAccess(candidateId);
-  if ("error" in access) {
-    return { error: access.error };
-  }
-
-  try {
-    const analysis = await analyzeCandidateResumeOnFile({
-      candidateId,
-      interestedRole: interestedRole?.trim() || null,
-    });
-
-    return {
-      success: true,
-      fileName: analysis.fileName,
-      downloadUrl: analysis.downloadUrl,
-      resumeText: analysis.resumeText,
-      wordCount: analysis.wordCount,
-    };
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Could not analyze resume on file.",
-    };
-  }
 }
 
 export async function sendCandidateApplicationsDigestAction(

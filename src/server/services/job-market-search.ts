@@ -133,7 +133,7 @@ export function jobMatchesKeywordFilter(
     return true;
   }
   return (
-    countMatchedJobKeywords(keywords, { role: job.role, jdText: job.jdText }) >=
+    countMatchedJobKeywords(keywords, { jdText: job.jdText }) >=
     Math.min(2, keywords.length)
   );
 }

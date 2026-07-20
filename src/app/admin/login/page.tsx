@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   adminLoginAction,
   type AdminLoginState,
@@ -11,15 +12,21 @@ import { LoginMemberIdPreview } from "@/components/auth/login-member-id-preview"
 import { FormField } from "@/components/auth/form-field";
 import { PasswordField } from "@/components/auth/password-field";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { startRouteLoading } from "@/lib/route-loading";
 import styles from "@/components/auth/auth-page.module.css";
 
 const initialState: AdminLoginState = {};
 
 export default function AdminLoginPage() {
+  const router = useRouter();
   const [state, setState] = useState<AdminLoginState>(initialState);
   const [pending, startTransition] = useTransition();
   const [memberId, setMemberId] = useState<string | null>(null);
   const [memberIdLoading, setMemberIdLoading] = useState(false);
+
+  useEffect(() => {
+    router.prefetch("/admin");
+  }, [router]);
 
   async function handleEmailBlur(event: React.FocusEvent<HTMLInputElement>) {
     const email = event.target.value.trim();
@@ -38,6 +45,7 @@ export default function AdminLoginPage() {
   }
 
   function handleSubmit(formData: FormData) {
+    startRouteLoading();
     startTransition(async () => {
       try {
         const result = await adminLoginAction(state, formData);

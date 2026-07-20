@@ -373,7 +373,11 @@
 
 @media (max-width: 900px) {
   .home {
-    padding: 20px 20px 40px;
+    padding: 20px 20px 24px;
+  }
+
+  .workspaceSection {
+    padding-bottom: 8px;
   }
 
   .heroCard {

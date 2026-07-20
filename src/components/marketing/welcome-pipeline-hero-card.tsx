@@ -18,8 +18,8 @@ const pipelineNodes = [
     step: "02",
     label: "Prepare",
     icon: FileText,
-    detail: "Résumé tailored per application",
-    metric: "ATS-safe",
+    detail: "Application resume per role",
+    metric: "Reviewed",
   },
   {
     id: "apply",

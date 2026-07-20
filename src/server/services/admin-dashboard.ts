@@ -21,7 +21,7 @@ const CANDIDATE_ROLES = [
 ] as const;
 
 const CANDIDATE_PROFILE_SELECT =
-  "user_id, education, career_goals, linkedin_url, resume_url, analyzed_resume_text, assigned_employee_id, job_search_role, experience_years, gender, graduation_college, graduation_year, specialization, work_experience, location, timezone";
+  "user_id, education, career_goals, linkedin_url, resume_url, analyzed_resume_text, assigned_employee_id, job_search_role, experience_years, gender, graduation_college, graduation_year, specialization, work_experience, location, timezone, visa_status";
 
 export type CareerAdvisorySubmission = {
   id: string;
@@ -63,6 +63,7 @@ export type AdminCandidate = {
   workExperience: string | null;
   location: string | null;
   timezone: string | null;
+  visaStatus: string | null;
   subscriptionPlan: PremiumPlanId | null;
   hasManagedApplications: boolean;
   submission: CareerAdvisorySubmission | null;
@@ -557,6 +558,7 @@ function mapUserToCandidate(
         work_experience: string | null;
         location: string | null;
         timezone: string | null;
+        visa_status: string | null;
         analyzed_resume_text: string | null;
       }
     | undefined,
@@ -587,6 +589,7 @@ function mapUserToCandidate(
     workExperience: profile?.work_experience ?? null,
     location: profile?.location ?? null,
     timezone: profile?.timezone ?? null,
+    visaStatus: profile?.visa_status ?? null,
     subscriptionPlan,
     hasManagedApplications:
       entitlementsForPlan(subscriptionPlan).hasManagedApplications,
