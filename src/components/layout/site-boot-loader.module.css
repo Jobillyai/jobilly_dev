@@ -4,13 +4,136 @@
   z-index: 10000;
   display: grid;
   place-items: center;
-  background: var(--jb-surface);
+  background: #07090f;
   pointer-events: all;
-  opacity: 1;
-  transition: opacity 0.28s ease;
+  overflow: hidden;
 }
 
 .overlayFadeOut {
-  opacity: 0;
   pointer-events: none;
+}
+
+.atmosphere {
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(ellipse 50% 40% at 50% 45%, rgba(56, 182, 255, 0.22), transparent 58%),
+    radial-gradient(ellipse 40% 35% at 50% 55%, rgba(81, 112, 255, 0.16), transparent 60%);
+  pointer-events: none;
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.overlayFadeOut .atmosphere {
+  opacity: 0;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+  perspective: 1100px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+}
+
+.line {
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+}
+
+.brand,
+.tagline {
+  margin: 0;
+  text-align: center;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.brand {
+  font-family: var(--jb-font-sans, "Plus Jakarta Sans", system-ui, sans-serif);
+  font-size: clamp(2.6rem, 8vw, 4.75rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  /* Match welcome-page .brandWord (“Hands on.”) */
+  color: var(--jb-brand, #5170ff);
+  background: linear-gradient(135deg, #5170ff 0%, #38b6ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tagline {
+  font-family: var(--jb-font-display, "Instrument Serif", Georgia, serif);
+  font-size: clamp(1.15rem, 3vw, 1.75rem);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: rgba(244, 247, 255, 0.82);
+}
+
+/* Enter: large on Z → defined size */
+.lineIn {
+  animation: netflixIn 1.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.taglineLine.lineIn {
+  animation-delay: 0.18s;
+}
+
+/* Exit: defined → large outwards (toward camera) */
+.lineOut {
+  animation: netflixOut 0.85s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.taglineLine.lineOut {
+  animation-delay: 0.06s;
+}
+
+@keyframes netflixIn {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(0, 0, 640px) scale(3.6);
+  }
+  55% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  78% {
+    transform: translate3d(0, 0, -24px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes netflixOut {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translate3d(0, 0, 720px) scale(4.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lineIn,
+  .lineOut {
+    animation: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+  }
 }

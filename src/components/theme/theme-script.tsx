@@ -5,8 +5,7 @@ export function ThemeScript() {
 (function() {
   try {
     var stored = localStorage.getItem("${THEME_STORAGE_KEY}");
-    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    var theme = stored === "light" || stored === "dark" ? stored : (prefersDark ? "dark" : "light");
+    var theme = stored === "dark" ? "dark" : "light";
     var root = document.documentElement;
     root.setAttribute("data-theme", theme);
     root.style.colorScheme = theme;

@@ -1,35 +1,54 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LottieLoader } from "./lottie-loader";
 import styles from "./site-boot-loader.module.css";
 
-const BOOT_KEY = "jobilly:booted";
+const MIN_VISIBLE_MS = 2200;
+const FADE_MS = 900;
 
 export function SiteBootLoader() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem(BOOT_KEY)) {
-      return;
-    }
-
-    setVisible(true);
+    const startedAt = performance.now();
+    let fadeTimer: number | undefined;
+    let hideTimer: number | undefined;
+    let cancelled = false;
 
     function finish() {
-      sessionStorage.setItem(BOOT_KEY, "1");
-      setFadeOut(true);
-      window.setTimeout(() => setVisible(false), 220);
+      if (cancelled) {
+        return;
+      }
+
+      const elapsed = performance.now() - startedAt;
+      const wait = Math.max(0, MIN_VISIBLE_MS - elapsed);
+
+      fadeTimer = window.setTimeout(() => {
+        if (cancelled) {
+          return;
+        }
+        setFadeOut(true);
+        hideTimer = window.setTimeout(() => {
+          if (!cancelled) {
+            setVisible(false);
+          }
+        }, FADE_MS);
+      }, wait);
     }
 
     if (document.readyState === "complete") {
       finish();
-      return;
+    } else {
+      window.addEventListener("load", finish, { once: true });
     }
 
-    window.addEventListener("load", finish, { once: true });
-    return () => window.removeEventListener("load", finish);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("load", finish);
+      if (fadeTimer) window.clearTimeout(fadeTimer);
+      if (hideTimer) window.clearTimeout(hideTimer);
+    };
   }, []);
 
   if (!visible) {
@@ -41,8 +60,25 @@ export function SiteBootLoader() {
       className={`${styles.overlay} ${fadeOut ? styles.overlayFadeOut : ""}`}
       aria-live="polite"
       aria-busy={!fadeOut}
+      role="status"
     >
-      <LottieLoader size={180} />
+      <div className={styles.atmosphere} aria-hidden />
+      <div className={styles.stage}>
+        <div
+          className={`${styles.line} ${styles.brandLine} ${
+            fadeOut ? styles.lineOut : styles.lineIn
+          }`}
+        >
+          <p className={styles.brand}>Jobilly.AI</p>
+        </div>
+        <div
+          className={`${styles.line} ${styles.taglineLine} ${
+            fadeOut ? styles.lineOut : styles.lineIn
+          }`}
+        >
+          <p className={styles.tagline}>Graduate ready. Job ready.</p>
+        </div>
+      </div>
     </div>
   );
 }

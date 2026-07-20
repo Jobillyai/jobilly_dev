@@ -16,7 +16,8 @@ export function resolveTheme(): Theme {
     // ignore storage errors
   }
 
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // Marketing/default: light unless the user explicitly toggles theme.
+  return "light";
 }
 
 export function applyTheme(theme: Theme) {

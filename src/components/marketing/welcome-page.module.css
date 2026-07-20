@@ -165,26 +165,23 @@
 
 .statItem {
   position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   padding: 32px 20px;
   text-align: center;
-  border: 1px solid var(--jb-glass-border);
+  border: 1px solid var(--jb-border);
   border-radius: var(--jb-radius-md);
-  background: var(--jb-glass-surface);
-  box-shadow:
-    inset 0 1px 0 var(--jb-glass-highlight),
-    0 8px 24px rgba(17, 17, 17, 0.04);
-  backdrop-filter: blur(18px) saturate(1.15);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  background: var(--jb-surface-raised);
+  box-shadow: var(--jb-shadow-sm);
 }
 
 :global([data-theme="dark"]) .statItem {
-  box-shadow:
-    inset 0 1px 0 var(--jb-glass-highlight),
-    0 10px 28px rgba(0, 0, 0, 0.22);
+  border-color: var(--jb-border-strong);
+  background: var(--jb-surface-subtle);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
 }
 
 .statValue {
@@ -198,7 +195,7 @@
 .statLabel {
   font-size: 15px;
   color: var(--jb-ink-muted);
-  max-width: 12ch;
+  max-width: 14ch;
 }
 
 /* ── EDITORIAL (Hey there) ── */
