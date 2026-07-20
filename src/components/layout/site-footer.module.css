@@ -32,6 +32,33 @@
   color: var(--jb-ink-on-dark);
 }
 
+.linkedinLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.linkedinLink:hover {
+  color: var(--jb-ink-on-dark);
+}
+
+.linkedinWord {
+  font: inherit;
+}
+
+.socialIcon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  flex-shrink: 0;
+}
+
 .footerCopy {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.35);
