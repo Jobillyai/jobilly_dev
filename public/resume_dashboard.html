@@ -479,7 +479,7 @@
   </div>
   <div style="flex:1;">
     <h1>ATS Resume Tailoring</h1>
-    <p>Powered by <span class="brand-word">Jobilly.ai</span> · Keyword extract · Rewrite · Score · Download</p>
+    <p>Powered by <span class="brand-word">Jobilly.ai</span> · Keyword extract · ATS score · Tailor if needed · Download</p>
   </div>
   <div class="api-badge is-offline" id="sessionBadge" aria-live="polite">
     <div class="api-dot"></div>
@@ -501,11 +501,11 @@
     </div>
     <div class="step" id="step3">
       <div class="step-num">3</div>
-      <span class="step-label">Resume Rewrite</span>
+      <span class="step-label">ATS Scoring</span>
     </div>
     <div class="step" id="step4">
       <div class="step-num">4</div>
-      <span class="step-label">ATS Scoring</span>
+      <span class="step-label">Analyse &amp; Tailor</span>
     </div>
     <div class="step" id="step5">
       <div class="step-num">5</div>
@@ -529,8 +529,11 @@
 
   <!-- ACTION BAR -->
   <div class="action-bar">
-    <button class="btn-primary" id="analyzeBtn" onclick="runAnalysis()">
-      Analyze &amp; Tailor Resume
+    <button class="btn-primary" id="analyzeBtn" onclick="runAtsCheck()">
+      Check ATS Score
+    </button>
+    <button class="btn-warning hidden" id="tailorBtn" onclick="runAnalyseAndTailor()">
+      Analyse &amp; Tailor
     </button>
     <button class="btn-warning hidden" id="rerunBtn" onclick="resetAndRun()">
       Start Over
@@ -552,11 +555,12 @@
 
   <!-- SCORE CARDS -->
   <div id="scoreSection" class="hidden">
+    <div id="atsGateBanner" class="hidden" style="margin-bottom:14px;padding:12px 16px;border-radius:10px;border:1px solid var(--border);font-size:13px;line-height:1.5;"></div>
     <div class="score-grid">
       <div class="score-card">
         <div class="score-label">ATS Score</div>
         <div class="score-value green" id="atsScore">--</div>
-        <div class="score-sub">Target: 100/100</div>
+        <div class="score-sub">Target: 95+/100 before tailor skip</div>
       </div>
       <div class="score-card">
         <div class="score-label">Keywords Matched</div>
@@ -605,7 +609,7 @@
 
     <!-- TAB: KEYWORDS -->
     <div class="tab-content" id="tab-keywords">
-      <p style="font-size:13px;color:#94a3b8;margin-bottom:12px;">Top 20 ATS keywords (10 primary + 10 secondary) extracted by Gemini AI from the Job Description and their presence in the tailored resume.</p>
+      <p style="font-size:13px;color:#94a3b8;margin-bottom:12px;">Top 20 ATS keywords (10 primary + 10 secondary) extracted by Gemini AI from the Job Description and their presence in the current resume being scored.</p>
       <div class="keyword-grid" id="kwGrid"></div>
       <div style="margin-top:20px;">
         <div class="progress-bar-wrap" style="height:12px;">
@@ -642,6 +646,7 @@
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────
 // Gemini calls go through /api/admin/resume-dashboard/generate (server uses GEMINI_API_KEY).
+const ATS_TAILOR_THRESHOLD = 95;
 
 // ─── STATE ────────────────────────────────────────────────────────
 let state = {
@@ -649,7 +654,10 @@ let state = {
   tailoredResume: '',
   scorecard: null,
   gaps: [],
-  filename: ''
+  filename: '',
+  atsScore: null,
+  scoredResume: '',
+  phase: 'idle', // idle | scored | tailored
 };
 
 // ─── CHAR COUNTERS ────────────────────────────────────────────────
@@ -663,13 +671,15 @@ document.getElementById('resumeInput').addEventListener('input', function() {
   document.getElementById('resumeCount').textContent = this.value.length.toLocaleString();
   document.getElementById('resumeWords').textContent = wordCount(this.value).toLocaleString();
   // Changing the resume invalidates prior extraction/rewrite results.
-  if (state.tailoredResume || state.scorecard || (state.keywords && state.keywords.primary?.length)) {
-    state = { keywords: [], tailoredResume: '', scorecard: null, gaps: [], filename: '' };
+  if (state.tailoredResume || state.scorecard || state.atsScore != null || (state.keywords && state.keywords.primary?.length)) {
+    state = { keywords: [], tailoredResume: '', scorecard: null, gaps: [], filename: '', atsScore: null, scoredResume: '', phase: 'idle' };
     document.getElementById('scoreSection')?.classList.add('hidden');
     document.getElementById('resultsSection')?.classList.add('hidden');
     document.getElementById('boostBtn')?.classList.add('hidden');
+    document.getElementById('tailorBtn')?.classList.add('hidden');
     document.getElementById('rerunBtn')?.classList.add('hidden');
     document.getElementById('analyzeBtn')?.classList.remove('hidden');
+    document.getElementById('atsGateBanner')?.classList.add('hidden');
     setStep(1);
   }
 });
@@ -704,16 +714,20 @@ function setSessionBadge(online) {
   const badge = document.getElementById('sessionBadge');
   const label = document.getElementById('sessionBadgeLabel');
   const analyzeBtn = document.getElementById('analyzeBtn');
+  const tailorBtn = document.getElementById('tailorBtn');
   if (!badge || !label) return;
 
   badge.classList.toggle('is-offline', !online);
   label.textContent = online ? 'Online' : 'Offline';
 
+  const offlineTitle = 'Admin login required. Sign in at /admin/login';
   if (analyzeBtn && !analyzeBtn.classList.contains('hidden')) {
     analyzeBtn.disabled = !online;
-    analyzeBtn.title = online
-      ? ''
-      : 'Admin login required. Sign in at /admin/login';
+    analyzeBtn.title = online ? '' : offlineTitle;
+  }
+  if (tailorBtn && !tailorBtn.classList.contains('hidden')) {
+    tailorBtn.disabled = !online;
+    tailorBtn.title = online ? '' : offlineTitle;
   }
 }
 
@@ -1321,178 +1335,90 @@ SECONDARY KEYWORDS (should appear at least once where truthful): ${secondary.joi
 JOB DESCRIPTION:
 ${jd}
 
-TAILORED RESUME:
+RESUME TO SCORE:
 ${tailoredResume}`;
 }
 
-// ─── MAIN ANALYSIS ────────────────────────────────────────────────
-async function runAnalysis() {
-  const online = await refreshAdminSession();
-  if (!online) {
-    showToast('Admin session offline — sign in at /admin/login', '#dc2626');
+function computeAtsFromScorecard(sc, keywords) {
+  const kwMatch = sc.keywordMatch != null ? Math.min(sc.keywordMatch, 10) : 0;
+  const fmtCheck = sc.formatCheck || 'PASS';
+  const confidence = sc.confidenceLevel || 'High';
+  const primaryTotal = keywords.primary.length || 10;
+  const secTotalForScore = keywords.secondary.length || 10;
+
+  const kwPts = Math.round((kwMatch / primaryTotal) * 40);
+  const secPts = secTotalForScore > 0
+    ? Math.round(((sc.secondaryFound?.length || 0) / secTotalForScore) * 10)
+    : 10;
+  const bTotal = sc.bulletsTotal || 0;
+  const bMetrics = sc.bulletsWithMetrics != null ? sc.bulletsWithMetrics : 0;
+  const metricPts = bTotal > 0 ? Math.round((bMetrics / bTotal) * 20) : 0;
+  const summaryPts = (sc.summaryScore != null) ? sc.summaryScore
+    : (confidence === 'High' ? 15 : confidence === 'Medium' ? 10 : 5);
+  const fmtPts = fmtCheck === 'PASS' ? 10 : Math.max(0, 10 - (sc.formatIssues?.length || 1) * 3);
+  const secCompPts = sc.sectionCheck === 'FAIL'
+    ? Math.max(0, 5 - (sc.missingSections?.length || 1) * 2) : 5;
+
+  const atsScore = Math.min(100, kwPts + secPts + metricPts + summaryPts + fmtPts + secCompPts);
+  return { atsScore, kwMatch, fmtCheck, confidence, primaryTotal, secTotalForScore, kwPts, secPts, metricPts, summaryPts, fmtPts, secCompPts };
+}
+
+function updateAtsGateBanner(atsScore, phase) {
+  const banner = document.getElementById('atsGateBanner');
+  if (!banner) return;
+  banner.classList.remove('hidden');
+  if (phase === 'tailored') {
+    banner.style.background = atsScore >= ATS_TAILOR_THRESHOLD ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.12)';
+    banner.style.borderColor = atsScore >= ATS_TAILOR_THRESHOLD ? 'rgba(34,197,94,0.35)' : 'rgba(245,158,11,0.35)';
+    banner.innerHTML = atsScore >= ATS_TAILOR_THRESHOLD
+      ? `<strong>Post-tailor ATS ${atsScore}/100</strong> — at or above ${ATS_TAILOR_THRESHOLD}. Ready to download.`
+      : `<strong>Post-tailor ATS ${atsScore}/100</strong> — still below ${ATS_TAILOR_THRESHOLD}. Use <em>Boost to 100</em> for targeted fixes.`;
     return;
   }
+  if (atsScore >= ATS_TAILOR_THRESHOLD) {
+    banner.style.background = 'rgba(34,197,94,0.12)';
+    banner.style.borderColor = 'rgba(34,197,94,0.35)';
+    banner.innerHTML = `<strong>ATS ${atsScore}/100</strong> — already at or above ${ATS_TAILOR_THRESHOLD}. Tailoring is optional; you can download as-is.`;
+  } else {
+    banner.style.background = 'rgba(245,158,11,0.12)';
+    banner.style.borderColor = 'rgba(245,158,11,0.35)';
+    banner.innerHTML = `<strong>ATS ${atsScore}/100</strong> — below ${ATS_TAILOR_THRESHOLD}. Click <em>Analyse &amp; Tailor</em> to rewrite for this JD.`;
+  }
+}
 
-  const jd     = document.getElementById('jdInput').value.trim();
-  const resume = document.getElementById('resumeInput').value.trim();
+function renderScorecardTabs(sc, keywords, resumeText, atsScoreLabel) {
+  const derived = computeAtsFromScorecard(sc, keywords);
+  const {
+    atsScore, kwMatch, fmtCheck, confidence, primaryTotal,
+    kwPts, secPts, metricPts, summaryPts, fmtPts, secCompPts,
+  } = derived;
+  const secTotal = keywords.secondary.length || 10;
 
-  if (!jd)     { showToast('⚠️ Please paste a Job Description', '#ef4444'); return; }
-  if (!resume) { showToast('⚠️ Please paste your Resume', '#ef4444'); return; }
+  const atsColour = atsScore >= ATS_TAILOR_THRESHOLD ? 'green' : atsScore >= 70 ? 'yellow' : 'red';
+  const fmtColour = fmtCheck === 'PASS' ? 'green' : 'yellow';
 
-  // UI reset
-  document.getElementById('analyzeBtn').disabled = true;
-  document.getElementById('scoreSection').classList.add('hidden');
-  document.getElementById('resultsSection').classList.add('hidden');
-  document.getElementById('progressSection').classList.remove('hidden');
-  setLoading('Calling Gemini AI...');
-  setStep(2);
+  const atsEl = document.getElementById('atsScore');
+  atsEl.textContent = atsScore + '/100';
+  atsEl.className = 'score-value ' + atsColour;
 
-  try {
-    // ── STEP 1: KEYWORD EXTRACTION ──────────────────────────────
-    setProgress(10, 'Extracting top 20 ATS keywords via Gemini AI...', 'Analyzing job description...');
-    setLoading('Extracting keywords...');
+  document.getElementById('kwMatch').textContent = kwMatch + '/' + primaryTotal;
+  const fmtEl = document.getElementById('fmtCheck');
+  fmtEl.textContent = fmtCheck + (fmtCheck === 'PASS' ? ' ✓' : ' ⚠');
+  fmtEl.className = 'score-value ' + fmtColour;
+  document.getElementById('confScore').textContent = confidence.toUpperCase();
+  document.getElementById('confScore').className = 'score-value ' + (confidence === 'High' ? 'green' : confidence === 'Medium' ? 'yellow' : 'red');
+  document.getElementById('scoreSection').classList.remove('hidden');
 
-    const kwRaw = await callClaude(buildKeywordPrompt(jd), 0.3, 512);
-    let keywords = { primary: [], secondary: [] };
-    try {
-      const match = kwRaw.match(/\{[\s\S]*\}/);
-      const parsed = match ? JSON.parse(match[0]) : {};
-      keywords.primary   = Array.isArray(parsed.primary)   ? parsed.primary.slice(0, 10)   : [];
-      keywords.secondary = Array.isArray(parsed.secondary) ? parsed.secondary.slice(0, 10) : [];
-      if (keywords.primary.length === 0) throw new Error('bad parse');
-    } catch {
-      // fallback: treat entire response as flat list, split into primary/secondary
-      const flat = kwRaw.replace(/[\[\]{}'"]/g, '').split(',').map(k => k.trim()).filter(Boolean);
-      keywords.primary   = flat.slice(0, 10);
-      keywords.secondary = flat.slice(10, 20);
-    }
-    state.keywords = keywords;
-    setProgress(30, `✓ Extracted ${keywords.primary.length} primary + ${keywords.secondary.length} secondary keywords: ${keywords.primary.slice(0,3).join(', ')}...`, 'Keywords extracted successfully');
-
-    // ── STEP 2: RESUME REWRITE ────────────────────────────────
-    await delay(300);
-    // Pre-extract role count so we can show it in the progress bar and validate output
-    const detectedRoles = extractRolesFromResume(resume);
-    const roleCountMsg  = detectedRoles.length > 0
-      ? `Detected ${detectedRoles.length} roles — all will be preserved...`
-      : 'Rewriting all sections...';
-    setProgress(40, 'Rewriting resume to 100/100 ATS alignment...', roleCountMsg);
-    setStep(3);
-    setLoading('Rewriting resume...');
-
-    // temperature 0.7 → varied, human-sounding language; maxTokens 6000 → safely fits all roles (4-6 jobs) without truncation
-    const tailoredResume = await callClaude(buildRewritePrompt(jd, resume, keywords), 0.7, 6000);
-    state.tailoredResume = tailoredResume;
-
-    // Stream output visually
-    const outputEl = document.getElementById('outputArea');
-    outputEl.textContent = '';
-    outputEl.classList.add('streaming-cursor');
-    setProgress(65, '✓ Resume rewritten · Rendering output...', 'Streaming to display...');
-
-    // Show results section early so user sees streaming
-    document.getElementById('resultsSection').classList.remove('hidden');
-
-    // Chunk-stream the text for visual effect
-    const chunkSize = 30;
-    for (let i = 0; i < tailoredResume.length; i += chunkSize) {
-      outputEl.textContent += tailoredResume.slice(i, i + chunkSize);
-      outputEl.scrollTop = outputEl.scrollHeight;
-      await delay(8);
-    }
-    outputEl.classList.remove('streaming-cursor');
-
-    // ── ROLE COUNT GUARD ─────────────────────────────────────
-    // Compare roles in output vs roles extracted from input
-    const outputRoles = extractRolesFromResume(tailoredResume);
-    const outputLineCount = tailoredResume.split('\n').filter(l => l.trim()).length;
-    const inputLineCount  = resume.split('\n').filter(l => l.trim()).length;
-    const rolesDropped = detectedRoles.length > 0 && outputRoles.length < detectedRoles.length;
-    const outputTooShort = outputLineCount < Math.max(15, inputLineCount * 0.35);
-
-    if (rolesDropped) {
-      const missing = detectedRoles.length - outputRoles.length;
-      showToast(
-        `⚠️ ${missing} role(s) may be missing in output (detected ${detectedRoles.length}, got ${outputRoles.length}). Click "New JD / Resume" and try again.`,
-        '#ef4444'
-      );
-    } else if (outputTooShort) {
-      showToast('⚠️ Output seems short — check all roles are present. Try again if needed.', '#f59e0b');
-    }
-
-    // ── STEP 3: ATS SCORING ──────────────────────────────────
-    await delay(300);
-    setProgress(80, 'Running ATS confidence scoring...', 'Gemini AI evaluating alignment...');
-    setStep(4);
-    setLoading('Scoring resume...');
-
-    // temperature 0.1 → pure deterministic analysis for consistent scoring
-    const scorecardRaw = await callClaude(buildScorecardPrompt(tailoredResume, jd, keywords), 0.1, 4096);
-    let sc = {};
-    try {
-      const match = scorecardRaw.match(/\{[\s\S]*\}/);
-      sc = match ? JSON.parse(match[0]) : {};
-    } catch {
-      sc = {};
-    }
-    state.scorecard = sc;
-
-    // ── DERIVE CONSISTENT ATS SCORE FROM RUBRIC FIELDS ───────
-    // The AI returns individual scoring fields reliably. We recompute
-    // atsScore from them so the top score always matches the scorecard rows.
-    const kwMatch    = sc.keywordMatch != null ? Math.min(sc.keywordMatch, 10) : 0;
-    const fmtCheck   = sc.formatCheck  || 'PASS';
-    const confidence = sc.confidenceLevel || 'High';
-    const primaryTotal = keywords.primary.length || 10;
-    const secTotalForScore = keywords.secondary.length || 10;
-
-    // Rubric:  40 + 10 + 20 + 15 + 10 + 5 = 100
-    const kwPts       = Math.round((kwMatch / primaryTotal) * 40);                                 // 40 pts
-    const secPts      = secTotalForScore > 0
-      ? Math.round(((sc.secondaryFound?.length || 0) / secTotalForScore) * 10)
-      : 10;                                                                                         // 10 pts
-    const bTotal      = sc.bulletsTotal      || 0;
-    const bMetrics    = sc.bulletsWithMetrics != null ? sc.bulletsWithMetrics : 0;
-    const metricPts   = bTotal > 0 ? Math.round((bMetrics / bTotal) * 20) : 0;                    // 20 pts
-    const summaryPts  = (sc.summaryScore != null) ? sc.summaryScore                                // 15 pts
-                      : (confidence === 'High' ? 15 : confidence === 'Medium' ? 10 : 5);
-    const fmtPts      = fmtCheck === 'PASS' ? 10 : Math.max(0, 10 - (sc.formatIssues?.length || 1) * 3); // 10 pts
-    const secCompPts  = sc.sectionCheck === 'FAIL'
-      ? Math.max(0, 5 - (sc.missingSections?.length || 1) * 2) : 5;                               // 5 pts
-
-    const atsScore = Math.min(100, kwPts + secPts + metricPts + summaryPts + fmtPts + secCompPts);
-
-    // ATS score colour: ≥90 green, ≥70 yellow, else red
-    const atsColour = atsScore >= 90 ? 'green' : atsScore >= 70 ? 'yellow' : 'red';
-    const fmtColour = fmtCheck === 'PASS' ? 'green' : 'yellow';
-
-    const atsEl = document.getElementById('atsScore');
-    atsEl.textContent  = atsScore + '/100';
-    atsEl.className    = 'score-value ' + atsColour;
-
-    document.getElementById('kwMatch').textContent    = kwMatch + '/' + primaryTotal;
-    const fmtEl = document.getElementById('fmtCheck');
-    fmtEl.textContent  = fmtCheck + (fmtCheck === 'PASS' ? ' ✓' : ' ⚠');
-    fmtEl.className    = 'score-value ' + fmtColour;
-    document.getElementById('confScore').textContent  = confidence.toUpperCase();
-    document.getElementById('confScore').className    = 'score-value ' + (confidence === 'High' ? 'green' : confidence === 'Medium' ? 'yellow' : 'red');
-
-    document.getElementById('scoreSection').classList.remove('hidden');
-
-    // ── SCORECARD TAB ─────────────────────────────────────────
-    const scDiv = document.getElementById('scorecardContent');
-    const bulletsWithMetrics = sc.bulletsWithMetrics != null ? sc.bulletsWithMetrics : null;
-    const bulletsTotal       = sc.bulletsTotal       != null ? sc.bulletsTotal       : null;
-    const bulletsScore = bulletsWithMetrics != null
-      ? (bulletsTotal != null ? `${bulletsWithMetrics} of ${bulletsTotal} bullets` : `${bulletsWithMetrics} bullets`)
-      : 'N/A';
-    const secFound = (sc.secondaryFound || []).length;
-    const secTotal = keywords.secondary.length || 10;
-    // Update header card sub-label to reflect actual keyword count
-    document.getElementById('kwMatchSub').textContent = `of ${primaryTotal} primary keywords`;
-    const atsScoreClass = atsScore >= 90 ? 'sc-green' : atsScore >= 70 ? 'sc-yellow' : 'sc-red';
-    scDiv.innerHTML = `
-      <div class="scorecard-row"><span class="sc-label">ATS Score</span><span class="sc-value ${atsScoreClass}" style="font-size:28px;">${atsScore} / 100</span></div>
+  const bulletsWithMetrics = sc.bulletsWithMetrics != null ? sc.bulletsWithMetrics : null;
+  const bulletsTotal = sc.bulletsTotal != null ? sc.bulletsTotal : null;
+  const bulletsScore = bulletsWithMetrics != null
+    ? (bulletsTotal != null ? `${bulletsWithMetrics} of ${bulletsTotal} bullets` : `${bulletsWithMetrics} bullets`)
+    : 'N/A';
+  const secFound = (sc.secondaryFound || []).length;
+  document.getElementById('kwMatchSub').textContent = `of ${primaryTotal} primary keywords`;
+  const atsScoreClass = atsScore >= ATS_TAILOR_THRESHOLD ? 'sc-green' : atsScore >= 70 ? 'sc-yellow' : 'sc-red';
+  document.getElementById('scorecardContent').innerHTML = `
+      <div class="scorecard-row"><span class="sc-label">${atsScoreLabel}</span><span class="sc-value ${atsScoreClass}" style="font-size:28px;">${atsScore} / 100</span></div>
       <div style="font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:0.8px;padding:10px 0 4px;">Score Breakdown</div>
       <div class="scorecard-row"><span class="sc-label">Primary Keywords (40 pts max)</span><span class="sc-value sc-blue">${kwPts} pts &nbsp;·&nbsp; ${kwMatch} of ${primaryTotal} found</span></div>
       <div class="scorecard-row"><span class="sc-label">Secondary Keywords (10 pts max)</span><span class="sc-value sc-blue">${secPts} pts &nbsp;·&nbsp; ${secFound} of ${secTotal} found</span></div>
@@ -1506,113 +1432,190 @@ async function runAnalysis() {
       ${sc.improvementSuggestions?.length ? `<div class="scorecard-row"><span class="sc-label">To reach 100/100</span><span class="sc-value sc-yellow">${sc.improvementSuggestions.join(' · ')}</span></div>` : ''}
     `;
 
-    // ── KEYWORDS TAB ─────────────────────────────────────────
-    const found   = sc.keywordsFound   || keywords.primary.slice(0, kwMatch);
-    const missing = sc.keywordsMissing || keywords.primary.slice(kwMatch);
-    const kwGrid  = document.getElementById('kwGrid');
-    kwGrid.innerHTML = '';
+  const found = sc.keywordsFound || keywords.primary.slice(0, kwMatch);
+  const missing = sc.keywordsMissing || keywords.primary.slice(kwMatch);
+  const kwGrid = document.getElementById('kwGrid');
+  kwGrid.innerHTML = '';
 
-    // Word-boundary-safe fuzzy match: checks if AI listed this keyword as found
-    function kwIsFound(list, kw) {
-      const kl = kw.toLowerCase();
-      return list.some(f => {
-        const fl = f.toLowerCase();
-        // exact match or one fully contains the other at word boundary
-        return fl === kl ||
-          new RegExp('(^|\\s)' + kl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)').test(fl) ||
-          new RegExp('(^|\\s)' + fl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)').test(kl);
-      });
-    }
+  function kwIsFound(list, kw) {
+    const kl = kw.toLowerCase();
+    return list.some(f => {
+      const fl = f.toLowerCase();
+      return fl === kl ||
+        new RegExp('(^|\\s)' + kl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)').test(fl) ||
+        new RegExp('(^|\\s)' + fl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)').test(kl);
+    });
+  }
 
-    // Primary keywords
-    keywords.primary.forEach(kw => {
-      const isFound = kwIsFound(found, kw);
+  keywords.primary.forEach(kw => {
+    const isFound = kwIsFound(found, kw);
+    const tag = document.createElement('span');
+    tag.className = 'kw-tag ' + (isFound ? 'kw-match' : 'kw-miss');
+    tag.textContent = (isFound ? '✓ ' : '✗ ') + kw;
+    kwGrid.appendChild(tag);
+  });
+  if (keywords.secondary.length > 0) {
+    const divider = document.createElement('div');
+    divider.style.cssText = 'width:100%;font-size:11px;color:#475569;margin-top:8px;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.8px;';
+    divider.textContent = 'Secondary Keywords';
+    kwGrid.appendChild(divider);
+    const secFoundList = sc.secondaryFound || [];
+    keywords.secondary.forEach(kw => {
+      const isFound = kwIsFound(secFoundList, kw);
       const tag = document.createElement('span');
       tag.className = 'kw-tag ' + (isFound ? 'kw-match' : 'kw-miss');
+      tag.style.opacity = '0.8';
       tag.textContent = (isFound ? '✓ ' : '✗ ') + kw;
       kwGrid.appendChild(tag);
     });
-    // Secondary keywords
-    if (keywords.secondary.length > 0) {
-      const divider = document.createElement('div');
-      divider.style.cssText = 'width:100%;font-size:11px;color:#475569;margin-top:8px;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.8px;';
-      divider.textContent = 'Secondary Keywords';
-      kwGrid.appendChild(divider);
-      const secFoundList = sc.secondaryFound || [];
-      keywords.secondary.forEach(kw => {
-        const isFound = kwIsFound(secFoundList, kw);
-        const tag = document.createElement('span');
-        tag.className = 'kw-tag ' + (isFound ? 'kw-match' : 'kw-miss');
-        tag.style.opacity = '0.8';
-        tag.textContent = (isFound ? '✓ ' : '✗ ') + kw;
-        kwGrid.appendChild(tag);
-      });
-    }
-    document.getElementById('kwProgressBar').style.width = (kwMatch / primaryTotal * 100) + '%';
-    document.getElementById('kwProgressLabel').textContent =
-      kwMatch + ' of ' + primaryTotal + ' primary keywords matched · ' +
-      (sc.secondaryFound?.length || 0) + ' of ' + secTotal + ' secondary keywords matched';
+  }
+  document.getElementById('kwProgressBar').style.width = (kwMatch / primaryTotal * 100) + '%';
+  document.getElementById('kwProgressLabel').textContent =
+    kwMatch + ' of ' + primaryTotal + ' primary keywords matched · ' +
+    (sc.secondaryFound?.length || 0) + ' of ' + secTotal + ' secondary keywords matched';
 
-    // ── GAPS TAB ──────────────────────────────────────────────
-    const gaps = sc.gaps || missing.map(k => `"${k}" not prominently featured — add a bullet or skill entry.`);
-    state.gaps = gaps;
-    const gapsDiv = document.getElementById('gapsContent');
-    gapsDiv.innerHTML = '';
-    if (gaps.length === 0) {
-      gapsDiv.innerHTML = '<div style="color:#4ade80;font-size:14px;font-weight:600;">✅ No critical gaps detected. All major JD requirements addressed.</div>';
-    } else {
-      gaps.forEach(g => {
-        gapsDiv.innerHTML += `<div class="gap-item"><strong>⚠️</strong> ${g}</div>`;
-      });
-    }
-    // Improvement suggestions below gaps
-    if (sc.improvementSuggestions?.length) {
-      gapsDiv.innerHTML += '<div style="margin-top:16px;font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;">Score Improvement Tips</div>';
-      sc.improvementSuggestions.forEach(tip => {
-        gapsDiv.innerHTML += `<div class="gap-item"><strong>💡</strong> ${tip}</div>`;
-      });
-    }
+  const gaps = sc.gaps || missing.map(k => `"${k}" not prominently featured — add a bullet or skill entry.`);
+  state.gaps = gaps;
+  const gapsDiv = document.getElementById('gapsContent');
+  gapsDiv.innerHTML = '';
+  if (gaps.length === 0) {
+    gapsDiv.innerHTML = '<div style="color:#4ade80;font-size:14px;font-weight:600;">✅ No critical gaps detected. All major JD requirements addressed.</div>';
+  } else {
+    gaps.forEach(g => {
+      gapsDiv.innerHTML += `<div class="gap-item"><strong>⚠️</strong> ${g}</div>`;
+    });
+  }
+  if (sc.improvementSuggestions?.length) {
+    gapsDiv.innerHTML += '<div style="margin-top:16px;font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;">Score Improvement Tips</div>';
+    sc.improvementSuggestions.forEach(tip => {
+      gapsDiv.innerHTML += `<div class="gap-item"><strong>💡</strong> ${tip}</div>`;
+    });
+  }
 
-    // ── FILENAME TAB ─────────────────────────────────────────
-    // Build filename from actual resume content — first line = name, second line = job title
-    const resumeLines = state.tailoredResume.split('\n').map(l => l.trim()).filter(Boolean);
-    let autoFilename = 'Resume_Tailored.doc';
-    if (resumeLines.length >= 2) {
-      // Convert ALL CAPS name to Title_Case for filename
-      const rawName   = resumeLines[0].replace(/[^a-zA-Z\s]/g, '').trim();
-      const namePart  = rawName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('_');
-      const rawTitle  = resumeLines[1].replace(/[^a-zA-Z\s]/g, '').trim();
-      const titlePart = rawTitle.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('_');
-      if (namePart && titlePart) autoFilename = `${namePart}_${titlePart}.doc`;
-      else if (namePart)         autoFilename = `${namePart}_Resume.doc`;
-    }
-    const filename = autoFilename;
-    state.filename = filename;
-    // Always use auto-generated filename (from name + title in resume) — never Claude's suggestion
-    document.getElementById('suggestedFilename').textContent = filename;
-    document.getElementById('filenameReason').textContent =
-      'ATS systems and recruiters sort by filename. Using FirstName_LastName_RoleTitle.doc ensures immediate identification and avoids generic filenames.';
+  const resumeLines = (resumeText || '').split('\n').map(l => l.trim()).filter(Boolean);
+  let autoFilename = 'Resume_Tailored.doc';
+  if (resumeLines.length >= 2) {
+    const rawName = resumeLines[0].replace(/[^a-zA-Z\s]/g, '').trim();
+    const namePart = rawName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('_');
+    const rawTitle = resumeLines[1].replace(/[^a-zA-Z\s]/g, '').trim();
+    const titlePart = rawTitle.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('_');
+    if (namePart && titlePart) autoFilename = `${namePart}_${titlePart}.doc`;
+    else if (namePart) autoFilename = `${namePart}_Resume.doc`;
+  }
+  state.filename = autoFilename;
+  document.getElementById('suggestedFilename').textContent = autoFilename;
+  document.getElementById('filenameReason').textContent =
+    'ATS systems and recruiters sort by filename. Using FirstName_LastName_RoleTitle.doc ensures immediate identification and avoids generic filenames.';
 
-    // ── DONE ──────────────────────────────────────────────────
-    setProgress(100, `✅ Complete — ATS Score: ${atsScore}/100 · ${kwMatch}/10 keywords`, 'Powered by Google Gemini 2.5 Flash Lite');
-    await delay(1000);
+  state.atsScore = atsScore;
+  state.scorecard = sc;
+  return derived;
+}
+
+async function extractKeywordsFromJd(jd) {
+  const kwRaw = await callClaude(buildKeywordPrompt(jd), 0.3, 512);
+  let keywords = { primary: [], secondary: [] };
+  try {
+    const match = kwRaw.match(/\{[\s\S]*\}/);
+    const parsed = match ? JSON.parse(match[0]) : {};
+    keywords.primary = Array.isArray(parsed.primary) ? parsed.primary.slice(0, 10) : [];
+    keywords.secondary = Array.isArray(parsed.secondary) ? parsed.secondary.slice(0, 10) : [];
+    if (keywords.primary.length === 0) throw new Error('bad parse');
+  } catch {
+    const flat = kwRaw.replace(/[\[\]{}'"]/g, '').split(',').map(k => k.trim()).filter(Boolean);
+    keywords.primary = flat.slice(0, 10);
+    keywords.secondary = flat.slice(10, 20);
+  }
+  return keywords;
+}
+
+async function scoreResumeText(resumeText, jd, keywords) {
+  const scorecardRaw = await callClaude(buildScorecardPrompt(resumeText, jd, keywords), 0.1, 4096);
+  let sc = {};
+  try {
+    const match = scorecardRaw.match(/\{[\s\S]*\}/);
+    sc = match ? JSON.parse(match[0]) : {};
+  } catch {
+    sc = {};
+  }
+  return sc;
+}
+
+// ─── STEP A: ATS CHECK (before tailor) ────────────────────────────
+async function runAtsCheck() {
+  const online = await refreshAdminSession();
+  if (!online) {
+    showToast('Admin session offline — sign in at /admin/login', '#dc2626');
+    return;
+  }
+
+  const jd = document.getElementById('jdInput').value.trim();
+  const resume = document.getElementById('resumeInput').value.trim();
+
+  if (!jd) { showToast('⚠️ Please paste a Job Description', '#ef4444'); return; }
+  if (!resume) { showToast('⚠️ Please paste your Resume', '#ef4444'); return; }
+
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('tailorBtn').classList.add('hidden');
+  document.getElementById('boostBtn').classList.add('hidden');
+  document.getElementById('scoreSection').classList.add('hidden');
+  document.getElementById('resultsSection').classList.add('hidden');
+  document.getElementById('progressSection').classList.remove('hidden');
+  setLoading('Calling Gemini AI...');
+  setStep(2);
+
+  try {
+    setProgress(10, 'Extracting top 20 ATS keywords via Gemini AI...', 'Analyzing job description...');
+    setLoading('Extracting keywords...');
+    const keywords = await extractKeywordsFromJd(jd);
+    state.keywords = keywords;
+    setProgress(35, `✓ Extracted ${keywords.primary.length} primary + ${keywords.secondary.length} secondary keywords`, 'Keywords extracted successfully');
+
+    await delay(200);
+    setProgress(55, 'Scoring the ORIGINAL resume (before any rewrite)...', 'Gemini AI evaluating ATS alignment...');
+    setStep(3);
+    setLoading('Scoring original resume...');
+
+    const sc = await scoreResumeText(resume, jd, keywords);
+    state.scoredResume = resume;
+    state.tailoredResume = '';
+    state.phase = 'scored';
+
+    const { atsScore, kwMatch, primaryTotal } = renderScorecardTabs(
+      sc,
+      keywords,
+      resume,
+      `ATS Score (original resume)`,
+    );
+    updateAtsGateBanner(atsScore, 'scored');
+
+    // Show results with current resume text so downloads work even when tailor is skipped
+    const outputEl = document.getElementById('outputArea');
+    outputEl.textContent = resume;
+    outputEl.classList.remove('streaming-cursor');
+    document.getElementById('resultsSection').classList.remove('hidden');
+
+    setProgress(100, `✅ ATS Score: ${atsScore}/100 · ${kwMatch}/${primaryTotal} keywords`, 'Score complete — tailor only if below ' + ATS_TAILOR_THRESHOLD);
+    await delay(600);
     document.getElementById('progressSection').classList.add('hidden');
     stopLoading();
+
     document.getElementById('analyzeBtn').classList.add('hidden');
     document.getElementById('rerunBtn').classList.remove('hidden');
     document.getElementById('analyzeBtn').disabled = false;
-    setStep(5);
-    showToast(`✅ Done! ATS Score: ${atsScore}/100 · ${kwMatch}/${primaryTotal} keywords matched`);
 
-    // Show Boost button if score is below 90
-    if (atsScore < 90) {
-      document.getElementById('boostBtn').classList.remove('hidden');
+    if (atsScore < ATS_TAILOR_THRESHOLD) {
+      document.getElementById('tailorBtn').classList.remove('hidden');
+      document.getElementById('tailorBtn').disabled = false;
+      setStep(4);
+      showToast(`ATS ${atsScore}/100 — below ${ATS_TAILOR_THRESHOLD}. Analyse & Tailor is available.`, '#f59e0b');
     } else {
+      document.getElementById('tailorBtn').classList.add('hidden');
       document.getElementById('boostBtn').classList.add('hidden');
+      setStep(5);
+      showToast(`ATS ${atsScore}/100 — already ≥${ATS_TAILOR_THRESHOLD}. No tailor required.`);
     }
-
   } catch (err) {
-    // Show error inside outputArea — preserves the tab structure and download buttons
     document.getElementById('resultsSection').classList.remove('hidden');
     document.getElementById('outputArea').innerHTML = `
       <div class="error-box">
@@ -1628,21 +1631,141 @@ async function runAnalysis() {
     stopLoading();
     document.getElementById('analyzeBtn').disabled = false;
     document.getElementById('analyzeBtn').classList.remove('hidden');
+    document.getElementById('tailorBtn').classList.add('hidden');
     document.getElementById('rerunBtn').classList.add('hidden');
     document.getElementById('progressSection').classList.add('hidden');
     showToast('❌ ' + err.message.slice(0, 80), '#ef4444');
   }
 }
 
+// ─── STEP B: ANALYSE & TAILOR (only when ATS < threshold) ─────────
+async function runAnalyseAndTailor() {
+  const online = await refreshAdminSession();
+  if (!online) {
+    showToast('Admin session offline — sign in at /admin/login', '#dc2626');
+    return;
+  }
+
+  const jd = document.getElementById('jdInput').value.trim();
+  const resume = document.getElementById('resumeInput').value.trim();
+  const keywords = state.keywords;
+
+  if (!jd || !resume) {
+    showToast('⚠️ JD and Resume are required', '#ef4444');
+    return;
+  }
+  if (!keywords?.primary?.length) {
+    showToast('⚠️ Run Check ATS Score first', '#ef4444');
+    return;
+  }
+  if (state.atsScore != null && state.atsScore >= ATS_TAILOR_THRESHOLD) {
+    showToast(`ATS already ≥${ATS_TAILOR_THRESHOLD} — tailor not required`, '#22c55e');
+    return;
+  }
+
+  const tailorBtn = document.getElementById('tailorBtn');
+  tailorBtn.disabled = true;
+  document.getElementById('boostBtn').classList.add('hidden');
+  document.getElementById('progressSection').classList.remove('hidden');
+  setLoading('Tailoring resume...');
+  setStep(4);
+
+  try {
+    const detectedRoles = extractRolesFromResume(resume);
+    const roleCountMsg = detectedRoles.length > 0
+      ? `Detected ${detectedRoles.length} roles — all will be preserved...`
+      : 'Rewriting all sections...';
+    setProgress(40, 'Rewriting resume for ATS alignment...', roleCountMsg);
+
+    const tailoredResume = await callClaude(buildRewritePrompt(jd, resume, keywords), 0.7, 6000);
+    state.tailoredResume = tailoredResume;
+    state.scoredResume = tailoredResume;
+    state.phase = 'tailored';
+
+    const outputEl = document.getElementById('outputArea');
+    outputEl.textContent = '';
+    outputEl.classList.add('streaming-cursor');
+    document.getElementById('resultsSection').classList.remove('hidden');
+    setProgress(65, '✓ Resume rewritten · Rendering output...', 'Streaming to display...');
+
+    const chunkSize = 30;
+    for (let i = 0; i < tailoredResume.length; i += chunkSize) {
+      outputEl.textContent += tailoredResume.slice(i, i + chunkSize);
+      outputEl.scrollTop = outputEl.scrollHeight;
+      await delay(8);
+    }
+    outputEl.classList.remove('streaming-cursor');
+
+    const outputRoles = extractRolesFromResume(tailoredResume);
+    const outputLineCount = tailoredResume.split('\n').filter(l => l.trim()).length;
+    const inputLineCount = resume.split('\n').filter(l => l.trim()).length;
+    const rolesDropped = detectedRoles.length > 0 && outputRoles.length < detectedRoles.length;
+    const outputTooShort = outputLineCount < Math.max(15, inputLineCount * 0.35);
+
+    if (rolesDropped) {
+      const missing = detectedRoles.length - outputRoles.length;
+      showToast(
+        `⚠️ ${missing} role(s) may be missing in output (detected ${detectedRoles.length}, got ${outputRoles.length}). Click "Start Over" and try again.`,
+        '#ef4444'
+      );
+    } else if (outputTooShort) {
+      showToast('⚠️ Output seems short — check all roles are present. Try again if needed.', '#f59e0b');
+    }
+
+    await delay(200);
+    setProgress(80, 'Re-scoring tailored resume...', 'Gemini AI evaluating alignment...');
+    setLoading('Scoring tailored resume...');
+
+    const sc = await scoreResumeText(tailoredResume, jd, keywords);
+    const { atsScore, kwMatch, primaryTotal } = renderScorecardTabs(
+      sc,
+      keywords,
+      tailoredResume,
+      'ATS Score (after tailor)',
+    );
+    updateAtsGateBanner(atsScore, 'tailored');
+
+    setProgress(100, `✅ Tailor complete — ATS Score: ${atsScore}/100 · ${kwMatch}/${primaryTotal} keywords`, 'Powered by Google Gemini 2.5 Flash Lite');
+    await delay(800);
+    document.getElementById('progressSection').classList.add('hidden');
+    stopLoading();
+    tailorBtn.classList.add('hidden');
+    tailorBtn.disabled = false;
+    document.getElementById('rerunBtn').classList.remove('hidden');
+    setStep(5);
+    showToast(`✅ Tailored! ATS Score: ${atsScore}/100 · ${kwMatch}/${primaryTotal} keywords matched`);
+
+    if (atsScore < ATS_TAILOR_THRESHOLD) {
+      document.getElementById('boostBtn').classList.remove('hidden');
+    } else {
+      document.getElementById('boostBtn').classList.add('hidden');
+    }
+  } catch (err) {
+    stopLoading();
+    tailorBtn.disabled = false;
+    tailorBtn.classList.remove('hidden');
+    document.getElementById('progressSection').classList.add('hidden');
+    showToast('❌ ' + err.message.slice(0, 80), '#ef4444');
+  }
+}
+
+// Kept for any leftover onclick references
+async function runAnalysis() {
+  return runAtsCheck();
+}
+
 // ─── RESET & RUN ──────────────────────────────────────────────────
 function resetAndRun() {
   // Reset state
-  state = { keywords: [], tailoredResume: '', scorecard: null, gaps: [], filename: '' };
+  state = { keywords: [], tailoredResume: '', scorecard: null, gaps: [], filename: '', atsScore: null, scoredResume: '', phase: 'idle' };
 
   // Hide result panels
   document.getElementById('scoreSection').classList.add('hidden');
   document.getElementById('resultsSection').classList.add('hidden');
   document.getElementById('progressSection').classList.add('hidden');
+  document.getElementById('atsGateBanner')?.classList.add('hidden');
+  document.getElementById('boostBtn')?.classList.add('hidden');
+  document.getElementById('tailorBtn')?.classList.add('hidden');
 
   // Swap buttons
   document.getElementById('analyzeBtn').classList.remove('hidden');
@@ -1688,7 +1811,7 @@ function clearAll() {
 // ─── BOOST TO 100 ─────────────────────────────────────────────────
 async function boostScore() {
   if (!state.tailoredResume || !state.keywords?.primary?.length) {
-    showToast('⚠️ No tailored resume to boost. Run analysis first.', '#ef4444');
+    showToast('⚠️ Tailor the resume first, then boost.', '#ef4444');
     return;
   }
 
@@ -1707,7 +1830,7 @@ async function boostScore() {
   const bulletsMetrics   = sc.bulletsWithMetrics|| 0;
   const bulletsNeedFix   = bulletsTotal - bulletsMetrics;
 
-  const boostPrompt = `You are a precision ATS resume editor. The resume below has already been tailored but scored below 90/100. Your ONLY job is to fix the EXACT gaps listed — nothing else.
+  const boostPrompt = `You are a precision ATS resume editor. The resume below has already been tailored but scored below ${ATS_TAILOR_THRESHOLD}/100. Your ONLY job is to fix the EXACT gaps listed — nothing else.
 
 DO NOT restructure the resume. DO NOT rewrite sections that are already passing. Make the minimum targeted edits needed to reach 100/100.
 
@@ -1796,7 +1919,7 @@ OUTPUT: The fixed resume only. Start with the candidate's name on line 1.`;
     const atsScore2    = Math.min(100, kwPts2 + secPts2 + metricPts2 + summaryPts2 + fmtPts2 + secCompPts2);
 
     // Update score tiles
-    const atsColour2 = atsScore2 >= 90 ? 'green' : atsScore2 >= 70 ? 'yellow' : 'red';
+    const atsColour2 = atsScore2 >= ATS_TAILOR_THRESHOLD ? 'green' : atsScore2 >= 70 ? 'yellow' : 'red';
     document.getElementById('atsScore').textContent = atsScore2 + '/100';
     document.getElementById('atsScore').className   = 'score-value ' + atsColour2;
     document.getElementById('kwMatch').textContent  = kwMatch2 + '/' + primaryTotal;
@@ -1808,7 +1931,7 @@ OUTPUT: The fixed resume only. Start with the candidate's name on line 1.`;
 
     // Update scorecard tab
     const scDiv2 = document.getElementById('scorecardContent');
-    const atsScoreClass2 = atsScore2 >= 90 ? 'sc-green' : atsScore2 >= 70 ? 'sc-yellow' : 'sc-red';
+    const atsScoreClass2 = atsScore2 >= ATS_TAILOR_THRESHOLD ? 'sc-green' : atsScore2 >= 70 ? 'sc-yellow' : 'sc-red';
     const secFound2 = (sc2.secondaryFound || []).length;
     const bulletsScore2 = sc2.bulletsWithMetrics != null
       ? (sc2.bulletsTotal != null ? `${sc2.bulletsWithMetrics} of ${sc2.bulletsTotal} bullets` : `${sc2.bulletsWithMetrics} bullets`)
@@ -1886,12 +2009,15 @@ OUTPUT: The fixed resume only. Start with the candidate's name on line 1.`;
     document.getElementById('progressSection').classList.add('hidden');
     stopLoading();
 
-    // Hide boost button if now ≥ 90, keep visible if still needs work
-    if (atsScore2 >= 90) {
+    // Hide boost button if now ≥ threshold, keep visible if still needs work
+    if (atsScore2 >= ATS_TAILOR_THRESHOLD) {
       boostBtn.classList.add('hidden');
     }
     boostBtn.disabled = false;
     boostBtn.textContent = '🎯 Boost to 100';
+    state.atsScore = atsScore2;
+    state.scorecard = sc2;
+    updateAtsGateBanner(atsScore2, 'tailored');
 
     showToast(`🎯 Boost done! ATS Score: ${atsScore2}/100 · ${kwMatch2}/${primaryTotal} keywords matched`);
 
@@ -2021,7 +2147,7 @@ function parseResumeToHtml(text) {
 
 // ─── DOCX DOWNLOAD ────────────────────────────────────────────────
 function downloadDocx() {
-  const content = state.tailoredResume || document.getElementById('outputArea').textContent;
+  const content = state.tailoredResume || state.scoredResume || document.getElementById('outputArea').textContent;
   if (!content.trim()) { showToast('⚠️ No resume to download yet', '#ef4444'); return; }
   const resumeHtml = parseResumeToHtml(content);
   const filename = (state.filename || 'tailored_resume.docx').replace(/\.txt$/i, '.docx');
@@ -2136,7 +2262,7 @@ function downloadDocx() {
 
 // ─── DOWNLOADS ────────────────────────────────────────────────────
 function downloadTxt() {
-  const text = state.tailoredResume || document.getElementById('outputArea').textContent;
+  const text = state.tailoredResume || state.scoredResume || document.getElementById('outputArea').textContent;
   if (!text.trim()) { showToast('⚠️ No resume to download yet', '#ef4444'); return; }
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
   const a = document.createElement('a');
@@ -2147,26 +2273,27 @@ function downloadTxt() {
 }
 
 function copyToClipboard() {
-  const text = state.tailoredResume || document.getElementById('outputArea').textContent;
+  const text = state.tailoredResume || state.scoredResume || document.getElementById('outputArea').textContent;
   navigator.clipboard.writeText(text).then(() => showToast('📋 Copied! Paste into Word or Google Docs'));
 }
 
 function printResume() {
-  const content = state.tailoredResume || document.getElementById('outputArea').textContent;
+  const content = state.tailoredResume || state.scoredResume || document.getElementById('outputArea').textContent;
   if (!content.trim()) { showToast('⚠️ No resume to print yet', '#ef4444'); return; }
   const resumeHtml = parseResumeToHtml(content);
 
-  // Build full HTML as a Blob URL — avoids "about:blank" in footer
-  // Empty <title> removes filename from Chrome header
-  const printFilename = (state.filename || 'Resume').replace(/\.doc$/i, '');
+  // Print via a same-origin hidden iframe (not a blob: URL) with an empty <title>
+  // so Chrome/Edge do not stamp the resume filename or blob URL into the page header/footer.
+  // Users should also leave "Headers and footers" unchecked in the print dialog
+  // to hide the browser date and page numbers.
   const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>${printFilename}</title>
+  <title></title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    html, body {
       font-family: Calibri, Arial, sans-serif;
       font-size: 11pt;
       color: #111111;
@@ -2243,19 +2370,14 @@ function printResume() {
     .r-skill-line { margin: 0 0 4px 0; color: #222222; line-height: 1.5; font-family: Calibri, Arial, sans-serif; font-size: 10.5pt; }
     .r-skill-label { color: #111111; font-weight: 700; }
 
-    /* ── PRINT STYLES ── */
     @media print {
-      html, body { margin: 0; padding: 0; background: #fff; }
+      html, body { margin: 0; padding: 0; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .page { padding: 0; max-width: 100%; }
 
-      /* Standard page size and content margins */
       @page {
         size: letter portrait;
-        margin: 0.65in 0.75in 0.75in 0.75in;
+        margin: 0.6in 0.7in;
       }
-
-      /* Chrome/Edge: suppress running header & footer using named strings */
-      @page { margin-top: 0.65in; margin-bottom: 0.65in; }
 
       .r-section { page-break-after: avoid; }
       .r-role    { page-break-after: avoid; }
@@ -2264,25 +2386,42 @@ function printResume() {
 </head>
 <body>
   <div class="page">${resumeHtml}</div>
-  <script>
-    // Use blob URL so Chrome shows a blob:// URL not "about:blank" in footer
-    // Empty title ensures filename is NOT shown in header
-    window.addEventListener('load', function() {
-      window.focus();
-      setTimeout(function() { window.print(); }, 250);
-    });
-  <\/script>
 </body>
 </html>`;
 
-  // Open as blob URL — Chrome shows "blob:..." which is blank in print header
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const win  = window.open(url, '_blank');
-  // Revoke the blob URL after the window has loaded
-  if (win) {
-    win.addEventListener('load', () => setTimeout(() => URL.revokeObjectURL(url), 5000));
-  }
+  const existing = document.getElementById('resumePrintFrame');
+  if (existing) existing.remove();
+
+  const iframe = document.createElement('iframe');
+  iframe.id = 'resumePrintFrame';
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+  document.body.appendChild(iframe);
+
+  const frameWindow = iframe.contentWindow;
+  const frameDoc = frameWindow.document;
+  frameDoc.open();
+  frameDoc.write(html);
+  frameDoc.close();
+
+  const cleanup = () => {
+    setTimeout(() => {
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+    }, 800);
+  };
+
+  frameWindow.addEventListener('afterprint', cleanup);
+
+  setTimeout(() => {
+    try {
+      frameWindow.focus();
+      frameWindow.print();
+      showToast('Print tip: turn off “Headers and footers” for a clean PDF (no date / page numbers)');
+    } catch (err) {
+      cleanup();
+      showToast('⚠️ Print failed — try Download .doc instead', '#ef4444');
+    }
+  }, 300);
 }
 
 function copyFilename() {
