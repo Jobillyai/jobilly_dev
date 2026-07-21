@@ -1,6 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const file = path.join(__dirname, "..", "public", "resume_dashboard.html");
+const target =
+  process.argv[2] ||
+  path.join(__dirname, "..", "public", "resume_dashboard.html");
+const file = path.isAbsolute(target)
+  ? target
+  : path.join(process.cwd(), target);
 let text = fs.readFileSync(file, "utf8");
 
 const start = text.indexOf("<style>");

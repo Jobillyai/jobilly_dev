@@ -160,3 +160,106 @@ export async function geminiGenerateJson(input: {
     status: lastStatus,
   };
 }
+
+/** Free-text Gemini generation (resume rewrite, etc.). */
+export async function geminiGenerateText(input: {
+  prompt: string;
+  models?: readonly string[];
+  temperature?: number;
+  maxOutputTokens?: number;
+  timeoutMs?: number;
+}): Promise<
+  | { text: string; model: string; endpoint: string }
+  | { error: string; status?: number }
+> {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    return { error: "GEMINI_API_KEY is not configured." };
+  }
+
+  const models = input.models ?? DEFAULT_MODELS;
+  let lastStatus: number | undefined;
+  let lastDetail = "";
+
+  for (const model of models) {
+    const generationConfig: Record<string, unknown> = {
+      temperature: input.temperature ?? 0.3,
+      maxOutputTokens: input.maxOutputTokens ?? 8192,
+    };
+    if (model.startsWith("gemini-2.5")) {
+      generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    }
+
+    for (const url of geminiUrls(model, apiKey)) {
+      const controller = new AbortController();
+      const timer = setTimeout(
+        () => controller.abort(),
+        input.timeoutMs ?? 90_000,
+      );
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: input.prompt }] }],
+            generationConfig,
+          }),
+        });
+
+        if (!response.ok) {
+          lastStatus = response.status;
+          lastDetail = (await response.text()).slice(0, 240);
+          console.error(
+            `Gemini text request failed (${response.status}, ${model}):`,
+            lastDetail,
+          );
+          continue;
+        }
+
+        const body = (await response.json()) as GeminiResponse;
+        if (body.error?.message) {
+          lastStatus = body.error.code ?? 500;
+          lastDetail = body.error.message;
+          console.error(`Gemini text payload error (${model}):`, body.error);
+          continue;
+        }
+
+        const text = extractResponseText(body);
+        if (!text) {
+          lastStatus = 500;
+          lastDetail = "Empty Gemini response.";
+          continue;
+        }
+
+        return { text, model, endpoint: url.split("?")[0] ?? url };
+      } catch (error) {
+        lastStatus = error instanceof Error && error.name === "AbortError" ? 408 : 500;
+        lastDetail =
+          error instanceof Error ? error.message : "Could not reach Gemini.";
+        console.error(`Gemini text fetch error (${model}):`, lastDetail);
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  }
+
+  if (lastStatus === 429) {
+    return { error: "Gemini is rate-limited. Retry in a minute.", status: 429 };
+  }
+  if (lastStatus === 401 || lastStatus === 403) {
+    return {
+      error:
+        "Gemini API key was rejected. Enable Generative Language API on the Google Cloud project or use a valid AI Studio key.",
+      status: lastStatus,
+    };
+  }
+
+  return {
+    error: lastDetail
+      ? `Gemini generation failed (${lastStatus ?? "unknown"}): ${lastDetail}`
+      : "Gemini generation failed. Check GEMINI_API_KEY and API access.",
+    status: lastStatus,
+  };
+}

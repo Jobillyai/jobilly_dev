@@ -41,154 +41,83 @@
     }
 
     header {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      background: rgba(255, 255, 255, 0.82);
-      backdrop-filter: blur(14px);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--card-border);
-      padding: 14px 28px;
+      padding: 18px 28px;
       display: flex;
       align-items: center;
-      gap: 18px;
-      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.05);
+      gap: 16px;
+      box-shadow: var(--shadow);
     }
-    header .brand {
+    header .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #fff;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 8px 18px rgba(81, 112, 255, 0.18);
       display: flex;
       align-items: center;
-      gap: 14px;
-      min-width: 0;
+      justify-content: center;
     }
-    header .logoImg {
-      height: 36px;
-      width: auto;
-      display: block;
+    header .logo img {
+      width: 100%;
+      height: 100%;
       object-fit: contain;
-    }
-    header .brandText {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-    header .brandEyebrow {
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--accent);
+      display: block;
     }
     header h1 {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 800;
       letter-spacing: -0.03em;
       color: var(--ink);
-      line-height: 1.15;
     }
-    header p {
-      font-size: 13px;
-      color: var(--ink-muted);
-      margin-top: 0;
+    header .brand-word {
+      background: linear-gradient(90deg, var(--brand), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
-    header .headerRight {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-    }
+    header p { font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
 
     .container { max-width: 1200px; margin: 0 auto; padding: 28px 20px 48px; }
 
-    .heroStrip {
-      margin-bottom: 20px;
-      padding: 18px 20px;
-      border-radius: 18px;
-      border: 1px solid rgba(56, 182, 255, 0.22);
-      background:
-        linear-gradient(135deg, rgba(56, 182, 255, 0.12), rgba(81, 112, 255, 0.08)),
-        rgba(255, 255, 255, 0.7);
-      box-shadow: var(--shadow);
-    }
-    .heroStrip strong {
-      display: block;
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: var(--ink);
-      margin-bottom: 4px;
-    }
-    .heroStrip span {
-      font-size: 13px;
-      color: var(--ink-muted);
-      line-height: 1.5;
-    }
-
-    .steps {
-      --step-count: 5;
+    /* Connected progress flow */
+    .steps-track {
       --current-step: 1;
       position: relative;
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(5, 1fr);
       gap: 0;
       margin-bottom: 28px;
-      padding: 18px 12px 14px;
-      border-radius: 18px;
-      border: 1px solid var(--card-border);
-      background: rgba(255, 255, 255, 0.88);
-      box-shadow: var(--shadow);
-      overflow: visible;
+      padding: 8px 4px 4px;
     }
-    .steps::before {
+    .steps-track::before {
       content: "";
       position: absolute;
       left: 10%;
       right: 10%;
-      top: 36px;
+      top: 26px;
       height: 3px;
       border-radius: 999px;
-      background: #e8edf5;
+      background: #e2e8f0;
       z-index: 0;
     }
-    .steps-progress {
-      position: absolute;
-      left: 10%;
-      top: 36px;
-      height: 3px;
-      width: calc((100% - 20%) * ((var(--current-step) - 1) / (var(--step-count) - 1)));
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--brand), var(--accent), #22c55e);
-      background-size: 200% 100%;
-      z-index: 1;
-      transition: width 0.65s cubic-bezier(0.22, 1, 0.36, 1);
-      animation: progressShimmer 2.2s linear infinite;
-      box-shadow: 0 0 12px rgba(56, 182, 255, 0.45);
-    }
-    .steps-progress::after {
+    .steps-track::after {
       content: "";
       position: absolute;
-      right: -7px;
-      top: 50%;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--accent);
-      transform: translateY(-50%);
-      box-shadow: 0 0 0 4px rgba(56, 182, 255, 0.22), 0 0 16px rgba(56, 182, 255, 0.55);
-      animation: progressPulse 1.4s ease-in-out infinite;
-    }
-    @keyframes progressShimmer {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 200% 50%; }
-    }
-    @keyframes progressPulse {
-      0%, 100% { transform: translateY(-50%) scale(1); opacity: 1; }
-      50% { transform: translateY(-50%) scale(1.18); opacity: 0.85; }
-    }
-    @keyframes stepArrive {
-      0% { transform: scale(0.86); }
-      60% { transform: scale(1.08); }
-      100% { transform: scale(1); }
+      left: 10%;
+      top: 26px;
+      height: 3px;
+      border-radius: 999px;
+      width: calc((var(--current-step) - 1) / 4 * 80%);
+      background: linear-gradient(90deg, var(--brand), var(--accent));
+      z-index: 1;
+      transition: width 0.45s ease;
+      box-shadow: 0 0 12px rgba(56, 182, 255, 0.45);
     }
     .step {
       position: relative;
@@ -196,29 +125,31 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-      text-align: center;
+      gap: 10px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
       padding: 0 6px;
-      color: var(--ink-muted);
       font-size: 12px;
-      font-weight: 600;
-      line-height: 1.25;
-      transition: color 0.35s ease;
+      font-weight: 700;
+      color: var(--ink-muted);
+      text-align: center;
+      transition: color 0.25s ease;
     }
     .step-num {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: #fff;
       color: var(--ink-muted);
-      border: 2px solid #dbe3ef;
+      border: 2px solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-      transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
     }
     .step.active {
       color: var(--ink);
@@ -226,9 +157,10 @@
     .step.active .step-num {
       background: linear-gradient(135deg, var(--brand), var(--accent));
       border-color: transparent;
-      color: #0c1018;
-      box-shadow: 0 0 0 5px rgba(56, 182, 255, 0.18), 0 10px 22px rgba(56, 182, 255, 0.28);
-      animation: stepArrive 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      color: #fff;
+      transform: scale(1.08);
+      box-shadow: 0 8px 20px rgba(81, 112, 255, 0.35);
+      animation: stepPulse 1.6s ease-in-out infinite;
     }
     .step.done {
       color: var(--success);
@@ -237,46 +169,18 @@
       background: var(--success);
       border-color: transparent;
       color: #fff;
-      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
     }
-    .step.done .step-num::before {
-      content: "✓";
-      font-size: 14px;
-      font-weight: 800;
-      line-height: 1;
+    .step-label { line-height: 1.25; max-width: 110px; }
+    @keyframes stepPulse {
+      0%, 100% { box-shadow: 0 8px 20px rgba(81, 112, 255, 0.3); }
+      50% { box-shadow: 0 8px 28px rgba(56, 182, 255, 0.55); }
     }
-    .step.done .step-num {
-      font-size: 0;
-    }
-    .step-label {
-      max-width: 110px;
-    }
-    @media (max-width: 720px) {
-      .steps {
-        padding: 14px 8px 12px;
-      }
-      .steps::before,
-      .steps-progress {
-        left: 8%;
-        right: 8%;
-        top: 32px;
-      }
-      .steps-progress {
-        left: 8%;
-        width: calc((100% - 16%) * ((var(--current-step) - 1) / (var(--step-count) - 1)));
-      }
-      .step {
-        font-size: 10px;
-        gap: 6px;
-      }
-      .step-num {
-        width: 28px;
-        height: 28px;
-        font-size: 11px;
-      }
-      .step-label {
-        max-width: 72px;
-      }
+    @media (max-width: 700px) {
+      .steps-track { grid-template-columns: 1fr; gap: 14px; padding-left: 12px; }
+      .steps-track::before,
+      .steps-track::after { display: none; }
+      .step { flex-direction: row; justify-content: flex-start; text-align: left; gap: 12px; }
+      .step-label { max-width: none; }
     }
 
     .grid-2 {
@@ -290,19 +194,9 @@
     .card {
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 20px;
+      border-radius: var(--radius);
+      padding: 18px;
       box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
-    }
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--brand), var(--accent));
-      opacity: 0.9;
     }
     .card-title {
       font-size: 11px;
@@ -310,7 +204,7 @@
       color: var(--accent);
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       display: flex; align-items: center; gap: 8px;
     }
 
@@ -336,42 +230,80 @@
     textarea::placeholder { color: #9aa3b5; }
 
     .action-bar {
-      display: flex; gap: 10px; align-items: center;
+      display: flex; gap: 12px; align-items: center;
       margin-bottom: 20px; flex-wrap: wrap;
     }
     button {
-      cursor: pointer; border: none; border-radius: 10px;
+      cursor: pointer; border: none; border-radius: 999px;
       font-family: var(--font);
       font-size: 13px; font-weight: 700;
-      padding: 11px 18px; transition: all 0.15s;
+      padding: 12px 20px; transition: all 0.18s ease;
+      letter-spacing: -0.01em;
     }
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #6ecfff);
-      color: #0c1018;
-      box-shadow: 0 10px 22px rgba(56, 182, 255, 0.3);
+      background: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(81, 112, 255, 0.32);
     }
-    .btn-primary:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(56, 182, 255, 0.38);
+    }
     .btn-secondary {
-      background: var(--elevated);
+      background: #fff;
       color: var(--ink-secondary);
       border: 1px solid var(--card-border);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
     }
     .btn-secondary:hover {
       background: var(--accent-soft);
-      border-color: rgba(56,182,255,0.35);
+      border-color: rgba(56,182,255,0.4);
       color: var(--ink);
     }
-    .btn-success { background: var(--success); color: #fff; }
-    .btn-success:hover { filter: brightness(1.05); }
-    .btn-warning { background: var(--warning); color: #fff; }
-    .btn-warning:hover { filter: brightness(1.05); }
+    .btn-success {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(16, 185, 129, 0.28);
+    }
+    .btn-success:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .btn-warning {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(217, 119, 6, 0.25);
+    }
+    .btn-warning:hover { filter: brightness(1.05); transform: translateY(-1px); }
     .btn-danger {
-      background: var(--elevated);
+      background: #fff;
       color: var(--danger);
-      border: 1px solid rgba(220, 38, 38, 0.3);
+      border: 1px solid rgba(220, 38, 38, 0.28);
     }
     .btn-danger:hover { background: var(--danger-soft); }
-    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; filter: none !important; }
+
+    .api-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--success-soft);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 12px; color: var(--success); font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .api-badge.is-offline {
+      background: var(--danger-soft);
+      border-color: rgba(220, 38, 38, 0.28);
+      color: var(--danger);
+    }
+    .api-dot {
+      width: 8px; height: 8px; background: var(--success);
+      border-radius: 50%; animation: pulse 2s infinite;
+    }
+    .api-badge.is-offline .api-dot {
+      background: var(--danger);
+      animation: none;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
     .score-grid {
       display: grid;
@@ -490,20 +422,6 @@
 
     .char-count { font-size: 11px; color: var(--ink-muted); text-align: right; margin-top: 4px; }
 
-    .api-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--success-soft);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 12px; color: var(--success); font-weight: 700;
-    }
-    .api-dot {
-      width: 8px; height: 8px; background: var(--success);
-      border-radius: 50%; animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-
     .streaming-cursor::after {
       content: '▋'; animation: blink 1s infinite; color: var(--accent);
     }
@@ -550,61 +468,39 @@
       font-size: 13px;
       line-height: 1.7;
     }
-
-    @media (max-width: 720px) {
-      header {
-        flex-wrap: wrap;
-        padding: 14px 16px;
-      }
-      header .logoImg { height: 30px; }
-      header h1 { font-size: 18px; }
-      header .headerRight { margin-left: 0; width: 100%; }
-      .heroStrip { padding: 14px 16px; }
-    }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="brand">
-    <img
-      class="logoImg"
-      src="/brand/jobilly-logo-arrow-name.png"
-      alt="Jobilly.ai"
-      draggable="false"
-    />
-    <div class="brandText">
-      <div class="brandEyebrow">Jobilly admin</div>
-      <h1>Resume dashboard</h1>
-      <p>ATS-aligned rewrites with Gemini</p>
-    </div>
+  <div class="logo" aria-hidden="true">
+    <img src="/brand/jobilly-mark-arrow.png" alt="" width="44" height="44" />
   </div>
-  <div class="headerRight">
-    <div class="api-badge"><div class="api-dot"></div> Gemini AI Connected</div>
+  <div style="flex:1;">
+    <h1>ATS Resume Tailoring</h1>
+    <p>Powered by <span class="brand-word">Jobilly.ai</span> · Keyword extract · Rewrite · Score · Download</p>
+  </div>
+  <div class="api-badge is-offline" id="sessionBadge" aria-live="polite">
+    <div class="api-dot"></div>
+    <span id="sessionBadgeLabel">Offline</span>
   </div>
 </header>
 
 <div class="container">
 
-  <div class="heroStrip">
-    <strong>Tailor a resume to the job in a few steps</strong>
-    <span>Paste the JD and resume, run the Gemini pipeline, then download a Word-ready file.</span>
-  </div>
-
-  <!-- STEP INDICATORS -->
-  <div class="steps" id="stepsTrack" style="--current-step: 1">
-    <div class="steps-progress" id="stepsProgress" aria-hidden="true"></div>
+  <!-- STEP FLOW -->
+  <div class="steps-track" id="stepsTrack" style="--current-step: 1">
     <div class="step active" id="step1">
       <div class="step-num">1</div>
       <span class="step-label">Paste Inputs</span>
     </div>
     <div class="step" id="step2">
       <div class="step-num">2</div>
-      <span class="step-label">AI Keyword Extraction</span>
+      <span class="step-label">Keyword Extraction</span>
     </div>
     <div class="step" id="step3">
       <div class="step-num">3</div>
-      <span class="step-label">AI Resume Rewrite</span>
+      <span class="step-label">Resume Rewrite</span>
     </div>
     <div class="step" id="step4">
       <div class="step-num">4</div>
@@ -621,27 +517,27 @@
     <div class="card">
       <div class="card-title">📋 Job Description</div>
       <textarea id="jdInput" placeholder="Paste the full job description here...&#10;&#10;Include: role title, responsibilities, required skills, preferred skills, tools, certifications..."></textarea>
-      <div class="char-count"><span id="jdCount">0</span> characters</div>
+      <div class="char-count"><span id="jdCount">0</span> chars · <span id="jdWords">0</span> words</div>
     </div>
     <div class="card">
       <div class="card-title">👤 Your Resume</div>
       <textarea id="resumeInput" placeholder="Paste your resume here as plain text...&#10;&#10;Include: name, contact, all roles, education, certifications, skills, projects..."></textarea>
-      <div class="char-count"><span id="resumeCount">0</span> characters</div>
+      <div class="char-count"><span id="resumeCount">0</span> chars · <span id="resumeWords">0</span> words</div>
     </div>
   </div>
 
   <!-- ACTION BAR -->
   <div class="action-bar">
     <button class="btn-primary" id="analyzeBtn" onclick="runAnalysis()">
-      🚀 Analyze &amp; Tailor Resume (AI)
+      Analyze &amp; Tailor Resume
     </button>
     <button class="btn-warning hidden" id="rerunBtn" onclick="resetAndRun()">
-      🔄 New JD / Resume
+      Start Over
     </button>
-    <button class="btn-danger" onclick="clearAll()">🗑 Clear All</button>
-    <div id="loadingIndicator" class="hidden" style="display:flex;align-items:center;gap:8px;">
+    <button class="btn-danger" onclick="clearAll()">Clear All</button>
+    <div id="loadingIndicator" class="hidden" style="align-items:center;gap:8px;">
       <span class="spinner"></span>
-      <span id="loadingText" style="font-size:13px;color:#94a3b8;">Processing...</span>
+      <span id="loadingText" style="font-size:13px;color:var(--ink-muted);">Processing...</span>
     </div>
   </div>
 
@@ -650,7 +546,7 @@
     <div class="card-title" style="margin-bottom:12px;">⚙️ AI Processing Pipeline</div>
     <div id="progressLabel" style="font-size:13px;color:#94a3b8;margin-bottom:6px;">Initializing...</div>
     <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
-    <div style="font-size:11px;color:#475569;margin-top:6px;" id="progressSub">Sending to gemini-3.5-flash...</div>
+    <div style="font-size:11px;color:#475569;margin-top:6px;" id="progressSub">Sending to gemini-flash-lite-latest...</div>
   </div>
 
   <!-- SCORE CARDS -->
@@ -664,17 +560,17 @@
       <div class="score-card">
         <div class="score-label">Keywords Matched</div>
         <div class="score-value blue" id="kwMatch">--</div>
-        <div class="score-sub">of 10 primary keywords</div>
+        <div class="score-sub" id="kwMatchSub">of 10 primary keywords</div>
       </div>
       <div class="score-card">
         <div class="score-label">Format Check</div>
-        <div class="score-value green" id="fmtCheck">--</div>
+        <div class="score-value green" id="fmtCheck" style="font-size:22px;">--</div>
         <div class="score-sub">ATS-safe formatting</div>
       </div>
       <div class="score-card">
         <div class="score-label">Confidence</div>
-        <div class="score-value yellow" id="confScore">--</div>
-        <div class="score-sub">Iteration quality</div>
+        <div class="score-value yellow" id="confScore" style="font-size:22px;">--</div>
+        <div class="score-sub">Resume-JD alignment</div>
       </div>
     </div>
   </div>
@@ -697,6 +593,7 @@
         <button class="btn-secondary" onclick="downloadTxt()">⬇ Download .txt</button>
         <button class="btn-secondary" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
         <button class="btn-secondary" onclick="printResume()">🖨 Print / Save PDF</button>
+        <button class="btn-warning hidden" id="boostBtn" onclick="boostScore()">🎯 Boost to 100</button>
       </div>
     </div>
 
@@ -743,9 +640,7 @@
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────
-const GEMINI_API_KEY = ''; // paste your Gemini API key locally — do not commit secrets
-const GEMINI_MODEL   = 'gemini-3.5-flash';
-const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+// Gemini calls go through /api/admin/resume-dashboard/generate (server uses GEMINI_API_KEY).
 
 // ─── STATE ────────────────────────────────────────────────────────
 let state = {
@@ -757,11 +652,15 @@ let state = {
 };
 
 // ─── CHAR COUNTERS ────────────────────────────────────────────────
+function wordCount(s) { return s.trim() ? s.trim().split(/\s+/).length : 0; }
+
 document.getElementById('jdInput').addEventListener('input', function() {
   document.getElementById('jdCount').textContent = this.value.length.toLocaleString();
+  document.getElementById('jdWords').textContent = wordCount(this.value).toLocaleString();
 });
 document.getElementById('resumeInput').addEventListener('input', function() {
   document.getElementById('resumeCount').textContent = this.value.length.toLocaleString();
+  document.getElementById('resumeWords').textContent = wordCount(this.value).toLocaleString();
 });
 
 // ─── HELPERS ──────────────────────────────────────────────────────
@@ -786,6 +685,57 @@ function setStep(n) {
   }
 }
 
+// ─── ADMIN SESSION BADGE (Online only when admin is logged in) ────
+let adminOnline = false;
+
+function setSessionBadge(online) {
+  adminOnline = online;
+  const badge = document.getElementById('sessionBadge');
+  const label = document.getElementById('sessionBadgeLabel');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  if (!badge || !label) return;
+
+  badge.classList.toggle('is-offline', !online);
+  label.textContent = online ? 'Online' : 'Offline';
+
+  if (analyzeBtn && !analyzeBtn.classList.contains('hidden')) {
+    analyzeBtn.disabled = !online;
+    analyzeBtn.title = online
+      ? ''
+      : 'Admin login required. Sign in at /admin/login';
+  }
+}
+
+async function refreshAdminSession() {
+  try {
+    const res = await fetch('/api/admin/resume-dashboard/session', {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    const data = await res.json().catch(() => ({}));
+    const online = res.ok && data.online === true;
+    setSessionBadge(online);
+    return online;
+  } catch {
+    setSessionBadge(false);
+    return false;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    void refreshAdminSession();
+  }
+});
+window.addEventListener('focus', () => {
+  void refreshAdminSession();
+});
+void refreshAdminSession();
+setInterval(() => {
+  void refreshAdminSession();
+}, 15000);
+
 function setProgress(pct, label, sub = '') {
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressLabel').textContent = label;
@@ -794,11 +744,15 @@ function setProgress(pct, label, sub = '') {
 
 function setLoading(text) {
   document.getElementById('loadingText').textContent = text;
-  document.getElementById('loadingIndicator').style.display = 'flex';
+  const el = document.getElementById('loadingIndicator');
+  el.classList.remove('hidden');
+  el.style.display = 'flex';
 }
 
 function stopLoading() {
-  document.getElementById('loadingIndicator').style.display = 'none';
+  const el = document.getElementById('loadingIndicator');
+  el.style.display = '';
+  el.classList.add('hidden');
 }
 
 function switchTab(name, btn) {
@@ -808,29 +762,25 @@ function switchTab(name, btn) {
   if (btn) btn.classList.add('active');
 }
 
-// ─── GEMINI API CALL ──────────────────────────────────────────────
-async function callClaude(prompt, temperature = 0.3, maxTokens = 16000) {
-  const body = {
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: temperature,
-      maxOutputTokens: maxTokens
-    }
-  };
-
-  const res = await fetch(GEMINI_URL, {
+// ─── GEMINI API CALL (server proxy — uses env GEMINI_API_KEY) ─────
+async function callClaude(prompt, temperature = 0.3, maxTokens = 4096) {
+  const res = await fetch('/api/admin/resume-dashboard/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    credentials: 'same-origin',
+    body: JSON.stringify({
+      prompt,
+      temperature,
+      maxOutputTokens: Math.min(maxTokens, 16384),
+    }),
   });
 
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `Gemini API error ${res.status}`);
+    throw new Error(data?.error?.message || data?.error || `Gemini API error ${res.status}`);
   }
 
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return data.text || '';
 }
 
 // ─── PROMPTS ──────────────────────────────────────────────────────
@@ -864,9 +814,208 @@ Return format:
 }`;
 }
 
+// ─── UNIVERSAL ROLE EXTRACTOR ────────────────────────────────────
+// Handles ANY resume format:
+//   Format A  — "Company | Title | Jan 2022 - Present | City"  (pipe-delimited, one line)
+//   Format B  — Company on line 1, "Title | Jan 2022 – Present" on line 2
+//   Format C  — Company line 1, Title line 2, "Jan 2022 – Present" line 3
+//   Format D  — "Company, Title (Jan 2022 – Present)"           (comma/parens)
+//   Format E  — "Title at Company — 2022 to Present"            (narrative)
+//   Format F  — "Company  Jan 2022 – Present" (tab / wide space)
+//   Format G  — LinkedIn export: Company / Title / Date+duration / Location (4 lines)
+//   Format H  — Dates only (no months): "2020 – 2022"           (year-range)
+// Strategy: anchor on DATE LINES (lines with a parseable date range), then look
+// up to 2 prior non-bullet lines to find the company/title context.
+function extractRolesFromResume(resumeText) {
+  const rawLines = resumeText.split('\n').map(l => l.trim());
+
+  // ── helpers ────────────────────────────────────────────────
+  // True if line looks like a resume bullet (accomplishment)
+  const isBullet = l => /^[-•*·◦▸▶>]/.test(l) || /^\d+[.)]\s/.test(l);
+
+  // True if line is a known section header
+  const EXP_HDR  = /^(EXPERIENCE|WORK EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT(?: HISTORY)?|CAREER(?: HISTORY)?|WORK HISTORY)$/i;
+  const STOP_HDR = /^(EDUCATION|ACADEMIC|CERTIF|PROJECT|SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES|SUMMARY|PROFESSIONAL SUMMARY|OBJECTIVE|PROFILE|PUBLICATIONS|AWARDS|VOLUNTEER|REFERENCES|LANGUAGE|INTEREST)/i;
+
+  // A date line must contain a 4-digit year AND one of:
+  //   a) a month name / abbreviation
+  //   b) "present" / "current" / "now" / "today"
+  //   c) a year-range pattern like "2020-2023" or "2020–Present"
+  const MONTH    = /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i;
+  const PRESENT  = /\b(present|current|now|today|ongoing)\b/i;
+  const YR_RANGE = /\b(19|20)\d{2}\s*[-–—\/to]+\s*((19|20)\d{2}|present|current|now|today|ongoing)\b/i;
+  const YEAR     = /\b(19|20)\d{2}\b/;
+
+  function isDateLine(l) {
+    if (!YEAR.test(l)) return false;
+    return MONTH.test(l) || PRESENT.test(l) || YR_RANGE.test(l);
+  }
+
+  // Strip LinkedIn "· 2 yrs 3 mos" style duration suffixes
+  function cleanDateLine(l) {
+    return l.replace(/[·•]\s*\d+\s*(yr|year|mo|month|mos|yrs|wk|week)[s]?(\s*\d+\s*(yr|year|mo|month|mos|yrs|wk|week)[s]?)?\s*/gi, '').trim();
+  }
+
+  // True if the line looks like a company/job-title (not a date line, not a bullet,
+  // not a section header, not contact info, has enough real words)
+  function isContextLine(l) {
+    if (!l || l.length < 3 || l.length > 120) return false;
+    if (isBullet(l)) return false;
+    if (isDateLine(l)) return false;
+    if (EXP_HDR.test(l) || STOP_HDR.test(l)) return false;
+    if (/[@]/.test(l) && /\.\w{2,4}$/.test(l)) return false; // email
+    if (/^\+?\d[\d\s\-().]{6,}$/.test(l)) return false;       // phone
+    if (/^https?:\/\/|^www\.|linkedin\.com/i.test(l)) return false; // URL
+    return true;
+  }
+
+  // ── pass 1: find experience section boundaries ─────────────
+  // Collect indices of all non-empty lines; note section changes
+  const nonEmpty = rawLines
+    .map((text, idx) => ({ text, idx }))
+    .filter(l => l.text.length > 0);
+
+  let expStart = -1;
+  let expEnd   = nonEmpty.length;
+
+  for (let i = 0; i < nonEmpty.length; i++) {
+    const t = nonEmpty[i].text;
+    if (expStart === -1 && EXP_HDR.test(t))  { expStart = i + 1; continue; }
+    if (expStart !== -1 && STOP_HDR.test(t)) { expEnd = i; break; }
+  }
+
+  // If no EXPERIENCE header found, scan the whole document (skip first 6 lines = contact area)
+  const scanLines = expStart === -1
+    ? nonEmpty.slice(6)
+    : nonEmpty.slice(expStart, expEnd);
+
+  // ── pass 2: find date-bearing lines = role anchors ─────────
+  const roles = [];
+
+  for (let i = 0; i < scanLines.length; i++) {
+    const cur = scanLines[i].text;
+    if (!isDateLine(cur)) continue;                // skip non-date lines
+    if (cur.includes('@')) continue;               // skip email lines with years
+
+    const datePart = cleanDateLine(cur);
+
+    // Look back up to 2 context lines to find company/title
+    // Collect up to 2 prior non-bullet, non-date, non-header lines
+    const context = [];
+    for (let j = i - 1; j >= 0 && context.length < 2; j--) {
+      const prev = scanLines[j].text;
+      if (!isContextLine(prev)) break;             // stop at bullet / header / blank
+      context.unshift(prev);                       // prepend (keep order: company first)
+    }
+
+    // Build the label from context + date
+    let label;
+    if (context.length === 0) {
+      // Date on same line as company/title (pipe / comma / narrative format)
+      label = datePart;
+    } else if (context.length === 1) {
+      // "Company\nDate" or "Title\nDate" — one context line above the date
+      label = context[0] + ' | ' + datePart;
+    } else {
+      // "Company\nTitle\nDate" (LinkedIn / multi-line format) — two context lines
+      label = context[0] + ' | ' + context[1] + ' | ' + datePart;
+    }
+
+    // Deduplicate: skip if we already captured a role from the same context lines
+    const alreadyHave = roles.some(r =>
+      context.length > 0
+        ? r.includes(context[0])
+        : r === label
+    );
+    if (!alreadyHave) roles.push(label);
+  }
+
+  return roles;
+}
+
+// ─── CONTACT FIELD EXTRACTOR ─────────────────────────────────────
+// Extracts email, phone, and LinkedIn URL from the raw resume text.
+// These are injected as LITERAL VALUES into the prompt so the AI
+// cannot hallucinate or alter them regardless of resume length.
+function extractContactFields(resumeText) {
+  const lines = resumeText.split('\n').map(l => l.trim()).filter(Boolean);
+
+  let email    = '';
+  let phone    = '';
+  let linkedin = '';
+  let location = '';
+
+  // Scan first 20 lines — contact info is always near the top
+  const headerLines = lines.slice(0, 20).join(' ');
+
+  // Email: standard RFC-compliant pattern
+  const emailMatch = headerLines.match(/\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/);
+  if (emailMatch) email = emailMatch[0];
+
+  // Phone: international or domestic formats
+  // +91-9876543210 / +1 (555) 555-5555 / 9876543210 / (555) 555-5555
+  const phoneMatch = headerLines.match(/(?:\+?\d{1,3}[\s\-.]?)?(?:\(?\d{3}\)?[\s\-.]?)?\d{3}[\s\-.]?\d{4,}/);
+  if (phoneMatch) {
+    // Ensure it's not just a year (4 digits alone)
+    const p = phoneMatch[0].replace(/\s+/g, ' ').trim();
+    if (p.replace(/\D/g, '').length >= 7) phone = p;
+  }
+
+  // LinkedIn URL: match any linkedin.com/... URL (with or without https://, with or without /in/ path)
+  // Scan line-by-line first for an exact URL, then fall back to the joined header string
+  const linkedinLineMatch = lines.slice(0, 20).join('\n')
+    .match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/[^\s|,<>\]"')]+/i);
+  if (linkedinLineMatch) linkedin = linkedinLineMatch[0].replace(/[.,;:]+$/, '');
+
+  // Location: scan only the first 5 lines (contact header area) for a standalone location token.
+  // A location token is: City, ST  /  City, State  /  ST  /  City, ST, Country
+  // It must appear AFTER a pipe (|) or on its own line — explicitly NOT inside an experience role line.
+  // We stop before the EXPERIENCE / PROFESSIONAL EXPERIENCE section header.
+  const contactOnlyLines = lines.slice(0, 5);
+  for (const line of contactOnlyLines) {
+    // Skip lines that look like experience entries (contain a year range or company/title pattern)
+    if (/\b(19|20)\d{2}\b/.test(line)) continue;
+    // Skip lines that are section headers
+    if (/^(SUMMARY|SKILLS|EXPERIENCE|EDUCATION|CERTIFICATIONS|PROFESSIONAL EXPERIENCE)/i.test(line)) continue;
+
+    // Try to find a location segment after a pipe separator
+    const pipeParts = line.split('|').map(s => s.trim());
+    for (const part of pipeParts) {
+      // Match: "City, ST" / "City, State" / "City, ST, Country" / bare state abbreviation (2 letters)
+      if (/^[A-Za-z][A-Za-z\s]+,\s*[A-Z]{2}(,\s*[A-Za-z]+)?$/.test(part) ||
+          /^[A-Z]{2}$/.test(part)) {
+        location = part;
+        break;
+      }
+    }
+    if (location) break;
+  }
+
+  return { email, phone, linkedin, location };
+}
+
 function buildRewritePrompt(jd, resume, keywords) {
   const primary   = keywords.primary   || keywords;
   const secondary = keywords.secondary || [];
+
+  // Extract role inventory client-side — inject as a mandatory manifest into the prompt
+  const roleList = extractRolesFromResume(resume);
+  const roleManifest = roleList.length > 0
+    ? `MANDATORY ROLE INVENTORY — YOU MUST OUTPUT ALL ${roleList.length} OF THESE ROLES IN THE EXPERIENCE SECTION:\n` +
+      roleList.map((r, i) => `  ${i + 1}. ${r}`).join('\n') +
+      `\n\nIf you do not see all ${roleList.length} roles in your output before finishing, go back and add the missing ones.`
+    : '';
+
+  // Extract contact fields client-side — inject as LOCKED LITERAL VALUES
+  const cf = extractContactFields(resume);
+  const contactLockBlock = [
+    `LOCKED CONTACT VALUES — copy these character-for-character into the contact header. DO NOT alter, abbreviate, or replace any of them:`,
+    cf.email    ? `  Email   : ${cf.email}`    : `  Email   : [copy email exactly as written in the original resume]`,
+    cf.phone    ? `  Phone   : ${cf.phone}`    : `  Phone   : [copy phone exactly as written in the original resume]`,
+    cf.linkedin ? `  LinkedIn: ${cf.linkedin}` : `  LinkedIn: [NONE — the master resume contains NO LinkedIn. Do NOT add, construct, or infer any LinkedIn URL. Omit LinkedIn from the contact header entirely.]`,
+    cf.location ? `  Location: ${cf.location}` : `  Location: [NONE — the master resume contact header contains NO location field. Do NOT add any city, state, or country to the contact header line. Do NOT use location tokens from experience role lines.]`,
+  ].join('\n');
+
   return `You are a human resume writer — a real career coach who has helped 10,000+ professionals land jobs at top companies. You write resumes that pass ATS machines AND make hiring managers stop scrolling and say "I want to meet this person."
 
 Your single most important job: make this resume sound like a real human wrote it about their real career — not like an AI optimized a document.
@@ -882,8 +1031,14 @@ BEFORE YOU WRITE — think through these 5 questions:
 RULE 1 — INTEGRITY (non-negotiable)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - NEVER invent experience, companies, degrees, certifications, or skills not in the original resume
+- INCLUDE EVERY SINGLE ROLE from the original resume — if the master resume has 4 jobs, the output MUST have all 4 jobs; if it has 6 jobs, output all 6 — DO NOT drop, skip, merge, or omit any role under any circumstances
 - Keep ALL original roles, companies, dates, and education — only rewrite the language
 - If a metric is missing, estimate conservatively based on typical industry benchmarks — never fabricate a specific number without basis
+
+PERSONAL DETAILS INTEGRITY RULE — the values below are pre-extracted from the master resume and are LOCKED:
+${contactLockBlock}
+- Full name: copy EXACTLY as written (output it in ALL CAPS as instructed, but spelling must not change)
+- These fields are READ-ONLY. Do NOT change, correct, abbreviate, or invent any part of them.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RULE 2 — HUMAN VOICE (most important quality rule)
@@ -927,19 +1082,16 @@ Good example:  "Cut customer onboarding time from 14 days to 3 by redesigning th
 Bad example:   "Responsible for improving onboarding process which resulted in better customer satisfaction"
 
 - Front-load the most impressive word or number — recruiters scan the first 3 words of each bullet
-- 3-5 bullets per role — quality over quantity
-- Every bullet needs at least one concrete number (count, days, scale, rank, dollar amount)
-- BANNED metric formats — never use any of these, even reworded:
-  ✗ Percentages: "reduced by 40%", "99.9% uptime", "95% resolution rate"
-  ✗ Uptime figures: "99.9 uptime", "99% availability" — replace with actual counts or durations (e.g. "zero unplanned outages across 200 endpoints over 6 months")
-  ✗ Disguised percentages: "95-of-100", "9 of every 10", "4 out of 5" — these are still percentages in disguise
-  ✗ Fractional scores: "4.8/5", "9/10"
-- ALLOWED metric formats — use these instead:
+- 4-6 bullets per role — enough to cover metrics AND keywords for every role
+- Every bullet needs at least one concrete number (count, %, time, scale, dollar amount)
+- PREFERRED metric formats (use variety across bullets):
   ✓ Counts: "resolved 47 incidents", "across 200 endpoints", "15 deployments per month"
+  ✓ Percentages: "reduced by 40%", "cut effort by 30%", "improved coverage from 65% to 90%" — percentages ARE allowed and encouraged as metrics
   ✓ Time saved: "cut deployment time from 4 hours to 15 minutes", "eliminated 8 hours of manual work weekly"
   ✓ Scale: "across 75 branch locations", "supporting 25 users", "12 applications"
   ✓ Dollar impact: "$2M cost savings", "within $50K budget"
-  ✓ SLA durations: "within 2-hour SLA windows" — this is a duration, allowed
+  ✓ SLA durations: "within 2-hour SLA windows"
+- GOAL: every single bullet must have at least one metric — target 100% of bullets with a measurable result
 - Mix impact types: speed, cost, quality, scale, team, revenue
 - Every bullet MUST end with a full stop (period ".")
 - SPELLING: never write "Troubleshot" — use "Diagnosed and resolved", "Resolved", "Investigated and fixed", or another correct past-tense verb
@@ -956,30 +1108,44 @@ Never write "strong communicator" or "team player" in a bullet. Instead, prove i
 RULE 6 — ATS COMPLIANCE (technical, not visible to humans)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONTACT HEADER — exact order, ATS parses top-to-bottom:
-   Line 1: FULL NAME IN ALL CAPS
-   Line 2: Target Job Title (exact title from JD)
-   Line 3: Phone | Email | LinkedIn URL | City, State
+   Line 1: FULL NAME IN ALL CAPS (name from original resume, do not change spelling)
+   Line 2: Professional title/headline from the original resume — copy it EXACTLY as written in the master resume (e.g. if the master says "Python Backend Engineer | AI & LLM Integration Engineer", write that). Do NOT substitute the JD job title here. Do NOT invent or change the title.
+   Line 3: Build this line using ONLY the fields that are present in LOCKED CONTACT VALUES — omit any field marked NONE. Separator is " | ". Order: Phone | Email | LinkedIn (only if present) | Location (only if present)
    Line 4: (blank)
+   CRITICAL: use the exact Email and Phone from the LOCKED CONTACT VALUES block above — not what you think the email might be
 
-LINKEDIN URL RULE (critical):
-- If the original resume contains a LinkedIn URL (e.g. linkedin.com/in/username), copy it exactly as-is
-- If the original resume only has the word "LinkedIn" or "Linkedin" with no URL, write: linkedin.com/in/[firstname-lastname] using the candidate's actual name
-- NEVER write just the word "LinkedIn" — always write the full URL starting with linkedin.com/in/
+LOCATION INTEGRITY RULE (critical — never fabricate location):
+- Copy the location EXACTLY as it appears in the original resume — every token, every comma, every abbreviation
+- If the original has only a City (e.g. "Austin") → write only "Austin" — do NOT add a state or country
+- If the original has only a State (e.g. "TX") → write only "TX" — do NOT invent a city
+- If the original has City + State (e.g. "Austin, TX") → write "Austin, TX" — do NOT add or remove anything
+- If the original has City + State + Country (e.g. "Austin, TX, USA") → write "Austin, TX, USA" — keep the country
+- If the original has City + Country (e.g. "Austin, USA") → write "Austin, USA"
+- NEVER add, remove, guess, or rearrange any location token not explicitly present in the original resume
+- Apply this same rule to every EXPERIENCE role line and to the contact header — no exceptions
+
+LINKEDIN INTEGRITY RULE (critical — mirror master exactly):
+- If the master resume contains a LinkedIn URL → copy it character-for-character into the contact header
+- If the master resume contains only the word "LinkedIn" or "Linkedin" with no URL → write: linkedin.com/in/firstname-lastname using the candidate's actual name
+- If the master resume contains NO LinkedIn at all (locked value says NONE) → omit LinkedIn from the contact header entirely. Do NOT construct, guess, or infer a URL.
+- NEVER add a LinkedIn field that does not exist in the master resume
 
 SECTION HEADERS — ALL CAPS, in this exact order:
    SUMMARY → SKILLS → EXPERIENCE → PROJECTS → EDUCATION → CERTIFICATIONS
 
 FORMATTING:
 - Bullet marker: hyphen (-)
-- Dates: MMM YYYY - MMM YYYY  (e.g. Mar 2021 - Present)
+- Experience dates: MMM YYYY - MMM YYYY  (e.g. Mar 2021 - Present)
+- Education dates: copy the date token-for-token from the original — if no start date exists, do NOT invent one
 - Plain text only — no tables, columns, icons, bold, italics, or special Unicode
 - Single column layout throughout
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RULE 7 — KEYWORD EMBEDDING (invisible to humans, critical for ATS)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Every PRIMARY keyword must appear 2-3 times across Summary + Skills + Experience bullets
-- Every SECONDARY keyword must appear at least once
+- Every PRIMARY keyword MUST appear in the SKILLS section (under the correct sub-label) AND at least 1-2 more times naturally across Summary + Experience bullets — minimum 2 appearances total
+- Every SECONDARY keyword must appear at least once anywhere in the resume
+- Before finishing, go through all 10 primary keywords one by one and confirm each is in SKILLS — if any is missing from SKILLS, add it to the most relevant sub-label
 - Keywords must flow naturally inside sentences — never dumped in a list, never forced
 - Test: if a keyword feels out of place when reading aloud, rewrite the sentence
 
@@ -993,19 +1159,48 @@ SUMMARY (3-4 sentences — this is your 10-second pitch):
 - S4: What you uniquely bring to THIS role/company (reference something specific from the JD)
 
 SKILLS — use EXACTLY these 4 sub-labels, no others:
-   Technical Skills: [hard skills, languages, frameworks]
-   Tools & Platforms: [software, cloud, databases, devtools]
-   Methodologies: [Agile, Scrum, SDLC, etc.]
-   Soft Skills: [only 3-4 — the ones most relevant to the JD, demonstrated in bullets]
-   DO NOT use "Core Competencies", "Key Skills", "Competencies" or any other label — ONLY the 4 above
+   Technical Skills: comma-separated exact hard skills from the original resume that match the JD first; put the strongest and most ATS-critical keywords in the first 8 items
+   Tools & Platforms: comma-separated software, cloud, databases, devtools using exact product names from the resume/JD overlap
+   Methodologies: comma-separated methods such as Agile, Scrum, SDLC, ITIL, CI/CD only when supported by the original resume
+   Core Competencies: exactly 3-4 concise items most relevant to the JD and supported by the experience bullets
+   Keep each sub-label on its own single line in this exact label format
+   DO NOT use "Soft Skills", "Key Skills", "Competencies" or any other label — ONLY the 4 above
 
-EXPERIENCE (for each role):
-   Company Name | Job Title | MMM YYYY - MMM YYYY | City, State
+EXPERIENCE (MANDATORY — include ALL roles):
+- COUNT the number of roles in the original resume before writing. Output the EXACT same number of roles.
+- If the original has 4 roles → output 4 roles. If it has 6 → output 6. No exceptions.
+- DO NOT drop any role to save space or improve narrative flow
+
+For each role, use this exact format:
+   Company Name | Job Title | MMM YYYY - MMM YYYY | [location]
+   (copy location token-for-token from the original resume for that role: City only / State only / City+State / City+State+Country — whatever the master has, nothing more, nothing less)
    - [bullet]
    - [bullet]
+
+EXPERIENCE INTEGRITY — these fields are READ-ONLY, copy token-for-token from the master resume:
+- Company Name: copy EXACTLY — do NOT abbreviate, expand, or rename
+- Job Title: copy EXACTLY as written in the master resume for that role — do NOT substitute the JD job title, do NOT reword (e.g. if master says "Software Engineer Analyst", write "Software Engineer Analyst" — not "Software Engineer" or the JD title)
+- Dates: reformat to MMM YYYY - MMM YYYY for ATS consistency (e.g. "January 2024 – December 2024" → "Jan 2024 - Dec 2024") but do NOT change the actual start/end months or years
+- Location: copy token-for-token (already covered above)
+
+EDUCATION:
+- Copy EVERY education entry from the original resume — degree, institution, field of study, GPA, and the date EXACTLY as written
+- MIRROR THE DATE TOKEN-FOR-TOKEN — no additions, no inventions:
+  * If the original has "2019 - 2023" → write "2019 - 2023"
+  * If the original has "Aug 2019 - May 2023" → write "Aug 2019 - May 2023"
+  * If the original has only "Graduated: May 2025" or "May 2025" → write ONLY that — do NOT invent a start year
+  * If the original has only a single year like "2023" → write only "2023" — do NOT add a start year
+- NEVER construct a date range if no start date exists in the original — fabricating "2019 - 2025" from "May 2025" is a critical integrity violation
+- Do NOT reformat, abbreviate, or drop any part of the education date
+- GPA: if present in the original resume, copy it EXACTLY (e.g. "GPA: 3.8 / 4.0") — do NOT omit, round, or alter it; if NOT present, do NOT add it
 
 CERTIFICATIONS:
-- Include ONLY certifications that exist in the original resume — listed as: Certification Name | Issuing Body | Year
+- Include ONLY certifications that exist in the original resume
+- Copy each certification EXACTLY as written in the master resume — including only the fields that are present
+- If the master resume lists a certification WITHOUT a year, copy it WITHOUT a year — do NOT invent or add a year
+- If the master resume lists a certification WITH a year, copy it WITH that exact year
+- Format: copy the format from the master — do NOT force "Certification Name | Issuing Body | Year" if that data is not all present
+- If the original resume has NO certifications, OMIT the CERTIFICATIONS section entirely — do NOT write "None listed", "N/A", "None", or any placeholder
 - DO NOT suggest, recommend, or mention certifications the candidate could pursue
 - DO NOT add placeholder lines like "AWS Certified (recommended)" or "Consider adding..."
 
@@ -1022,65 +1217,44 @@ ABSOLUTE OUTPUT RULES — violations will disqualify the output
 6. DO NOT split the resume into "Original vs Tailored" columns or sections
 7. The output must be ready to submit to a job application with zero editing required
 8. Every bullet point MUST end with a period (full stop). No exceptions.
-9. DO NOT use percentages (%) anywhere in bullet points — this includes uptime figures (99.9%), disguised ratios (95-of-100, 9 of every 10), or fractional scores (4.8/5). Use counts, durations, or dollar amounts only.
+9. Every bullet point MUST contain at least one measurable metric — counts, percentages, time saved, scale, or dollar amounts all qualify. A bullet with no number is a weak bullet.
 10. Every single line must be content a real recruiter expects to read — nothing else
 
 =======================================================
 FINAL SILENT CHECK — verify before outputting:
 =======================================================
 [ ] First line is the candidate's name only — nothing else
+[ ] Line 2 is the professional headline copied EXACTLY from the master resume — not the JD title
 [ ] Summary opens with exact JD job title
-[ ] KEYWORD AUDIT: go through all 10 primary keywords one by one — if ANY are missing, rewrite a bullet or add to skills to include it before outputting
-[ ] Every bullet has a concrete number — NO percentages, NO uptime figures (99.9%), NO disguised percentages (95-of-100, 9 of 10), NO fractional scores (4.8/5)
+[ ] ROLE COUNT CHECK: count roles in original resume → confirm same number of roles appear in output — if any are missing, add them before outputting
+[ ] EXPERIENCE JOB TITLES: every role's job title matches the master resume exactly — NOT the JD title (e.g. "Software Engineer Analyst" stays "Software Engineer Analyst")
+[ ] EXPERIENCE COMPANY NAMES: every company name copied exactly — no abbreviations or expansions
+[ ] CONTACT CHECK: email in output EXACTLY matches the locked email value "${cf.email || 'from original'}" · phone EXACTLY matches "${cf.phone || 'from original'}" — check character by character
+[ ] LinkedIn check: master resume LinkedIn is "${cf.linkedin || 'NOT PRESENT'}" — if NOT PRESENT, the contact header must contain NO LinkedIn URL whatsoever; do not construct or infer one
+[ ] KEYWORD AUDIT: go through all 10 primary keywords one by one — confirm EACH appears in the SKILLS section AND at least once in Summary or Experience; if missing from SKILLS, add it to the correct sub-label NOW before outputting
+[ ] SECONDARY KEYWORD AUDIT: go through all 10 secondary keywords — each must appear at least once anywhere in the resume; add missing ones to SKILLS or weave into a bullet
+[ ] METRICS AUDIT: count bullets with a number/metric vs total bullets — aim for 100%; any bullet without a metric must be rewritten to include one before outputting
+[ ] Location check — CONTACT HEADER: master resume location is "${cf.location || 'NOT PRESENT'}" — if NOT PRESENT, the contact header line must have NO location token at all; do not copy location from experience lines into the contact header
+[ ] Location check — EXPERIENCE LINES: every role line copies location token-for-token from master resume — no added cities, no added states, no added countries, no removed tokens
+[ ] GPA check: if master resume has a GPA, it appears in the output exactly as written — if master has no GPA, output has no GPA
+[ ] Every bullet has a concrete number — counts, percentages, time saved, dollar amounts, or scale figures all count; aim for 100% of bullets having at least one metric
 [ ] Every bullet ends with a period (full stop ".")
 [ ] No word "Troubleshot" anywhere — replaced with correct past-tense verb
 [ ] No AI phrases, no jargon soup, reads like a human wrote it
 [ ] Career arc shows upward progression
-[ ] All original companies, dates, education preserved exactly
+[ ] Education dates copied token-for-token from the original — if the master has only "Graduated: May 2025" with NO start year, the output must also have NO start year; do NOT write "2019 - 2025" or any invented range
 [ ] No suggested certifications, no commentary, no metadata
 
 PRIMARY KEYWORDS (embed 2-3x each): ${primary.join(', ')}
 SECONDARY KEYWORDS (embed at least once): ${secondary.join(', ')}
 
-JOB DESCRIPTION:
+${roleManifest ? roleManifest + '\n\n' : ''}JOB DESCRIPTION:
 ${jd}
 
 ORIGINAL RESUME (rewrite — never invent):
 ${resume}
 
 OUTPUT: The resume. Nothing else. Start with the candidate's name on line 1.`;
-}
-
-// ─── PATCH PROMPT (self-correction pass) ─────────────────────────
-function buildPatchPrompt(resume, jd, keywords, sc) {
-  const missingPrimary   = sc.keywordsMissing   || [];
-  const missingSecondary = sc.secondaryMissing  || [];
-  const gaps             = sc.gaps              || [];
-  const suggestions      = sc.improvementSuggestions || [];
-
-  return `You are a precise resume editor. A resume has already been tailored but scored ${sc.atsScore}/100 on ATS evaluation. Your job is to fix ONLY the specific gaps listed below — do not change anything else.
-
-GAPS TO FIX:
-${missingPrimary.length   ? '- Missing PRIMARY keywords (embed 2-3x each naturally): ' + missingPrimary.join(', ')   : ''}
-${missingSecondary.length ? '- Missing SECONDARY keywords (embed at least once): '     + missingSecondary.join(', ') : ''}
-${gaps.length             ? '- JD requirements not addressed:\n' + gaps.map(g => '  • ' + g).join('\n')              : ''}
-${suggestions.length      ? '- Score improvement actions:\n'     + suggestions.map(s => '  • ' + s).join('\n')       : ''}
-
-RULES FOR THIS EDIT:
-1. Output the COMPLETE resume — all sections, all roles, everything
-2. Only change the minimum number of words needed to embed missing keywords and fix gaps
-3. Every bullet must still end with a period
-4. No percentages, uptime figures, or fractional scores — use counts, durations, dollar amounts only
-5. Do not add new sections, do not invent experience, do not add commentary
-6. Start with the candidate's name on line 1 — nothing before it
-
-JOB DESCRIPTION:
-${jd}
-
-RESUME TO PATCH:
-${resume}
-
-OUTPUT: The corrected full resume. Nothing else.`;
 }
 
 function buildScorecardPrompt(tailoredResume, jd, keywords) {
@@ -1091,8 +1265,8 @@ function buildScorecardPrompt(tailoredResume, jd, keywords) {
 Think step by step:
 1. Scan the resume for each primary keyword using FUZZY matching — a keyword is FOUND if the resume contains the keyword itself OR a close synonym/variation (e.g. "tracker installation" matches "GPS tracker installation", "install trackers", "tracker installations")
 2. Scan for each secondary keyword using the same fuzzy matching
-3. Check every bullet point for a measurable result (number, %, $, time, scale)
-4. Check the summary first sentence for the exact JD job title or very close variation
+3. Check every bullet point for a measurable result — ANY of these count: a number, %, $, time duration, count, scale, ratio, or range (e.g. "30%", "$2M", "3x faster", "50,000+ users", "from 2s to 200ms" all qualify)
+4. Check the summary first sentence for the exact JD job title or very close variation — score 15 if exact/close match + 2 key skills present, 10 if job title present but weak skill coverage, 5 if vague or missing title
 5. Check formatting rules (ALL-CAPS headers, plain text, single column, no icons)
 6. Check that all required sections are present
 7. Tally the score using the rubric below — be FAIR and GENEROUS: if a concept is clearly present even in different words, count it as found
@@ -1101,34 +1275,37 @@ Think step by step:
 SCORING RUBRIC (total 100 points):
 - Primary keyword match    (40 pts): 4 pts per primary keyword found (use fuzzy match — synonyms count). Max 40.
 - Secondary keyword match  (10 pts): 1 pt per secondary keyword found (fuzzy match). Max 10.
-- Quantified achievements  (20 pts): % of bullets with any measurable result (number, %, $, time, scale, rank). Be generous — "100% compliance", "99% accuracy", "3+ years" all count. Scale to 20.
+- Quantified achievements  (20 pts): % of bullets with a measurable result — counts, percentages (e.g. "30%"), dollar amounts, time saved, scale, ratios (e.g. "3x"), ranges (e.g. "from 2s to 200ms") ALL count. Be generous. Scale to 20.
 - Summary alignment        (15 pts): Does S1 reference the JD role title and key skills? Exact match not required — close variation scores full marks.
-- Format compliance        (10 pts): Plain text, ALL-CAPS section headers, hyphen bullets, no tables/columns/icons? NOTE: Skills sub-labels ("Technical Skills:", "Tools & Platforms:", etc.) are NEVER a format violation.
+- Format compliance        (10 pts): Plain text, ALL-CAPS section headers, hyphen bullets, no tables/columns/icons? NOTE: Skills sub-labels ("Technical Skills:", "Tools & Platforms:", etc.) are NEVER a format violation when they appear as single lines under SKILLS.
 - Section completeness     ( 5 pts): SUMMARY, SKILLS, EXPERIENCE, EDUCATION all present?
+
+SCORING CONSISTENCY RULES:
+- Do not deduct points for acceptable skill label formatting or for close keyword variants that clearly match the JD intent.
+- Apply the rubric strictly — let the points tally speak for itself. Do NOT override the calculated total with a fixed floor.
 
 Return ONLY this JSON — no explanation, no markdown, no code fences:
 {
-  "atsScore": <total 0-100>,
-  "keywordMatch": <count of primary keywords found 0-10>,
+  "keywordMatch": <count of primary keywords found, integer 0-10>,
   "keywordsFound": ["<keyword>", ...],
   "keywordsMissing": ["<keyword>", ...],
   "secondaryFound": ["<keyword>", ...],
   "secondaryMissing": ["<keyword>", ...],
+  "bulletsWithMetrics": <integer — count of bullet points that contain a measurable result>,
+  "bulletsTotal": <integer — total number of bullet points in the resume>,
+  "summaryScore": <integer 0-15 — score the summary alignment: 15 if S1 contains the exact JD job title (or close variation) AND references at least 2 key skills; 10 if job title is present but skill coverage is thin; 5 if summary is vague or missing the title>,
   "formatCheck": "PASS" or "WARNING",
-  "formatIssues": ["<specific issue>", ...],
+  "formatIssues": ["<specific issue if WARNING, else empty array>"],
   "sectionCheck": "PASS" or "FAIL",
-  "missingSections": ["<section>", ...],
-  "bulletsWithMetrics": <percentage 0-100>,
+  "missingSections": ["<section name if FAIL, else empty array>"],
   "confidenceLevel": "High" or "Medium" or "Low",
   "confidenceReason": "<one concise sentence>",
-  "gaps": ["<specific JD requirement not addressed>", ...],
-  "improvementSuggestions": ["<one concrete change that would raise the score>", ...],
-  "suggestedFilename": "<FirstName_LastName_RoleTitle.docx>",
-  "filenameReason": "<one sentence why this filename helps ATS>"
+  "gaps": ["<specific JD requirement not addressed in resume>", ...],
+  "improvementSuggestions": ["<one concrete actionable change that would raise the score>", ...]
 }
 
-PRIMARY KEYWORDS (must each appear 1-3x): ${primary.join(', ')}
-SECONDARY KEYWORDS (should appear at least once): ${secondary.join(', ')}
+PRIMARY KEYWORDS (must each appear in SKILLS at least once, then naturally elsewhere as supported): ${primary.join(', ')}
+SECONDARY KEYWORDS (should appear at least once where truthful): ${secondary.join(', ')}
 
 JOB DESCRIPTION:
 ${jd}
@@ -1139,6 +1316,12 @@ ${tailoredResume}`;
 
 // ─── MAIN ANALYSIS ────────────────────────────────────────────────
 async function runAnalysis() {
+  const online = await refreshAdminSession();
+  if (!online) {
+    showToast('Admin session offline — sign in at /admin/login', '#dc2626');
+    return;
+  }
+
   const jd     = document.getElementById('jdInput').value.trim();
   const resume = document.getElementById('resumeInput').value.trim();
 
@@ -1177,12 +1360,17 @@ async function runAnalysis() {
 
     // ── STEP 2: RESUME REWRITE ────────────────────────────────
     await delay(300);
-    setProgress(40, 'Rewriting resume to 100/100 ATS alignment...', 'Gemini AI is rewriting all sections...');
+    // Pre-extract role count so we can show it in the progress bar and validate output
+    const detectedRoles = extractRolesFromResume(resume);
+    const roleCountMsg  = detectedRoles.length > 0
+      ? `Detected ${detectedRoles.length} roles — all will be preserved...`
+      : 'Rewriting all sections...';
+    setProgress(40, 'Rewriting resume to 100/100 ATS alignment...', roleCountMsg);
     setStep(3);
     setLoading('Rewriting resume...');
 
-    // temperature 0.7 → varied, human-sounding language; maxTokens 8192 → sufficient for full multi-role resume
-    const tailoredResume = await callClaude(buildRewritePrompt(jd, resume, keywords), 0.7, 8192);
+    // temperature 0.7 → varied, human-sounding language; maxTokens 6000 → safely fits all roles (4-6 jobs) without truncation
+    const tailoredResume = await callClaude(buildRewritePrompt(jd, resume, keywords), 0.7, 6000);
     state.tailoredResume = tailoredResume;
 
     // Stream output visually
@@ -1203,15 +1391,32 @@ async function runAnalysis() {
     }
     outputEl.classList.remove('streaming-cursor');
 
+    // ── ROLE COUNT GUARD ─────────────────────────────────────
+    // Compare roles in output vs roles extracted from input
+    const outputRoles = extractRolesFromResume(tailoredResume);
+    const outputLineCount = tailoredResume.split('\n').filter(l => l.trim()).length;
+    const inputLineCount  = resume.split('\n').filter(l => l.trim()).length;
+    const rolesDropped = detectedRoles.length > 0 && outputRoles.length < detectedRoles.length;
+    const outputTooShort = outputLineCount < Math.max(15, inputLineCount * 0.35);
+
+    if (rolesDropped) {
+      const missing = detectedRoles.length - outputRoles.length;
+      showToast(
+        `⚠️ ${missing} role(s) may be missing in output (detected ${detectedRoles.length}, got ${outputRoles.length}). Click "New JD / Resume" and try again.`,
+        '#ef4444'
+      );
+    } else if (outputTooShort) {
+      showToast('⚠️ Output seems short — check all roles are present. Try again if needed.', '#f59e0b');
+    }
+
     // ── STEP 3: ATS SCORING ──────────────────────────────────
     await delay(300);
-    setProgress(80, 'Running ATS scoring (pass 1)...', 'Gemini AI evaluating alignment...');
+    setProgress(80, 'Running ATS confidence scoring...', 'Gemini AI evaluating alignment...');
     setStep(4);
     setLoading('Scoring resume...');
 
     // temperature 0.1 → pure deterministic analysis for consistent scoring
-    let finalResume = tailoredResume;
-    const scorecardRaw = await callClaude(buildScorecardPrompt(finalResume, jd, keywords), 0.1, 4096);
+    const scorecardRaw = await callClaude(buildScorecardPrompt(tailoredResume, jd, keywords), 0.1, 4096);
     let sc = {};
     try {
       const match = scorecardRaw.match(/\{[\s\S]*\}/);
@@ -1219,52 +1424,45 @@ async function runAnalysis() {
     } catch {
       sc = {};
     }
-
-    // ── SELF-CORRECTION LOOP (up to 2 patch passes if score < 100) ────
-    let passCount = 1;
-    const MAX_PASSES = 2;
-    while (passCount <= MAX_PASSES && (sc.atsScore || 0) < 100 &&
-           ((sc.keywordsMissing || []).length > 0 || (sc.gaps || []).length > 0 || (sc.improvementSuggestions || []).length > 0)) {
-
-      setProgress(80 + passCount * 5, `Score ${sc.atsScore}/100 — running correction pass ${passCount}...`, `Fixing gaps: ${(sc.keywordsMissing || []).join(', ') || 'metrics & alignment'}`);
-      setLoading(`Patching resume (pass ${passCount})...`);
-
-      const patchedResume = await callClaude(buildPatchPrompt(finalResume, jd, keywords, sc), 0.4, 8192);
-      if (patchedResume && patchedResume.length > 200) {
-        finalResume = patchedResume;
-        // Update displayed resume
-        const outputEl = document.getElementById('outputArea');
-        outputEl.textContent = '';
-        const chunkSize = 40;
-        for (let i = 0; i < finalResume.length; i += chunkSize) {
-          outputEl.textContent += finalResume.slice(i, i + chunkSize);
-          await delay(5);
-        }
-      }
-
-      setProgress(80 + passCount * 5 + 3, `Re-scoring after pass ${passCount}...`, 'Gemini AI re-evaluating...');
-      setLoading('Re-scoring...');
-      const rescoreRaw = await callClaude(buildScorecardPrompt(finalResume, jd, keywords), 0.1, 4096);
-      try {
-        const m2 = rescoreRaw.match(/\{[\s\S]*\}/);
-        sc = m2 ? JSON.parse(m2[0]) : sc;
-      } catch { /* keep previous sc */ }
-
-      passCount++;
-    }
-
-    state.tailoredResume = finalResume;
     state.scorecard = sc;
 
-    // ── POPULATE SCORES ──────────────────────────────────────
-    const atsScore   = sc.atsScore || 97;
-    const kwMatch    = sc.keywordMatch || keywords.primary.length;
-    const fmtCheck   = sc.formatCheck || 'PASS';
+    // ── DERIVE CONSISTENT ATS SCORE FROM RUBRIC FIELDS ───────
+    // The AI returns individual scoring fields reliably. We recompute
+    // atsScore from them so the top score always matches the scorecard rows.
+    const kwMatch    = sc.keywordMatch != null ? Math.min(sc.keywordMatch, 10) : 0;
+    const fmtCheck   = sc.formatCheck  || 'PASS';
     const confidence = sc.confidenceLevel || 'High';
+    const primaryTotal = keywords.primary.length || 10;
+    const secTotalForScore = keywords.secondary.length || 10;
 
-    document.getElementById('atsScore').textContent   = atsScore + '/100';
-    document.getElementById('kwMatch').textContent    = kwMatch + '/10';
-    document.getElementById('fmtCheck').textContent   = fmtCheck + (fmtCheck === 'PASS' ? ' ✓' : ' ⚠');
+    // Rubric:  40 + 10 + 20 + 15 + 10 + 5 = 100
+    const kwPts       = Math.round((kwMatch / primaryTotal) * 40);                                 // 40 pts
+    const secPts      = secTotalForScore > 0
+      ? Math.round(((sc.secondaryFound?.length || 0) / secTotalForScore) * 10)
+      : 10;                                                                                         // 10 pts
+    const bTotal      = sc.bulletsTotal      || 0;
+    const bMetrics    = sc.bulletsWithMetrics != null ? sc.bulletsWithMetrics : 0;
+    const metricPts   = bTotal > 0 ? Math.round((bMetrics / bTotal) * 20) : 0;                    // 20 pts
+    const summaryPts  = (sc.summaryScore != null) ? sc.summaryScore                                // 15 pts
+                      : (confidence === 'High' ? 15 : confidence === 'Medium' ? 10 : 5);
+    const fmtPts      = fmtCheck === 'PASS' ? 10 : Math.max(0, 10 - (sc.formatIssues?.length || 1) * 3); // 10 pts
+    const secCompPts  = sc.sectionCheck === 'FAIL'
+      ? Math.max(0, 5 - (sc.missingSections?.length || 1) * 2) : 5;                               // 5 pts
+
+    const atsScore = Math.min(100, kwPts + secPts + metricPts + summaryPts + fmtPts + secCompPts);
+
+    // ATS score colour: ≥90 green, ≥70 yellow, else red
+    const atsColour = atsScore >= 90 ? 'green' : atsScore >= 70 ? 'yellow' : 'red';
+    const fmtColour = fmtCheck === 'PASS' ? 'green' : 'yellow';
+
+    const atsEl = document.getElementById('atsScore');
+    atsEl.textContent  = atsScore + '/100';
+    atsEl.className    = 'score-value ' + atsColour;
+
+    document.getElementById('kwMatch').textContent    = kwMatch + '/' + primaryTotal;
+    const fmtEl = document.getElementById('fmtCheck');
+    fmtEl.textContent  = fmtCheck + (fmtCheck === 'PASS' ? ' ✓' : ' ⚠');
+    fmtEl.className    = 'score-value ' + fmtColour;
     document.getElementById('confScore').textContent  = confidence.toUpperCase();
     document.getElementById('confScore').className    = 'score-value ' + (confidence === 'High' ? 'green' : confidence === 'Medium' ? 'yellow' : 'red');
 
@@ -1272,17 +1470,26 @@ async function runAnalysis() {
 
     // ── SCORECARD TAB ─────────────────────────────────────────
     const scDiv = document.getElementById('scorecardContent');
-    const bulletsScore = sc.bulletsWithMetrics != null ? sc.bulletsWithMetrics + '%' : 'N/A';
-    const secFound  = (sc.secondaryFound  || []).length;
-    const secTotal  = keywords.secondary.length || 10;
+    const bulletsWithMetrics = sc.bulletsWithMetrics != null ? sc.bulletsWithMetrics : null;
+    const bulletsTotal       = sc.bulletsTotal       != null ? sc.bulletsTotal       : null;
+    const bulletsScore = bulletsWithMetrics != null
+      ? (bulletsTotal != null ? `${bulletsWithMetrics} of ${bulletsTotal} bullets` : `${bulletsWithMetrics} bullets`)
+      : 'N/A';
+    const secFound = (sc.secondaryFound || []).length;
+    const secTotal = keywords.secondary.length || 10;
+    // Update header card sub-label to reflect actual keyword count
+    document.getElementById('kwMatchSub').textContent = `of ${primaryTotal} primary keywords`;
+    const atsScoreClass = atsScore >= 90 ? 'sc-green' : atsScore >= 70 ? 'sc-yellow' : 'sc-red';
     scDiv.innerHTML = `
-      <div class="scorecard-row"><span class="sc-label">ATS Score Estimate</span><span class="sc-value sc-green">${atsScore} / 100</span></div>
-      <div class="scorecard-row"><span class="sc-label">Primary Keyword Match</span><span class="sc-value sc-blue">${kwMatch} of 10 primary keywords</span></div>
-      <div class="scorecard-row"><span class="sc-label">Secondary Keyword Match</span><span class="sc-value sc-blue">${secFound} of ${secTotal} secondary keywords</span></div>
-      <div class="scorecard-row"><span class="sc-label">Bullets with Metrics</span><span class="sc-value sc-yellow">${bulletsScore} of bullets quantified</span></div>
-      <div class="scorecard-row"><span class="sc-label">Formatting Check</span><span class="sc-value ${fmtCheck === 'PASS' ? 'sc-green' : 'sc-yellow'}">${fmtCheck}</span></div>
-      <div class="scorecard-row"><span class="sc-label">Section Check</span><span class="sc-value ${sc.sectionCheck === 'PASS' ? 'sc-green' : 'sc-yellow'}">${sc.sectionCheck || 'PASS'}</span></div>
-      <div class="scorecard-row"><span class="sc-label">Confidence Level</span><span class="sc-value ${confidence === 'High' ? 'sc-green' : 'sc-yellow'}">${confidence} — ${sc.confidenceReason || 'All major JD requirements addressed'}</span></div>
+      <div class="scorecard-row"><span class="sc-label">ATS Score</span><span class="sc-value ${atsScoreClass}" style="font-size:28px;">${atsScore} / 100</span></div>
+      <div style="font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:0.8px;padding:10px 0 4px;">Score Breakdown</div>
+      <div class="scorecard-row"><span class="sc-label">Primary Keywords (40 pts max)</span><span class="sc-value sc-blue">${kwPts} pts &nbsp;·&nbsp; ${kwMatch} of ${primaryTotal} found</span></div>
+      <div class="scorecard-row"><span class="sc-label">Secondary Keywords (10 pts max)</span><span class="sc-value sc-blue">${secPts} pts &nbsp;·&nbsp; ${secFound} of ${secTotal} found</span></div>
+      <div class="scorecard-row"><span class="sc-label">Quantified Bullets (20 pts max)</span><span class="sc-value sc-yellow">${metricPts} pts &nbsp;·&nbsp; ${bulletsScore} have metrics</span></div>
+      <div class="scorecard-row"><span class="sc-label">Summary Alignment (15 pts max)</span><span class="sc-value ${summaryPts >= 13 ? 'sc-green' : summaryPts >= 8 ? 'sc-yellow' : 'sc-red'}">${summaryPts} pts</span></div>
+      <div class="scorecard-row"><span class="sc-label">Format Compliance (10 pts max)</span><span class="sc-value ${fmtCheck === 'PASS' ? 'sc-green' : 'sc-yellow'}">${fmtPts} pts &nbsp;·&nbsp; ${fmtCheck}</span></div>
+      <div class="scorecard-row"><span class="sc-label">Section Completeness (5 pts max)</span><span class="sc-value ${sc.sectionCheck === 'PASS' ? 'sc-green' : 'sc-yellow'}">${secCompPts} pts &nbsp;·&nbsp; ${sc.sectionCheck || 'PASS'}</span></div>
+      <div class="scorecard-row"><span class="sc-label">Confidence</span><span class="sc-value ${confidence === 'High' ? 'sc-green' : 'sc-yellow'}">${confidence} — ${sc.confidenceReason || 'All major JD requirements addressed'}</span></div>
       ${sc.formatIssues?.length ? `<div class="scorecard-row"><span class="sc-label">Format Notes</span><span class="sc-value sc-yellow">${sc.formatIssues.join('; ')}</span></div>` : ''}
       ${sc.missingSections?.length ? `<div class="scorecard-row"><span class="sc-label">Missing Sections</span><span class="sc-value sc-red">${sc.missingSections.join(', ')}</span></div>` : ''}
       ${sc.improvementSuggestions?.length ? `<div class="scorecard-row"><span class="sc-label">To reach 100/100</span><span class="sc-value sc-yellow">${sc.improvementSuggestions.join(' · ')}</span></div>` : ''}
@@ -1293,15 +1500,28 @@ async function runAnalysis() {
     const missing = sc.keywordsMissing || keywords.primary.slice(kwMatch);
     const kwGrid  = document.getElementById('kwGrid');
     kwGrid.innerHTML = '';
+
+    // Word-boundary-safe fuzzy match: checks if AI listed this keyword as found
+    function kwIsFound(list, kw) {
+      const kl = kw.toLowerCase();
+      return list.some(f => {
+        const fl = f.toLowerCase();
+        // exact match or one fully contains the other at word boundary
+        return fl === kl ||
+          new RegExp('(^|\\s)' + kl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)').test(fl) ||
+          new RegExp('(^|\\s)' + fl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)').test(kl);
+      });
+    }
+
     // Primary keywords
     keywords.primary.forEach(kw => {
-      const isFound = found.some(f => f.toLowerCase().includes(kw.toLowerCase()) || kw.toLowerCase().includes(f.toLowerCase()));
+      const isFound = kwIsFound(found, kw);
       const tag = document.createElement('span');
       tag.className = 'kw-tag ' + (isFound ? 'kw-match' : 'kw-miss');
       tag.textContent = (isFound ? '✓ ' : '✗ ') + kw;
       kwGrid.appendChild(tag);
     });
-    // Secondary keywords (shown with different label)
+    // Secondary keywords
     if (keywords.secondary.length > 0) {
       const divider = document.createElement('div');
       divider.style.cssText = 'width:100%;font-size:11px;color:#475569;margin-top:8px;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.8px;';
@@ -1309,7 +1529,7 @@ async function runAnalysis() {
       kwGrid.appendChild(divider);
       const secFoundList = sc.secondaryFound || [];
       keywords.secondary.forEach(kw => {
-        const isFound = secFoundList.some(f => f.toLowerCase().includes(kw.toLowerCase()) || kw.toLowerCase().includes(f.toLowerCase()));
+        const isFound = kwIsFound(secFoundList, kw);
         const tag = document.createElement('span');
         tag.className = 'kw-tag ' + (isFound ? 'kw-match' : 'kw-miss');
         tag.style.opacity = '0.8';
@@ -1317,8 +1537,10 @@ async function runAnalysis() {
         kwGrid.appendChild(tag);
       });
     }
-    document.getElementById('kwProgressBar').style.width = (kwMatch / 10 * 100) + '%';
-    document.getElementById('kwProgressLabel').textContent = kwMatch + ' of 10 primary keywords matched · ' + (sc.secondaryFound?.length || 0) + ' of ' + secTotal + ' secondary keywords matched';
+    document.getElementById('kwProgressBar').style.width = (kwMatch / primaryTotal * 100) + '%';
+    document.getElementById('kwProgressLabel').textContent =
+      kwMatch + ' of ' + primaryTotal + ' primary keywords matched · ' +
+      (sc.secondaryFound?.length || 0) + ' of ' + secTotal + ' secondary keywords matched';
 
     // ── GAPS TAB ──────────────────────────────────────────────
     const gaps = sc.gaps || missing.map(k => `"${k}" not prominently featured — add a bullet or skill entry.`);
@@ -1361,7 +1583,7 @@ async function runAnalysis() {
       'ATS systems and recruiters sort by filename. Using FirstName_LastName_RoleTitle.doc ensures immediate identification and avoids generic filenames.';
 
     // ── DONE ──────────────────────────────────────────────────
-    setProgress(100, '✅ Complete — Resume tailored to 100/100 ATS alignment', 'Powered by Google Gemini AI');
+    setProgress(100, `✅ Complete — ATS Score: ${atsScore}/100 · ${kwMatch}/10 keywords`, 'Powered by Google Gemini 2.5 Flash Lite');
     await delay(1000);
     document.getElementById('progressSection').classList.add('hidden');
     stopLoading();
@@ -1369,17 +1591,24 @@ async function runAnalysis() {
     document.getElementById('rerunBtn').classList.remove('hidden');
     document.getElementById('analyzeBtn').disabled = false;
     setStep(5);
-    showToast(`✅ Done! ATS Score: ${atsScore}/100 · ${kwMatch}/10 keywords matched`);
+    showToast(`✅ Done! ATS Score: ${atsScore}/100 · ${kwMatch}/${primaryTotal} keywords matched`);
+
+    // Show Boost button if score is below 90
+    if (atsScore < 90) {
+      document.getElementById('boostBtn').classList.remove('hidden');
+    } else {
+      document.getElementById('boostBtn').classList.add('hidden');
+    }
 
   } catch (err) {
-    document.getElementById('progressSection').classList.remove('hidden');
-    setProgress(0, '❌ Error — see details below', '');
+    // Show error inside outputArea — preserves the tab structure and download buttons
     document.getElementById('resultsSection').classList.remove('hidden');
-    document.getElementById('tab-tailored').innerHTML = `
+    document.getElementById('outputArea').innerHTML = `
       <div class="error-box">
         <strong>⚠️ Gemini API Error</strong><br><br>
         ${err.message}<br><br>
         <strong>Common fixes:</strong><br>
+        • Confirm <code>GEMINI_API_KEY</code> is set in the server environment<br>
         • Check your API key is valid at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#60a5fa;">aistudio.google.com</a><br>
         • Ensure your JD and Resume are not empty<br>
         • Try again in a few seconds (rate limit)<br>
@@ -1387,26 +1616,281 @@ async function runAnalysis() {
       </div>`;
     stopLoading();
     document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('analyzeBtn').classList.remove('hidden');
+    document.getElementById('rerunBtn').classList.add('hidden');
+    document.getElementById('progressSection').classList.add('hidden');
     showToast('❌ ' + err.message.slice(0, 80), '#ef4444');
   }
 }
 
 // ─── RESET & RUN ──────────────────────────────────────────────────
 function resetAndRun() {
+  // Reset state
+  state = { keywords: [], tailoredResume: '', scorecard: null, gaps: [], filename: '' };
+
+  // Hide result panels
   document.getElementById('scoreSection').classList.add('hidden');
   document.getElementById('resultsSection').classList.add('hidden');
+  document.getElementById('progressSection').classList.add('hidden');
+
+  // Swap buttons
   document.getElementById('analyzeBtn').classList.remove('hidden');
   document.getElementById('rerunBtn').classList.add('hidden');
+
+  // Clear inputs
   document.getElementById('jdInput').value = '';
   document.getElementById('resumeInput').value = '';
   document.getElementById('jdCount').textContent = '0';
   document.getElementById('resumeCount').textContent = '0';
+
+  // Clear output area and all tabs
+  document.getElementById('outputArea').textContent = '';
+  document.getElementById('scorecardContent').innerHTML = '';
+  document.getElementById('kwGrid').innerHTML = '';
+  document.getElementById('gapsContent').innerHTML = '';
+  document.getElementById('suggestedFilename').textContent = '';
+  document.getElementById('filenameReason').textContent = '';
+
+  // Reset score tiles to placeholder
+  document.getElementById('atsScore').textContent = '--';
+  document.getElementById('atsScore').className   = 'score-value green';
+  document.getElementById('kwMatch').textContent  = '--';
+  document.getElementById('fmtCheck').textContent = '--';
+  document.getElementById('fmtCheck').className   = 'score-value green';
+  document.getElementById('confScore').textContent = '--';
+
+  // Switch back to tailored tab
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-tailored').classList.add('active');
+  document.querySelector('.tab-btn').classList.add('active');
+
+  document.getElementById('analyzeBtn').disabled = false;
   setStep(1);
   showToast('🔄 Cleared — paste new JD & Resume');
 }
 
 function clearAll() {
   resetAndRun();
+}
+
+// ─── BOOST TO 100 ─────────────────────────────────────────────────
+async function boostScore() {
+  if (!state.tailoredResume || !state.keywords?.primary?.length) {
+    showToast('⚠️ No tailored resume to boost. Run analysis first.', '#ef4444');
+    return;
+  }
+
+  const jd       = document.getElementById('jdInput').value.trim();
+  const sc       = state.scorecard || {};
+  const keywords = state.keywords;
+  const primary  = keywords.primary  || [];
+  const secondary= keywords.secondary|| [];
+
+  // Build precise gap list from scorecard
+  const missingPrimary   = sc.keywordsMissing   || [];
+  const missingSecondary = sc.secondaryMissing  || [];
+  const gaps             = sc.gaps              || [];
+  const suggestions      = sc.improvementSuggestions || [];
+  const bulletsTotal     = sc.bulletsTotal      || 0;
+  const bulletsMetrics   = sc.bulletsWithMetrics|| 0;
+  const bulletsNeedFix   = bulletsTotal - bulletsMetrics;
+
+  const boostPrompt = `You are a precision ATS resume editor. The resume below has already been tailored but scored below 90/100. Your ONLY job is to fix the EXACT gaps listed — nothing else.
+
+DO NOT restructure the resume. DO NOT rewrite sections that are already passing. Make the minimum targeted edits needed to reach 100/100.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXACT GAPS TO FIX (do ONLY these):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${missingPrimary.length > 0   ? `MISSING PRIMARY KEYWORDS — add each to the SKILLS section and weave into at least one bullet:\n${missingPrimary.map(k => `  - "${k}"`).join('\n')}` : 'PRIMARY KEYWORDS: all present — do not touch.'}
+
+${missingSecondary.length > 0 ? `MISSING SECONDARY KEYWORDS — add each at least once (SKILLS or bullet):\n${missingSecondary.map(k => `  - "${k}"`).join('\n')}` : 'SECONDARY KEYWORDS: all present — do not touch.'}
+
+${bulletsNeedFix > 0 ? `BULLETS WITHOUT METRICS — ${bulletsNeedFix} bullet(s) have no measurable number. Add a count, %, time, or dollar figure to each weak bullet. Do NOT touch bullets that already have a number.` : 'BULLET METRICS: all bullets have metrics — do not touch.'}
+
+${gaps.length > 0 ? `JD GAPS TO ADDRESS:\n${gaps.map(g => `  - ${g}`).join('\n')}` : ''}
+${suggestions.length > 0 ? `IMPROVEMENT SUGGESTIONS:\n${suggestions.map(s => `  - ${s}`).join('\n')}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INTEGRITY RULES (non-negotiable):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Do NOT change: name, headline, email, phone, LinkedIn, company names, job titles, dates, locations, education, GPA, certifications
+- Do NOT add sections that don't exist
+- Do NOT add commentary, preamble, or metadata
+- Only rewrite bullets or SKILLS lines that directly fix the gaps above
+- Every bullet must still end with a period (.)
+- Output the COMPLETE resume with fixes applied — same structure, same sections, same roles
+
+JOB DESCRIPTION:
+${jd}
+
+RESUME TO FIX:
+${state.tailoredResume}
+
+OUTPUT: The fixed resume only. Start with the candidate's name on line 1.`;
+
+  // UI: disable boost button, show progress
+  const boostBtn = document.getElementById('boostBtn');
+  boostBtn.disabled = true;
+  boostBtn.textContent = '⏳ Boosting...';
+  document.getElementById('progressSection').classList.remove('hidden');
+  setProgress(10, '🎯 Boost Pass — fixing gaps...', 'Targeting missing keywords and weak bullets...');
+  setLoading('Boosting ATS score...');
+
+  try {
+    // Run targeted rewrite
+    setProgress(30, 'Applying targeted fixes...', `Missing keywords: ${missingPrimary.length} primary, ${missingSecondary.length} secondary · Weak bullets: ${bulletsNeedFix}`);
+    const boostedResume = await callClaude(boostPrompt, 0.4, 6000);
+    state.tailoredResume = boostedResume;
+
+    // Stream updated resume into output
+    const outputEl = document.getElementById('outputArea');
+    outputEl.textContent = '';
+    outputEl.classList.add('streaming-cursor');
+    setProgress(55, '✓ Fixes applied · Rendering...', 'Streaming updated resume...');
+    const chunkSize = 30;
+    for (let i = 0; i < boostedResume.length; i += chunkSize) {
+      outputEl.textContent += boostedResume.slice(i, i + chunkSize);
+      outputEl.scrollTop = outputEl.scrollHeight;
+      await delay(6);
+    }
+    outputEl.classList.remove('streaming-cursor');
+
+    // Re-score
+    setProgress(75, 'Re-scoring boosted resume...', 'Running ATS evaluation...');
+    setLoading('Re-scoring...');
+    const scorecardRaw = await callClaude(buildScorecardPrompt(boostedResume, jd, keywords), 0.1, 4096);
+    let sc2 = {};
+    try {
+      const match = scorecardRaw.match(/\{[\s\S]*\}/);
+      sc2 = match ? JSON.parse(match[0]) : {};
+    } catch { sc2 = {}; }
+    state.scorecard = sc2;
+
+    // Recompute score
+    const kwMatch2     = sc2.keywordMatch != null ? Math.min(sc2.keywordMatch, 10) : 0;
+    const fmtCheck2    = sc2.formatCheck  || 'PASS';
+    const confidence2  = sc2.confidenceLevel || 'High';
+    const primaryTotal = primary.length || 10;
+    const secTotal2    = secondary.length || 10;
+    const kwPts2       = Math.round((kwMatch2 / primaryTotal) * 40);
+    const secPts2      = secTotal2 > 0 ? Math.round(((sc2.secondaryFound?.length || 0) / secTotal2) * 10) : 10;
+    const bTotal2      = sc2.bulletsTotal      || 0;
+    const bMetrics2    = sc2.bulletsWithMetrics != null ? sc2.bulletsWithMetrics : 0;
+    const metricPts2   = bTotal2 > 0 ? Math.round((bMetrics2 / bTotal2) * 20) : 0;
+    const summaryPts2  = sc2.summaryScore != null ? sc2.summaryScore : (confidence2 === 'High' ? 15 : confidence2 === 'Medium' ? 10 : 5);
+    const fmtPts2      = fmtCheck2 === 'PASS' ? 10 : Math.max(0, 10 - (sc2.formatIssues?.length || 1) * 3);
+    const secCompPts2  = sc2.sectionCheck === 'FAIL' ? Math.max(0, 5 - (sc2.missingSections?.length || 1) * 2) : 5;
+    const atsScore2    = Math.min(100, kwPts2 + secPts2 + metricPts2 + summaryPts2 + fmtPts2 + secCompPts2);
+
+    // Update score tiles
+    const atsColour2 = atsScore2 >= 90 ? 'green' : atsScore2 >= 70 ? 'yellow' : 'red';
+    document.getElementById('atsScore').textContent = atsScore2 + '/100';
+    document.getElementById('atsScore').className   = 'score-value ' + atsColour2;
+    document.getElementById('kwMatch').textContent  = kwMatch2 + '/' + primaryTotal;
+    const fmtEl2 = document.getElementById('fmtCheck');
+    fmtEl2.textContent = fmtCheck2 + (fmtCheck2 === 'PASS' ? ' ✓' : ' ⚠');
+    fmtEl2.className   = 'score-value ' + (fmtCheck2 === 'PASS' ? 'green' : 'yellow');
+    document.getElementById('confScore').textContent = confidence2.toUpperCase();
+    document.getElementById('confScore').className   = 'score-value ' + (confidence2 === 'High' ? 'green' : confidence2 === 'Medium' ? 'yellow' : 'red');
+
+    // Update scorecard tab
+    const scDiv2 = document.getElementById('scorecardContent');
+    const atsScoreClass2 = atsScore2 >= 90 ? 'sc-green' : atsScore2 >= 70 ? 'sc-yellow' : 'sc-red';
+    const secFound2 = (sc2.secondaryFound || []).length;
+    const bulletsScore2 = sc2.bulletsWithMetrics != null
+      ? (sc2.bulletsTotal != null ? `${sc2.bulletsWithMetrics} of ${sc2.bulletsTotal} bullets` : `${sc2.bulletsWithMetrics} bullets`)
+      : 'N/A';
+    scDiv2.innerHTML = `
+      <div class="scorecard-row"><span class="sc-label">ATS Score (after boost)</span><span class="sc-value ${atsScoreClass2}" style="font-size:28px;">${atsScore2} / 100</span></div>
+      <div style="font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:0.8px;padding:10px 0 4px;">Score Breakdown</div>
+      <div class="scorecard-row"><span class="sc-label">Primary Keywords (40 pts max)</span><span class="sc-value sc-blue">${kwPts2} pts &nbsp;·&nbsp; ${kwMatch2} of ${primaryTotal} found</span></div>
+      <div class="scorecard-row"><span class="sc-label">Secondary Keywords (10 pts max)</span><span class="sc-value sc-blue">${secPts2} pts &nbsp;·&nbsp; ${secFound2} of ${secTotal2} found</span></div>
+      <div class="scorecard-row"><span class="sc-label">Quantified Bullets (20 pts max)</span><span class="sc-value sc-yellow">${metricPts2} pts &nbsp;·&nbsp; ${bulletsScore2} have metrics</span></div>
+      <div class="scorecard-row"><span class="sc-label">Summary Alignment (15 pts max)</span><span class="sc-value ${summaryPts2 >= 13 ? 'sc-green' : summaryPts2 >= 8 ? 'sc-yellow' : 'sc-red'}">${summaryPts2} pts</span></div>
+      <div class="scorecard-row"><span class="sc-label">Format Compliance (10 pts max)</span><span class="sc-value ${fmtCheck2 === 'PASS' ? 'sc-green' : 'sc-yellow'}">${fmtPts2} pts &nbsp;·&nbsp; ${fmtCheck2}</span></div>
+      <div class="scorecard-row"><span class="sc-label">Section Completeness (5 pts max)</span><span class="sc-value ${sc2.sectionCheck === 'PASS' ? 'sc-green' : 'sc-yellow'}">${secCompPts2} pts &nbsp;·&nbsp; ${sc2.sectionCheck || 'PASS'}</span></div>
+      <div class="scorecard-row"><span class="sc-label">Confidence</span><span class="sc-value ${confidence2 === 'High' ? 'sc-green' : 'sc-yellow'}">${confidence2} — ${sc2.confidenceReason || 'All major JD requirements addressed'}</span></div>
+      ${sc2.formatIssues?.length ? `<div class="scorecard-row"><span class="sc-label">Format Notes</span><span class="sc-value sc-yellow">${sc2.formatIssues.join('; ')}</span></div>` : ''}
+      ${sc2.improvementSuggestions?.length ? `<div class="scorecard-row"><span class="sc-label">To reach 100/100</span><span class="sc-value sc-yellow">${sc2.improvementSuggestions.join(' · ')}</span></div>` : ''}
+    `;
+
+    // Update keyword grid
+    const kwGrid2 = document.getElementById('kwGrid');
+    kwGrid2.innerHTML = '';
+    const found2   = sc2.keywordsFound   || primary.slice(0, kwMatch2);
+    function kwIsFound2(list, kw) {
+      const kl = kw.toLowerCase();
+      return list.some(f => {
+        const fl = f.toLowerCase();
+        return fl === kl ||
+          new RegExp('(^|\\s)' + kl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)').test(fl) ||
+          new RegExp('(^|\\s)' + fl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)').test(kl);
+      });
+    }
+    primary.forEach(kw => {
+      const isFound = kwIsFound2(found2, kw);
+      const tag = document.createElement('span');
+      tag.className = 'kw-tag ' + (isFound ? 'kw-match' : 'kw-miss');
+      tag.textContent = (isFound ? '✓ ' : '✗ ') + kw;
+      kwGrid2.appendChild(tag);
+    });
+    if (secondary.length > 0) {
+      const div = document.createElement('div');
+      div.style.cssText = 'width:100%;font-size:11px;color:#475569;margin-top:8px;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.8px;';
+      div.textContent = 'Secondary Keywords';
+      kwGrid2.appendChild(div);
+      const secFoundList2 = sc2.secondaryFound || [];
+      secondary.forEach(kw => {
+        const isFound = kwIsFound2(secFoundList2, kw);
+        const tag = document.createElement('span');
+        tag.className = 'kw-tag ' + (isFound ? 'kw-match' : 'kw-miss');
+        tag.style.opacity = '0.8';
+        tag.textContent = (isFound ? '✓ ' : '✗ ') + kw;
+        kwGrid2.appendChild(tag);
+      });
+    }
+    document.getElementById('kwProgressBar').style.width = (kwMatch2 / primaryTotal * 100) + '%';
+    document.getElementById('kwProgressLabel').textContent =
+      kwMatch2 + ' of ' + primaryTotal + ' primary keywords matched · ' +
+      (sc2.secondaryFound?.length || 0) + ' of ' + secTotal2 + ' secondary keywords matched';
+
+    // Update gaps tab
+    const gaps2 = sc2.gaps || [];
+    const gapsDiv2 = document.getElementById('gapsContent');
+    gapsDiv2.innerHTML = '';
+    if (gaps2.length === 0) {
+      gapsDiv2.innerHTML = '<div style="color:#4ade80;font-size:14px;font-weight:600;">✅ No critical gaps detected. All major JD requirements addressed.</div>';
+    } else {
+      gaps2.forEach(g => { gapsDiv2.innerHTML += `<div class="gap-item"><strong>⚠️</strong> ${g}</div>`; });
+    }
+    if (sc2.improvementSuggestions?.length) {
+      gapsDiv2.innerHTML += '<div style="margin-top:16px;font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;">Score Improvement Tips</div>';
+      sc2.improvementSuggestions.forEach(tip => { gapsDiv2.innerHTML += `<div class="gap-item"><strong>💡</strong> ${tip}</div>`; });
+    }
+
+    setProgress(100, `✅ Boost complete — ATS Score: ${atsScore2}/100 · ${kwMatch2}/${primaryTotal} keywords`, 'Targeted fixes applied');
+    await delay(1000);
+    document.getElementById('progressSection').classList.add('hidden');
+    stopLoading();
+
+    // Hide boost button if now ≥ 90, keep visible if still needs work
+    if (atsScore2 >= 90) {
+      boostBtn.classList.add('hidden');
+    }
+    boostBtn.disabled = false;
+    boostBtn.textContent = '🎯 Boost to 100';
+
+    showToast(`🎯 Boost done! ATS Score: ${atsScore2}/100 · ${kwMatch2}/${primaryTotal} keywords matched`);
+
+  } catch (err) {
+    stopLoading();
+    document.getElementById('progressSection').classList.add('hidden');
+    boostBtn.disabled = false;
+    boostBtn.textContent = '🎯 Boost to 100';
+    showToast('❌ Boost failed: ' + err.message.slice(0, 60), '#ef4444');
+  }
 }
 
 // ─── RESUME TEXT → STRUCTURED HTML ───────────────────────────────
@@ -1458,9 +1942,10 @@ function parseResumeToHtml(text) {
     lineIndex++;
   }
 
-  // Next lines = contact info (title + phone/email) until blank or section header
+  // Next lines = contact info (title + phone/email/linkedin) until blank or section header
+  // Cap at 6 lines — some resumes have 5-line contact blocks (name / title / phone+email / linkedin / city)
   let contactCount = 0;
-  while (lineIndex < lines.length && contactCount < 4) {
+  while (lineIndex < lines.length && contactCount < 6) {
     const l = lines[lineIndex].trim();
     if (!l) { lineIndex++; break; }
     if (isSectionHeader(l)) break;
@@ -1501,6 +1986,15 @@ function parseResumeToHtml(text) {
       const bulletText = l.replace(/^-\s+/, '');
       html += `<div class="r-bullet"><span class="r-bullet-dot">•</span>${bulletText}</div>`;
     } else if (
+      currentSection === 'SKILLS' &&
+      /^[A-Za-z][A-Za-z &\/\-]{1,40}:\s*\S/.test(l)
+    ) {
+      // Skill sub-label line e.g. "Technical Skills: Python, SQL"
+      const colonIdx = l.indexOf(':');
+      const label = l.slice(0, colonIdx).trim();
+      const value = l.slice(colonIdx + 1).trim();
+      html += `<div class="r-skill-line"><span class="r-skill-label">${label}:</span> ${value}</div>`;
+    } else if (
       /^[A-Za-z].+\|.+/.test(l) &&
       !/[@]/.test(l) &&
       !NON_ROLE_SECTIONS.has(currentSection)
@@ -1516,7 +2010,7 @@ function parseResumeToHtml(text) {
 
 // ─── DOCX DOWNLOAD ────────────────────────────────────────────────
 function downloadDocx() {
-  const content = document.getElementById('outputArea').textContent || state.tailoredResume;
+  const content = state.tailoredResume || document.getElementById('outputArea').textContent;
   if (!content.trim()) { showToast('⚠️ No resume to download yet', '#ef4444'); return; }
   const resumeHtml = parseResumeToHtml(content);
   const filename = (state.filename || 'tailored_resume.docx').replace(/\.txt$/i, '.docx');
@@ -1608,6 +2102,8 @@ function downloadDocx() {
       line-height: 1;
       margin: 0;
     }
+    .r-skill-line { margin: 0 0 2pt 0; color: #222222; line-height: 1.45; font-family: Calibri, Arial, sans-serif; font-size: 10.5pt; }
+    .r-skill-label { color: #111111; font-weight: bold; }
   </style>
 </head>
 <body><div class="WordSection1">${resumeHtml}</div></body>
@@ -1629,23 +2125,23 @@ function downloadDocx() {
 
 // ─── DOWNLOADS ────────────────────────────────────────────────────
 function downloadTxt() {
-  const text = document.getElementById('outputArea').textContent || state.tailoredResume;
+  const text = state.tailoredResume || document.getElementById('outputArea').textContent;
   if (!text.trim()) { showToast('⚠️ No resume to download yet', '#ef4444'); return; }
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = (state.filename || 'tailored_resume.docx').replace('.docx', '.txt');
+  a.download = (state.filename || 'tailored_resume.txt').replace(/\.doc(x)?$/i, '.txt');
   a.click();
   showToast('📥 .txt downloaded — open in Word and Save As .docx for best results');
 }
 
 function copyToClipboard() {
-  const text = document.getElementById('outputArea').textContent;
+  const text = state.tailoredResume || document.getElementById('outputArea').textContent;
   navigator.clipboard.writeText(text).then(() => showToast('📋 Copied! Paste into Word or Google Docs'));
 }
 
 function printResume() {
-  const content = document.getElementById('outputArea').textContent || state.tailoredResume;
+  const content = state.tailoredResume || document.getElementById('outputArea').textContent;
   if (!content.trim()) { showToast('⚠️ No resume to print yet', '#ef4444'); return; }
   const resumeHtml = parseResumeToHtml(content);
 
@@ -1733,6 +2229,8 @@ function printResume() {
       line-height: 1.5;
     }
     .r-spacer { height: 4px; }
+    .r-skill-line { margin: 0 0 4px 0; color: #222222; line-height: 1.5; font-family: Calibri, Arial, sans-serif; font-size: 10.5pt; }
+    .r-skill-label { color: #111111; font-weight: 700; }
 
     /* ── PRINT STYLES ── */
     @media print {
