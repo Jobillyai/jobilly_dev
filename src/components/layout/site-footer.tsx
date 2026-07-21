@@ -40,12 +40,13 @@ export function SiteFooter({ user = null }: SiteFooterProps) {
 
   return (
     <footer className={styles.footer}>
-      <JobillyLogo href="/" onDark className={styles.footerLogo} />
-      <div className={styles.footerLinks}>
-        <Link href="/privacy">Privacy</Link>
-        <Link href="/terms">Terms</Link>
-        <Link href="/contact">Contact</Link>
-        <Link href="/admin/login">Admin</Link>
+      <div className={styles.top}>
+        <JobillyLogo href="/" onDark className={styles.footerLogo} />
+        <nav className={styles.nav} aria-label="Footer">
+          <Link href="/about">About</Link>
+          <Link href="/faq">FAQ</Link>
+          <Link href="/contact">Contact</Link>
+        </nav>
         <a
           href={LINKEDIN_COMPANY_URL}
           className={styles.linkedinLink}
@@ -54,11 +55,18 @@ export function SiteFooter({ user = null }: SiteFooterProps) {
           aria-label="Jobilly on LinkedIn"
         >
           <LinkedInIcon />
-          <span className={styles.linkedinWord}>LinkedIn</span>
         </a>
       </div>
-      <div className={styles.footerCopy}>
-        &#xA9; 2026 Jobilly.ai &#x2014; Built for graduates.
+
+      <div className={styles.bottom}>
+        <p className={styles.footerCopy}>
+          &#xA9; 2026 Jobilly.ai &#x2014; Built for graduates.
+        </p>
+        <div className={styles.meta}>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/admin/login">Admin</Link>
+        </div>
       </div>
     </footer>
   );

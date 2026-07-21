@@ -440,6 +440,21 @@
   color: var(--jb-ink-secondary);
 }
 
+.faqMore {
+  margin: 20px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.faqMore a {
+  color: var(--jb-brand);
+  text-decoration: none;
+}
+
+.faqMore a:hover {
+  text-decoration: underline;
+}
+
 .companiesStrip {
   position: relative;
   width: 100%;

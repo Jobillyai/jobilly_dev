@@ -1,0 +1,33 @@
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 820px;
+}
+
+.faqItem {
+  border: 1px solid var(--jb-border);
+  border-radius: 14px;
+  background: var(--jb-surface);
+  padding: 0 18px;
+}
+
+.faqQuestion {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 0;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--jb-ink);
+}
+
+.faqQuestion::-webkit-details-marker {
+  display: none;
+}
+
+.faqAnswer {
+  margin: 0 0 16px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--jb-ink-secondary);
+}

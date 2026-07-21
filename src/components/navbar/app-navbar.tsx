@@ -42,6 +42,7 @@ function toSessionUser(authUser: User): SessionUser | null {
 const NAV_LINKS = [
   { href: "/products", label: "Products" },
   { href: "/communities", label: "Communities" },
+  { href: "/about", label: "About" },
   { href: "/contact", label: "Contact Us" },
 ] as const;
 

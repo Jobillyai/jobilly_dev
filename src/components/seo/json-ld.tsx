@@ -72,7 +72,8 @@ export function FaqJsonLd() {
       data={{
         "@context": "https://schema.org",
         "@type": "FAQPage",
-        "@id": `${SITE_URL}/#faq`,
+        "@id": `${absoluteUrl("/faq")}#faq`,
+        url: absoluteUrl("/faq"),
         mainEntity: SITE_FAQS.map((item) => ({
           "@type": "Question",
           name: item.question,

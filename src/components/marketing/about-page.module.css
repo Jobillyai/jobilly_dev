@@ -1,0 +1,58 @@
+.prose {
+  max-width: 720px;
+}
+
+.prose p {
+  margin: 0 0 18px;
+  font-size: clamp(16px, 2vw, 18px);
+  line-height: 1.75;
+  color: var(--jb-ink-secondary);
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.prose a {
+  color: var(--jb-brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.prose a:hover {
+  text-decoration: underline;
+}
+
+.pillarGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.pillar {
+  padding: 28px 24px;
+  border: 1px solid var(--jb-border);
+  border-radius: var(--jb-radius-xl, 16px);
+  background: var(--jb-surface);
+}
+
+.pillarTitle {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--jb-ink);
+}
+
+.pillarBody {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--jb-ink-secondary);
+}
+
+@media (max-width: 900px) {
+  .pillarGrid {
+    grid-template-columns: 1fr;
+  }
+}

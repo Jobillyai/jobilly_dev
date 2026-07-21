@@ -147,6 +147,9 @@ export function WelcomePage() {
               </details>
             ))}
           </div>
+          <p className={styles.faqMore}>
+            <Link href="/faq">View all FAQs</Link>
+          </p>
         </div>
       </section>
 

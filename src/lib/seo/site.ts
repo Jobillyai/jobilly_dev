@@ -20,6 +20,8 @@ export const PUBLIC_SITEMAP_ROUTES = [
   { path: "/", changeFrequency: "daily" as const, priority: 1 },
   { path: "/products", changeFrequency: "weekly" as const, priority: 0.9 },
   { path: "/communities", changeFrequency: "weekly" as const, priority: 0.8 },
+  { path: "/about", changeFrequency: "monthly" as const, priority: 0.8 },
+  { path: "/faq", changeFrequency: "monthly" as const, priority: 0.8 },
   { path: "/contact", changeFrequency: "monthly" as const, priority: 0.8 },
   { path: "/privacy", changeFrequency: "yearly" as const, priority: 0.3 },
   { path: "/terms", changeFrequency: "yearly" as const, priority: 0.3 },
