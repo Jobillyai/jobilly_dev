@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { applySessionCookiesToSet, attachTabSessionCookie, TAB_SESSION_COOKIE_NAME } from "@/lib/auth/supabase-cookies";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
+import {
+  STAFF_FORCE_PASSWORD_PATH,
+  staffMustChangePassword,
+} from "@/lib/auth/staff-password";
 
 function routeNeedsValidatedUser(pathname: string): boolean {
   if (pathname.startsWith("/admin") || pathname === "/resume_dashboard.html") {
@@ -94,18 +98,25 @@ export async function middleware(request: NextRequest) {
 
   let isLoggedIn = false;
   let userId: string | null = null;
+  let mustChangeStaffPasswordFlag = false;
 
   if (needsAuthCheck) {
     if (routeNeedsValidatedUser(pathname)) {
       const { data } = await supabase.auth.getUser();
       isLoggedIn = !!data.user;
       userId = data.user?.id ?? null;
+      mustChangeStaffPasswordFlag = staffMustChangePassword(
+        data.user?.app_metadata as Record<string, unknown> | undefined,
+      );
     } else {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       isLoggedIn = !!session?.user;
       userId = session?.user?.id ?? null;
+      mustChangeStaffPasswordFlag = staffMustChangePassword(
+        session?.user?.app_metadata as Record<string, unknown> | undefined,
+      );
     }
   } else {
     const {
@@ -113,6 +124,9 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getSession();
     isLoggedIn = !!session?.user;
     userId = session?.user?.id ?? null;
+    mustChangeStaffPasswordFlag = staffMustChangePassword(
+      session?.user?.app_metadata as Record<string, unknown> | undefined,
+    );
   }
 
   const hasTabSession = request.cookies.has(TAB_SESSION_COOKIE_NAME);
@@ -120,6 +134,7 @@ export async function middleware(request: NextRequest) {
     await supabase.auth.signOut();
     isLoggedIn = false;
     userId = null;
+    mustChangeStaffPasswordFlag = false;
   }
 
   let userRole: string | null = null;
@@ -138,6 +153,7 @@ export async function middleware(request: NextRequest) {
   const isResumeDashboard = pathname === "/resume_dashboard.html";
   const isAuthEntryPage = pathname === "/login" || pathname === "/signup";
   const isProtectedPage = pathname.startsWith("/dashboard");
+  const forcePasswordHome = `${STAFF_FORCE_PASSWORD_PATH}?forcePassword=1`;
 
   if ((isAdminRoute || isResumeDashboard) && !isAdminLogin && !isLoggedIn) {
     return redirectWithTabSession(new URL("/admin/login", request.url), false);
@@ -147,8 +163,21 @@ export async function middleware(request: NextRequest) {
     return redirectWithTabSession(new URL("/dashboard", request.url), true);
   }
 
+  if (isAdmin && isLoggedIn && mustChangeStaffPasswordFlag) {
+    const onForcePasswordPage = pathname === STAFF_FORCE_PASSWORD_PATH;
+    if (isAdminLogin || isResumeDashboard || (isAdminRoute && !onForcePasswordPage)) {
+      return redirectWithTabSession(new URL(forcePasswordHome, request.url), true);
+    }
+  }
+
   if (isAdminLogin && isLoggedIn && isAdmin) {
-    return redirectWithTabSession(new URL("/admin", request.url), true);
+    return redirectWithTabSession(
+      new URL(
+        mustChangeStaffPasswordFlag ? forcePasswordHome : "/admin",
+        request.url,
+      ),
+      true,
+    );
   }
 
   if (isProtectedPage && !isLoggedIn) {
@@ -165,12 +194,25 @@ export async function middleware(request: NextRequest) {
     const candidateNext = sanitizeCandidateRedirectPath(
       request.nextUrl.searchParams.get("next"),
     );
-    const redirectUrl = new URL(isAdmin ? "/admin" : candidateNext, request.url);
+    const redirectUrl = new URL(
+      isAdmin
+        ? mustChangeStaffPasswordFlag
+          ? forcePasswordHome
+          : "/admin"
+        : candidateNext,
+      request.url,
+    );
     return redirectWithTabSession(redirectUrl, true);
   }
 
   if (pathname === "/" && isLoggedIn && isAdmin) {
-    return redirectWithTabSession(new URL("/admin", request.url), true);
+    return redirectWithTabSession(
+      new URL(
+        mustChangeStaffPasswordFlag ? forcePasswordHome : "/admin",
+        request.url,
+      ),
+      true,
+    );
   }
 
   attachTabSessionCookie(response, isLoggedIn);

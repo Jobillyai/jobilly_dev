@@ -84,7 +84,10 @@ export async function adminLoginAction(
     "1",
     getPostAuthWelcomeCookieOptions(),
   );
-  redirect("/admin");
+
+  const mustChange =
+    authData.user?.app_metadata?.must_change_password === true;
+  redirect(mustChange ? "/admin/profile?forcePassword=1" : "/admin");
 }
 
 export async function adminLogoutAction() {

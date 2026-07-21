@@ -19,6 +19,7 @@ export type Database = {
           name: string | null;
           first_name: string | null;
           last_name: string | null;
+          phone: string | null;
           role:
             | "subscribed_candidate"
             | "free_candidate"
@@ -37,6 +38,7 @@ export type Database = {
           name?: string | null;
           first_name?: string | null;
           last_name?: string | null;
+          phone?: string | null;
           role?: Database["public"]["Tables"]["users"]["Row"]["role"];
           mfa_enabled?: boolean;
           member_id?: string | null;

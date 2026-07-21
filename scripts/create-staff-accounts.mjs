@@ -69,6 +69,7 @@ for (const account of accounts) {
       password,
       email_confirm: true,
       user_metadata: { name: account.name },
+      app_metadata: { must_change_password: true },
     }),
   });
   const created = await createResponse.json();

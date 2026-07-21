@@ -1,5 +1,5 @@
 .card {
-  max-width: 480px;
+  max-width: 560px;
 }
 
 .title {
@@ -25,10 +25,25 @@
   margin-bottom: 28px;
 }
 
+.forceBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.12);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--jb-admin-ink);
+}
+
 .fieldList {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  margin-bottom: 28px;
 }
 
 .field {
@@ -56,15 +71,47 @@
   color: var(--jb-ink-secondary);
 }
 
-.backLink {
-  display: inline-block;
-  margin-top: 28px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--jb-admin-accent);
-  text-decoration: none;
+.section {
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid var(--jb-border, rgba(15, 23, 42, 0.1));
 }
 
-.backLink:hover {
-  color: var(--jb-admin-accent-bright);
+.sectionTitle {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--jb-admin-ink);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nameRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.success {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #15803d;
+}
+
+.error {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+@media (max-width: 640px) {
+  .nameRow {
+    grid-template-columns: 1fr;
+  }
 }

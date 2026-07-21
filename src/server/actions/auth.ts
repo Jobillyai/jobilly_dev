@@ -228,7 +228,9 @@ export async function loginAction(
         "1",
         getPostAuthWelcomeCookieOptions(),
       );
-      redirect("/admin");
+      const mustChange =
+        authData.user?.app_metadata?.must_change_password === true;
+      redirect(mustChange ? "/admin/profile?forcePassword=1" : "/admin");
     }
   }
 

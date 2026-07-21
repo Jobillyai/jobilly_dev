@@ -6,6 +6,7 @@ import type { SessionUser } from "@/lib/auth/session";
 export type UserProfile = SessionUser & {
   firstName: string;
   lastName: string;
+  phone: string;
   education: string;
   careerGoals: string;
   linkedinUrl: string;
@@ -35,7 +36,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
   const { data: dbUser } = await supabase
     .from("users")
-    .select("name, email, first_name, last_name, member_id")
+    .select("name, email, first_name, last_name, phone, member_id")
     .eq("id", userId)
     .single();
 
@@ -67,6 +68,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     avatarUrl,
     firstName,
     lastName,
+    phone: dbUser?.phone?.trim() ?? "",
     education: candidateProfile?.education ?? "",
     careerGoals: candidateProfile?.career_goals ?? "",
     linkedinUrl: candidateProfile?.linkedin_url ?? "",

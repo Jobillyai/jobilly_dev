@@ -1,11 +1,24 @@
 import { redirect } from "next/navigation";
-import { getAdminUser, staffIsManager } from "@/lib/auth/admin";
+import { createClient } from "@/server/db/supabase-server";
+import {
+  getAdminUser,
+  staffIsManager,
+  staffIsTechnicalManager,
+  toStaffContext,
+} from "@/lib/auth/admin";
 import { getUserProfile } from "@/lib/auth/profile";
+import { staffMustChangePassword } from "@/lib/auth/staff-password";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { StaffProfileCard } from "@/components/admin/staff-profile-card";
 import styles from "../../admin.module.css";
 
-export default async function AdminProfilePage() {
+type AdminProfilePageProps = {
+  searchParams?: Promise<{ forcePassword?: string }>;
+};
+
+export default async function AdminProfilePage({
+  searchParams,
+}: AdminProfilePageProps) {
   const admin = await getAdminUser();
 
   if (!admin) {
@@ -18,11 +31,23 @@ export default async function AdminProfilePage() {
     redirect("/admin/login");
   }
 
-  const isManager = staffIsManager({
-    userId: admin.id,
-    role: admin.role,
-    email: admin.email,
-  });
+  const staff = toStaffContext(admin);
+  const isManager = staffIsManager(staff);
+  const isTechnical = staffIsTechnicalManager(staff);
+  const roleLabel = isTechnical
+    ? "Technical manager"
+    : isManager
+      ? "Manager"
+      : "Admin";
+
+  const params = searchParams ? await searchParams : {};
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getUser();
+  const forcePassword =
+    params.forcePassword === "1" ||
+    staffMustChangePassword(
+      authData.user?.app_metadata as Record<string, unknown> | undefined,
+    );
 
   return (
     <div className={styles.adminPage}>
@@ -30,13 +55,18 @@ export default async function AdminProfilePage() {
         <AdminPageHeader
           eyebrow="Account"
           title="My profile"
-          subtitle={`Your ${isManager ? "manager" : "admin"} employee ID for the admin portal.`}
+          subtitle={
+            forcePassword
+              ? "Set a new password and complete your basic details to continue."
+              : `Your ${roleLabel.toLowerCase()} profile for the admin portal.`
+          }
         />
 
         <section className={styles.section}>
           <StaffProfileCard
             profile={profile}
-            roleLabel={isManager ? "Manager" : "Admin"}
+            roleLabel={roleLabel}
+            forcePassword={forcePassword}
             showHeader={false}
           />
         </section>
