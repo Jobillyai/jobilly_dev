@@ -1,6 +1,9 @@
 /**
  * One-shot: create staff accounts with correct roles and member IDs.
  * Run: node scripts/create-staff-accounts.mjs
+ *
+ * Technical manager (full portal access) is marked by email in src/lib/auth/roles.ts
+ * — keep avinashb@jobilly.ai as role "manager" plus that allowlist entry.
  */
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -20,7 +23,6 @@ function loadEnvLocal() {
 }
 
 function generatePassword() {
-  // URL-safe, no ambiguous characters; 14 chars + required classes.
   const raw = randomBytes(10).toString("base64url").replace(/[-_]/g, "x");
   return `Jb${raw}!7`;
 }
@@ -40,9 +42,18 @@ const headers = {
   "Content-Type": "application/json",
 };
 
+/** @type {{ email: string, name: string, role: "admin" | "manager", note?: string }[]} */
 const accounts = [
-  { email: "rajeshwari.m@jobilly.ai", name: "Rajeshwari", role: "admin" },
-  { email: "saikrupa.p@jobilly.ai", name: "Sai Krupa", role: "admin" },
+  { email: "rajeshwari.m@jobilly.ai", name: "Rajeshwari M", role: "admin" },
+  { email: "saikrupa.p@jobilly.ai", name: "Sai Krupa P", role: "admin" },
+  { email: "shivaprasad.a@jobilly.ai", name: "Shiva Prasad A", role: "admin" },
+  { email: "abhilash.b@jobilly.ai", name: "Abhilash B", role: "manager" },
+  {
+    email: "avinashb@jobilly.ai",
+    name: "Avinash B",
+    role: "manager",
+    note: "Technical manager — full access (manager + job apply + scrape)",
+  },
 ];
 
 const results = [];
@@ -67,8 +78,7 @@ for (const account of accounts) {
   }
   const userId = created.id;
 
-  // The signup trigger inserted a free_candidate row (with a JAC member id).
-  // Fix the role, then allocate the correct staff member id.
+  // Signup trigger may insert free_candidate — force staff role + name.
   const roleResponse = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}`, {
     method: "PATCH",
     headers: { ...headers, Prefer: "return=minimal" },
@@ -103,8 +113,7 @@ for (const account of accounts) {
   results.push({ ...account, password, memberId });
 }
 
-// The signup trigger consumed JAC counter values for these staff accounts;
-// reset the candidate counter so the first real candidate gets JAC0001.
+// Reset JAC counter so the first real candidate gets JAC0001.
 const counterResponse = await fetch(
   `${supabaseUrl}/rest/v1/member_id_counters?prefix=eq.JAC`,
   {
@@ -123,6 +132,7 @@ for (const result of results) {
   console.log(`  Email:     ${result.email}`);
   console.log(`  Member ID: ${result.memberId}`);
   console.log(`  Password:  ${result.password}`);
+  if (result.note) console.log(`  Note:      ${result.note}`);
   console.log("");
 }
-console.log("Login at /admin/login. Ask both to change passwords after first login.");
+console.log("Login at /admin/login. Ask everyone to change passwords after first login.");

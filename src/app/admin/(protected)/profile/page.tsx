@@ -18,7 +18,11 @@ export default async function AdminProfilePage() {
     redirect("/admin/login");
   }
 
-  const isManager = staffIsManager({ userId: admin.id, role: admin.role });
+  const isManager = staffIsManager({
+    userId: admin.id,
+    role: admin.role,
+    email: admin.email,
+  });
 
   return (
     <div className={styles.adminPage}>

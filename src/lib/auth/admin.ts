@@ -5,6 +5,7 @@ import {
   canScrapeJobs,
   isAdminPortalRole,
   isManagerRole,
+  isTechnicalManagerEmail,
   type AdminPortalRole,
 } from "@/lib/auth/roles";
 
@@ -15,6 +16,7 @@ export type AdminUser = SessionUser & {
 export type StaffContext = {
   userId: string;
   role: AdminPortalRole;
+  email: string;
 };
 
 export const getUserRole = cache(async (userId: string): Promise<string | null> => {
@@ -46,16 +48,20 @@ export const getAdminUser = cache(async (): Promise<AdminUser | null> => {
 });
 
 export function toStaffContext(admin: AdminUser): StaffContext {
-  return { userId: admin.id, role: admin.role };
+  return { userId: admin.id, role: admin.role, email: admin.email };
+}
+
+export function staffIsTechnicalManager(staff: StaffContext): boolean {
+  return isTechnicalManagerEmail(staff.email);
 }
 
 export function staffCanScrapeJobs(staff: StaffContext): boolean {
-  return canScrapeJobs(staff.role);
+  return canScrapeJobs(staff.role) || staffIsTechnicalManager(staff);
 }
 
-/** Managers oversee the team but do not use the job apply portal. */
+/** Managers oversee the team but do not use the job apply portal — except technical managers. */
 export function staffCanAccessJobApplyPortal(staff: StaffContext): boolean {
-  return !isManagerRole(staff.role);
+  return !isManagerRole(staff.role) || staffIsTechnicalManager(staff);
 }
 
 export function staffIsManager(staff: StaffContext): boolean {

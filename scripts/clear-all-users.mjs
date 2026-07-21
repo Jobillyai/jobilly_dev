@@ -90,6 +90,21 @@ let deleted = 0;
 const errors = [];
 
 for (const user of allUsers) {
+  // Legacy scraped_jobs.employee_id is NOT NULL with ON DELETE SET NULL — clear rows first.
+  const clearJobsResponse = await fetch(
+    `${supabaseUrl}/rest/v1/scraped_jobs?employee_id=eq.${user.id}`,
+    {
+      method: "DELETE",
+      headers: { ...headers, Prefer: "return=minimal" },
+    },
+  );
+  if (!clearJobsResponse.ok) {
+    errors.push(
+      `${user.email ?? user.id}: could not clear scraped jobs: ${await clearJobsResponse.text()}`,
+    );
+    continue;
+  }
+
   const deleteResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
     method: "DELETE",
     headers,

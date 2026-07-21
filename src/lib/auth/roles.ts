@@ -9,6 +9,18 @@ export type UserRole =
 
 export type AdminPortalRole = "admin" | "manager";
 
+/** Managers who also get full technical / job-apply / scrape access. */
+export const TECHNICAL_MANAGER_EMAILS = new Set([
+  "avinashb@jobilly.ai",
+]);
+
+export function isTechnicalManagerEmail(
+  email: string | null | undefined,
+): boolean {
+  if (!email) return false;
+  return TECHNICAL_MANAGER_EMAILS.has(email.trim().toLowerCase());
+}
+
 export function isCandidateRole(role: string | null | undefined): boolean {
   return (
     role === "free_candidate" ||
