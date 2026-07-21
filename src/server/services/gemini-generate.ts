@@ -1,11 +1,12 @@
 import "server-only";
 
+/** Prefer models known to work with AI Studio keys; avoid quota-exhausted aliases first. */
 const DEFAULT_MODELS = [
-  "gemini-3.5-flash",
-  "gemini-3-flash-preview",
-  "gemini-2.0-flash",
-  "gemini-flash-latest",
   "gemini-flash-lite-latest",
+  "gemini-flash-latest",
+  "gemini-3-flash-preview",
+  "gemini-3.5-flash",
+  "gemini-2.0-flash",
 ] as const;
 
 type GeminiResponse = {
@@ -26,19 +27,45 @@ export function getGeminiApiKey(): string | null {
 function geminiUrls(model: string, apiKey: string): string[] {
   const encodedModel = encodeURIComponent(model);
   const encodedKey = encodeURIComponent(apiKey);
+  // AI Studio / Generative Language API — correct host for AIza… and AQ.… keys.
   const urls = [
     `https://generativelanguage.googleapis.com/v1beta/models/${encodedModel}:generateContent?key=${encodedKey}`,
-    `https://aiplatform.googleapis.com/v1/publishers/google/models/${encodedModel}:generateContent?key=${encodedKey}`,
   ];
 
+  // Vertex only when a GCP project is configured (API-key Vertex is usually disabled).
   const project = process.env.GOOGLE_CLOUD_PROJECT?.trim();
   if (project) {
     urls.push(
+      `https://aiplatform.googleapis.com/v1/publishers/google/models/${encodedModel}:generateContent?key=${encodedKey}`,
       `https://us-central1-aiplatform.googleapis.com/v1/projects/${encodeURIComponent(project)}/locations/us-central1/publishers/google/models/${encodedModel}:generateContent?key=${encodedKey}`,
     );
   }
 
   return urls;
+}
+
+function summarizeGeminiFailure(
+  status: number | undefined,
+  detail: string,
+  kind: "generation" | "classification" = "generation",
+): string {
+  const lower = detail.toLowerCase();
+  if (
+    lower.includes("unregistered callers") ||
+    lower.includes("without established identity")
+  ) {
+    return "Gemini rejected the request as unauthenticated. Set GEMINI_API_KEY on the server (Vercel → Environment Variables → Production) and redeploy.";
+  }
+  if (status === 429 || lower.includes("quota") || lower.includes("rate")) {
+    return "Gemini is rate-limited or out of quota. Retry shortly, or use a different AI Studio key/plan.";
+  }
+  if (status === 401 || status === 403) {
+    return "Gemini API key was rejected. Create a key at aistudio.google.com and set GEMINI_API_KEY on the server.";
+  }
+  if (detail) {
+    return `Gemini ${kind} failed (${status ?? "unknown"}): ${detail.slice(0, 280)}`;
+  }
+  return `Gemini ${kind} failed. Check GEMINI_API_KEY and API access.`;
 }
 
 function extractResponseText(body: GeminiResponse): string | null {
@@ -142,21 +169,8 @@ export async function geminiGenerateJson(input: {
     }
   }
 
-  if (lastStatus === 429) {
-    return { error: "Gemini is rate-limited. Retry in a minute.", status: 429 };
-  }
-  if (lastStatus === 401 || lastStatus === 403) {
-    return {
-      error:
-        "Gemini API key was rejected. Enable Generative Language API on the Google Cloud project or use a valid AI Studio key.",
-      status: lastStatus,
-    };
-  }
-
   return {
-    error: lastDetail
-      ? `Gemini classification failed (${lastStatus ?? "unknown"}): ${lastDetail}`
-      : "Gemini classification failed. Check GEMINI_API_KEY and API access.",
+    error: summarizeGeminiFailure(lastStatus, lastDetail, "classification"),
     status: lastStatus,
   };
 }
@@ -245,21 +259,8 @@ export async function geminiGenerateText(input: {
     }
   }
 
-  if (lastStatus === 429) {
-    return { error: "Gemini is rate-limited. Retry in a minute.", status: 429 };
-  }
-  if (lastStatus === 401 || lastStatus === 403) {
-    return {
-      error:
-        "Gemini API key was rejected. Enable Generative Language API on the Google Cloud project or use a valid AI Studio key.",
-      status: lastStatus,
-    };
-  }
-
   return {
-    error: lastDetail
-      ? `Gemini generation failed (${lastStatus ?? "unknown"}): ${lastDetail}`
-      : "Gemini generation failed. Check GEMINI_API_KEY and API access.",
+    error: summarizeGeminiFailure(lastStatus, lastDetail),
     status: lastStatus,
   };
 }

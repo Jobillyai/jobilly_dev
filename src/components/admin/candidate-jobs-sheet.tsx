@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   listCandidatePreviousSearchesAction,
@@ -211,6 +211,12 @@ export function CandidateJobsSheet({
   const [intelligencePending, setIntelligencePending] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisStage, setAnalysisStage] = useState("Preparing…");
+  const [intelligenceMessage, setIntelligenceMessage] = useState<{
+    kind: "success" | "error" | "warning";
+    text: string;
+  } | null>(null);
+  const baseResumeInputRef = useRef<HTMLInputElement>(null);
+  const txtOverrideInputRef = useRef<HTMLInputElement>(null);
 
   const refreshAllJobs = useCallback(async () => {
     const result = await loadAllCandidatePipelineJobsAction(
@@ -233,8 +239,13 @@ export function CandidateJobsSheet({
   useEffect(() => {
     setJobs(initialJobs);
     setPreviousSearches(initialPreviousSearches);
+    setResumeIntelligence(initialResumeIntelligence);
     setInterestedRole(
       initialResumeIntelligence.analysis?.canonical_search_title ?? defaultInterestedRole,
+    );
+    setKeywordsInput(
+      resumeSearchTerms(initialResumeIntelligence.analysis) ||
+        suggestJobSearchKeywords(defaultInterestedRole),
     );
     setMessage(null);
     setSelectedPreviousSearch("");
@@ -242,17 +253,29 @@ export function CandidateJobsSheet({
     setSourceFilter("all");
     setFreshnessFilter("all");
     setJobSort("best_match");
-    setKeywordsInput(
-      resumeSearchTerms(initialResumeIntelligence.analysis) ||
-      suggestJobSearchKeywords(defaultInterestedRole),
-    );
-  }, [
-    candidateId,
-    initialJobs,
-    initialPreviousSearches,
-    initialResumeIntelligence,
-    defaultInterestedRole,
-  ]);
+    // Only reset form defaults when switching candidates — not when jobs refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
+  }, [candidateId]);
+
+  useEffect(() => {
+    setJobs(initialJobs);
+  }, [initialJobs]);
+
+  useEffect(() => {
+    setPreviousSearches(initialPreviousSearches);
+  }, [initialPreviousSearches]);
+
+  useEffect(() => {
+    setResumeIntelligence(initialResumeIntelligence);
+    const analysis = initialResumeIntelligence.analysis;
+    if (analysis?.status === "completed" && analysis.canonical_search_title) {
+      setInterestedRole(analysis.canonical_search_title);
+      setKeywordsInput(
+        resumeSearchTerms(analysis) ||
+          suggestJobSearchKeywords(analysis.canonical_search_title),
+      );
+    }
+  }, [initialResumeIntelligence]);
 
   useEffect(() => {
     const activeScrape = readActiveScrapeSession(candidateId);
@@ -314,15 +337,60 @@ export function CandidateJobsSheet({
     }
   }
 
+  const activeExtractedResumeText = useMemo(() => {
+    const override = resumeIntelligence.sources.find(
+      (source) => source.source_kind === "admin_txt_override",
+    );
+    const base = resumeIntelligence.sources.find(
+      (source) => source.source_kind === "base_resume",
+    );
+    return (
+      override?.extracted_text ??
+      base?.extracted_text ??
+      candidateResumeMatch?.resumeText ??
+      null
+    );
+  }, [candidateResumeMatch?.resumeText, resumeIntelligence.sources]);
+
   const resumeCorpus = useMemo(
     () =>
       buildCandidateResumeCorpus({
-        ...candidateResumeMatch,
-        resumeText: null,
+        // Prefer the active resume file text. When present, ignore stale profile
+        // work_experience / education that may belong to a previous upload.
+        resumeText: activeExtractedResumeText,
         interestedRole:
-          interestedRole.trim() || candidateResumeMatch?.interestedRole || null,
+          interestedRole.trim() ||
+          (activeExtractedResumeText
+            ? null
+            : candidateResumeMatch?.interestedRole) ||
+          null,
+        workExperience: activeExtractedResumeText
+          ? null
+          : candidateResumeMatch?.workExperience,
+        profileEducation: activeExtractedResumeText
+          ? null
+          : candidateResumeMatch?.profileEducation,
+        specialization: activeExtractedResumeText
+          ? null
+          : candidateResumeMatch?.specialization,
+        careerGoals: activeExtractedResumeText
+          ? null
+          : candidateResumeMatch?.careerGoals,
+        skills: resumeIntelligence.analysis?.skills ?? [],
+        branch: activeExtractedResumeText ? null : candidateResumeMatch?.branch,
+        interestedTechnology: activeExtractedResumeText
+          ? null
+          : candidateResumeMatch?.interestedTechnology,
+        graduationDetails: activeExtractedResumeText
+          ? null
+          : candidateResumeMatch?.graduationDetails,
       }),
-    [candidateResumeMatch, interestedRole],
+    [
+      activeExtractedResumeText,
+      candidateResumeMatch,
+      interestedRole,
+      resumeIntelligence.analysis?.skills,
+    ],
   );
   const activeSkills = useMemo(
     () =>
@@ -618,15 +686,92 @@ export function CandidateJobsSheet({
     setResumeIntelligence((current) => ({
       ...current,
       analysis: current.analysis
-        ? { ...current.analysis, status: "processing", error_message: null }
-        : current.analysis,
+        ? {
+            ...current.analysis,
+            status: "processing",
+            error_message: null,
+            target_roles: [],
+            skills: [],
+            search_keywords: [],
+            canonical_search_title: null,
+            category_id: null,
+          }
+        : {
+            candidate_id: candidateId,
+            effective_source_kind: "base_resume",
+            source_fingerprint: "pending",
+            status: "processing",
+            target_roles: [],
+            responsibilities: [],
+            skills: [],
+            search_keywords: [],
+            canonical_search_title: null,
+            category_id: null,
+            confidence: null,
+            accepted_title_patterns: [],
+            excluded_category_ids: [],
+            result_json: null,
+            model: null,
+            prompt_version: "",
+            taxonomy_version: "",
+            generation_token: "",
+            category_confirmed_at: null,
+            category_confirmed_by: null,
+            analyzed_at: null,
+            error_message: null,
+            updated_at: new Date().toISOString(),
+          },
     }));
+  }
+
+  async function handleBaseResume(file: File | undefined) {
+    if (!file) return;
+    setIntelligencePending(true);
+    markIntelligenceProcessing();
+    setInterestedRole("");
+    setKeywordsInput("");
+    setMessage(null);
+    setIntelligenceMessage(null);
+    const data = new FormData();
+    data.set("baseResume", file);
+    try {
+      const result = await uploadCandidateBaseResumeAction(candidateId, data);
+      await reloadResumeIntelligence();
+      if (result && "error" in result && result.error) {
+        setMessageKind("error");
+        setMessage(result.error);
+        setIntelligenceMessage({ kind: "error", text: result.error });
+      } else if (result && "warning" in result && result.warning) {
+        setMessageKind("warning");
+        setMessage(result.warning);
+        setIntelligenceMessage({ kind: "warning", text: result.warning });
+      } else {
+        const fileName =
+          result && "fileName" in result && result.fileName
+            ? result.fileName
+            : file.name;
+        const text = `Replaced base resume with “${fileName}”. Role and keywords were refreshed from this file.`;
+        setMessageKind("success");
+        setMessage(text);
+        setIntelligenceMessage({ kind: "success", text });
+      }
+    } catch (error) {
+      const text =
+        error instanceof Error ? error.message : "Could not replace the base resume.";
+      setMessageKind("error");
+      setMessage(text);
+      setIntelligenceMessage({ kind: "error", text });
+    } finally {
+      setIntelligencePending(false);
+    }
   }
 
   async function handleTxtOverride(file: File | undefined) {
     if (!file) return;
     setIntelligencePending(true);
     markIntelligenceProcessing();
+    setInterestedRole("");
+    setKeywordsInput("");
     setMessage(null);
     const data = new FormData();
     data.set("resumeTxt", file);
@@ -637,43 +782,7 @@ export function CandidateJobsSheet({
     } else {
       await reloadResumeIntelligence();
       setMessageKind("success");
-      setMessage("TXT override analyzed. Role, skills, and keywords were filled automatically.");
-    }
-    setIntelligencePending(false);
-  }
-
-  async function handleBaseResume(file: File | undefined) {
-    if (!file) return;
-    setIntelligencePending(true);
-    markIntelligenceProcessing();
-    setMessage(null);
-    const data = new FormData();
-    data.set("baseResume", file);
-    const result = await uploadCandidateBaseResumeAction(candidateId, data);
-    await reloadResumeIntelligence();
-    if (result && "error" in result && result.error) {
-      setMessageKind("error");
-      setMessage(result.error);
-    } else if (result && "warning" in result && result.warning) {
-      setMessageKind("warning");
-      setMessage(result.warning);
-    } else {
-      setMessageKind("success");
-      setMessage("Base resume analyzed. Role, skills, and keywords were filled automatically.");
-    }
-    setIntelligencePending(false);
-  }
-
-  async function handleRemoveOverride() {
-    setIntelligencePending(true);
-    const result = await removeResumeTxtOverrideAction(candidateId);
-    if (result && "error" in result && result.error) {
-      setMessageKind("error");
-      setMessage(result.error);
-    } else {
-      await reloadResumeIntelligence();
-      setMessageKind("success");
-      setMessage("TXT override removed; the base resume is active again.");
+      setMessage("TXT override re-analyzed. Role, skills, and keywords were refreshed.");
     }
     setIntelligencePending(false);
   }
@@ -681,12 +790,33 @@ export function CandidateJobsSheet({
   async function handleRetryIntelligence() {
     setIntelligencePending(true);
     markIntelligenceProcessing();
+    setInterestedRole("");
+    setKeywordsInput("");
     const result = await retryResumeIntelligenceAction(candidateId);
     if (result && "error" in result && result.error) {
       setMessageKind("error");
       setMessage(result.error);
     } else {
       await reloadResumeIntelligence();
+      setMessageKind("success");
+      setMessage("Resume re-analyzed from the current source file.");
+    }
+    setIntelligencePending(false);
+  }
+
+  async function handleRemoveOverride() {
+    setIntelligencePending(true);
+    markIntelligenceProcessing();
+    setInterestedRole("");
+    setKeywordsInput("");
+    const result = await removeResumeTxtOverrideAction(candidateId);
+    if (result && "error" in result && result.error) {
+      setMessageKind("error");
+      setMessage(result.error);
+    } else {
+      await reloadResumeIntelligence();
+      setMessageKind("success");
+      setMessage("TXT override removed; the base resume was re-analyzed.");
     }
     setIntelligencePending(false);
   }
@@ -920,33 +1050,74 @@ export function CandidateJobsSheet({
           ) : resumeIntelligence.analysis.error_message ? (
             <p className={styles.intelligenceError}>{resumeIntelligence.analysis.error_message}</p>
           ) : resumeIntelligence.analysis.status === "completed" ? (
-            <p className={styles.intelligenceNotice}>
-              Analysis fills the role and keywords below automatically.
-            </p>
+            <div className={styles.intelligenceNotice}>
+              <p>Analysis fills the role and keywords below automatically.</p>
+              {activeExtractedResumeText ? (
+                <p style={{ marginTop: 8, fontSize: 12, opacity: 0.85 }}>
+                  Source file:{" "}
+                  <strong>
+                    {(
+                      resumeIntelligence.sources.find(
+                        (s) =>
+                          s.source_kind ===
+                          resumeIntelligence.analysis?.effective_source_kind,
+                      ) ?? resumeIntelligence.sources[0]
+                    )?.original_file_name ?? "resume"}
+                  </strong>
+                  {" · "}
+                  {activeExtractedResumeText.length.toLocaleString()} chars extracted
+                  <br />
+                  <span style={{ display: "block", marginTop: 4, fontFamily: "monospace" }}>
+                    Preview: {activeExtractedResumeText.slice(0, 180).replace(/\s+/g, " ")}
+                    {activeExtractedResumeText.length > 180 ? "…" : ""}
+                  </span>
+                </p>
+              ) : null}
+            </div>
           ) : null}
           <div className={styles.intelligenceActions}>
-            <label className={styles.fileAction}>
+            <input
+              ref={baseResumeInputRef}
+              type="file"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              disabled={intelligencePending}
+              className={styles.hiddenFileInput}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                void handleBaseResume(file);
+              }}
+            />
+            <input
+              ref={txtOverrideInputRef}
+              type="file"
+              accept=".txt,text/plain"
+              disabled={intelligencePending}
+              className={styles.hiddenFileInput}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                void handleTxtOverride(file);
+              }}
+            />
+            <button
+              type="button"
+              disabled={intelligencePending}
+              onClick={() => baseResumeInputRef.current?.click()}
+            >
               {resumeIntelligence.sources.some((source) => source.source_kind === "base_resume")
                 ? "Replace base resume"
                 : "Upload base resume"}
-              <input
-                type="file"
-                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                disabled={intelligencePending}
-                onChange={(event) => void handleBaseResume(event.target.files?.[0])}
-              />
-            </label>
-            <label className={styles.fileAction}>
+            </button>
+            <button
+              type="button"
+              disabled={intelligencePending}
+              onClick={() => txtOverrideInputRef.current?.click()}
+            >
               {resumeIntelligence.sources.some((source) => source.source_kind === "admin_txt_override")
                 ? "Replace TXT override"
                 : "Upload TXT override"}
-              <input
-                type="file"
-                accept=".txt,text/plain"
-                disabled={intelligencePending}
-                onChange={(event) => void handleTxtOverride(event.target.files?.[0])}
-              />
-            </label>
+            </button>
             {resumeIntelligence.sources.some((source) => source.source_kind === "admin_txt_override") ? (
               <button type="button" onClick={() => void handleRemoveOverride()} disabled={intelligencePending}>
                 Remove override
@@ -956,6 +1127,18 @@ export function CandidateJobsSheet({
               {intelligencePending ? "Analyzing…" : "Retry analysis"}
             </button>
           </div>
+          {intelligenceMessage ? (
+            <p
+              className={
+                intelligenceMessage.kind === "error"
+                  ? styles.intelligenceError
+                  : styles.intelligenceNotice
+              }
+              role="status"
+            >
+              {intelligenceMessage.text}
+            </p>
+          ) : null}
         </section>
       ) : null}
       <section className={styles.controls}>

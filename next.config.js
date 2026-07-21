@@ -37,6 +37,12 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/resume_dashboard.html",
+        headers: [
+          { key: "Cache-Control", value: "no-store, max-age=0, must-revalidate" },
+        ],
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },

@@ -19,7 +19,7 @@ import { createAdminClient } from "@/server/db/supabase-admin";
 import { saveCandidateResumeFile } from "@/server/services/resume-storage";
 import {
   registerBaseResumeForIntelligence,
-  validateBaseResumeFile,
+  resolveBaseResumeContentType,
 } from "@/server/services/resume-intelligence";
 
 const AVATAR_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -233,10 +233,6 @@ export async function uploadProfileResumeAction(
     return { error: "Resume must be 5 MB or smaller." };
   }
 
-  if (!["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.type)) {
-    return { error: "Use a PDF or DOCX resume. Legacy .doc files cannot be analyzed." };
-  }
-
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
 
@@ -246,12 +242,16 @@ export async function uploadProfileResumeAction(
 
   try {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
-    validateBaseResumeFile(fileBuffer, file.name, file.type);
+    const resolved = resolveBaseResumeContentType(
+      fileBuffer,
+      file.name,
+      file.type,
+    );
     const saved = await saveCandidateResumeFile({
       userId: authData.user.id,
       fileName: file.name,
       fileBuffer,
-      contentType: file.type,
+      contentType: resolved.contentType,
     });
     try {
       await registerBaseResumeForIntelligence({
@@ -259,7 +259,7 @@ export async function uploadProfileResumeAction(
         actorId: authData.user.id,
         storagePath: saved.storagePath,
         fileName: file.name,
-        contentType: file.type,
+        contentType: resolved.contentType,
         buffer: fileBuffer,
       });
     } catch (analysisError) {

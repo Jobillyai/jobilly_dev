@@ -47,7 +47,7 @@ import {
   registerBaseResumeForIntelligence,
   removeAdminTxtOverride,
   saveAdminTxtOverride,
-  validateBaseResumeFile,
+  resolveBaseResumeContentType,
 } from "@/server/services/resume-intelligence";
 
 export type JobSearchSourceMode = JobMarketSource | "all";
@@ -100,13 +100,18 @@ export async function uploadCandidateBaseResumeAction(candidateId: string, formD
     return { error: "Resume must be 5 MB or smaller." };
   }
   try {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    validateBaseResumeFile(buffer, file.name, file.type);
+    const raw = Buffer.from(await file.arrayBuffer());
+    if (!raw.byteLength) {
+      return { error: "The selected file was empty. Choose the resume PDF/DOCX again." };
+    }
+    // Keep an owned copy — storage upload can detach the ArrayBuffer.
+    const buffer = Buffer.from(raw);
+    const resolved = resolveBaseResumeContentType(buffer, file.name, file.type);
     const saved = await saveCandidateResumeFile({
       userId: candidateId,
       fileName: file.name,
-      fileBuffer: buffer,
-      contentType: file.type,
+      fileBuffer: Buffer.from(buffer),
+      contentType: resolved.contentType,
     });
     try {
       await registerBaseResumeForIntelligence({
@@ -114,8 +119,8 @@ export async function uploadCandidateBaseResumeAction(candidateId: string, formD
         actorId: access.admin.id,
         storagePath: saved.storagePath,
         fileName: file.name,
-        contentType: file.type,
-        buffer,
+        contentType: resolved.contentType,
+        buffer: Buffer.from(buffer),
       });
     } catch (analysisError) {
       revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
@@ -129,7 +134,11 @@ export async function uploadCandidateBaseResumeAction(candidateId: string, formD
     }
     revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
     revalidatePath("/admin/candidates");
-    return { success: true as const };
+    return {
+      success: true as const,
+      fileName: file.name,
+      storagePath: saved.storagePath,
+    };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Could not upload the resume." };
   }
@@ -171,7 +180,10 @@ export async function retryResumeIntelligenceAction(candidateId: string) {
   const access = await resumeIntelligenceAccess(candidateId);
   if ("error" in access) return access;
   try {
-    await invalidateAndAnalyzeResume(candidateId);
+    await invalidateAndAnalyzeResume(candidateId, {
+      force: true,
+      ignoreProfileRole: true,
+    });
     revalidateApplyForJobsCandidatePages(revalidatePath, candidateId);
     return { success: true as const };
   } catch (error) {

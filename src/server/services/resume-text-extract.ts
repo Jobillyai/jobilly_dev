@@ -4,13 +4,22 @@ import { createAdminClient } from "@/server/db/supabase-admin";
 
 const MAX_RESUME_TEXT_CHARS = 50_000;
 
-function toUint8Array(buffer: Buffer): Uint8Array {
-  return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+/** Keep line structure for role/section parsing; only tidy spaces within lines. */
+export function normalizeResumeExtractedText(text: string): string {
+  return text
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/[ \t\f\v]+/g, " ").trimEnd())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 async function parsePdfText(buffer: Buffer): Promise<string> {
+  // Copy bytes so PDF parsing cannot detach/neuter the caller's buffer.
   const { PDFParse } = await import("pdf-parse");
-  const parser = new PDFParse({ data: toUint8Array(buffer) });
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
 
   try {
     const parsed = await parser.getText();
@@ -48,7 +57,7 @@ export async function extractResumeTextFromBuffer(
     throw new Error("Unsupported resume format. Upload PDF or .docx.");
   }
 
-  const normalized = text.replace(/\s+/g, " ").trim();
+  const normalized = normalizeResumeExtractedText(text);
 
   if (!normalized) {
     throw new Error("Could not extract text from this resume. Try a different PDF or Word file.");

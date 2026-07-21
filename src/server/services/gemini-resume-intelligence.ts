@@ -13,15 +13,15 @@ import {
   parseGeminiJsonText,
 } from "@/server/services/gemini-generate";
 
-export const RESUME_INTELLIGENCE_PROMPT_VERSION = "2026-07-v1";
+export const RESUME_INTELLIGENCE_PROMPT_VERSION = "2026-07-v2";
 export const RESUME_INTELLIGENCE_SCHEMA_VERSION = "2026-07-v1";
 
 const RESUME_MODELS = [
-  "gemini-3.5-flash",
-  "gemini-3-flash-preview",
-  "gemini-2.0-flash",
-  "gemini-flash-latest",
   "gemini-flash-lite-latest",
+  "gemini-flash-latest",
+  "gemini-3-flash-preview",
+  "gemini-3.5-flash",
+  "gemini-2.0-flash",
 ] as const;
 
 const schema = z.object({
@@ -165,8 +165,16 @@ from the resume (max 50). searchKeywords: must include EVERY skill plus any extr
 role-specific search terms (tools, tech stack, domain phrases) useful for job boards.
 Keep searchKeywords at 60 items or fewer. Keep each responsibility under 240 characters.
 Do not omit skills from searchKeywords.
-Interested role: ${input.interestedRole?.trim() || "not supplied"}
-Resume: ${input.resumeText.slice(0, 50000)}`;
+CRITICAL: This resume may belong to a different person than any previous upload for this account.
+Derive targetRoles, skills, and canonicalSearchTitle ONLY from the resume text below.
+Ignore any memory of a prior candidate name, title, or employer.
+${
+  input.interestedRole?.trim()
+    ? `Optional hint (do not invent experience to match it): ${input.interestedRole.trim()}`
+    : "No prior role hint — classify only from this resume."
+}
+Resume:
+${input.resumeText.slice(0, 50000)}`;
 
   let lastError = "Resume analysis returned an invalid structure.";
 

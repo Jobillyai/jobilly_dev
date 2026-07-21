@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="jobilly-resume-dashboard" content="proxy-1" />
   <title>Resume dashboard · Jobilly</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -661,6 +662,16 @@ document.getElementById('jdInput').addEventListener('input', function() {
 document.getElementById('resumeInput').addEventListener('input', function() {
   document.getElementById('resumeCount').textContent = this.value.length.toLocaleString();
   document.getElementById('resumeWords').textContent = wordCount(this.value).toLocaleString();
+  // Changing the resume invalidates prior extraction/rewrite results.
+  if (state.tailoredResume || state.scorecard || (state.keywords && state.keywords.primary?.length)) {
+    state = { keywords: [], tailoredResume: '', scorecard: null, gaps: [], filename: '' };
+    document.getElementById('scoreSection')?.classList.add('hidden');
+    document.getElementById('resultsSection')?.classList.add('hidden');
+    document.getElementById('boostBtn')?.classList.add('hidden');
+    document.getElementById('rerunBtn')?.classList.add('hidden');
+    document.getElementById('analyzeBtn')?.classList.remove('hidden');
+    setStep(1);
+  }
 });
 
 // ─── HELPERS ──────────────────────────────────────────────────────

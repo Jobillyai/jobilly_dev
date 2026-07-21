@@ -1,20 +1,24 @@
+import {
+  contentTypeForResumeKind,
+  detectResumeFileKind,
+  type ResumeFileKind,
+} from "@/lib/resume-mime";
+
 export function validateBaseResumeFile(
   buffer: Buffer,
   fileName: string,
   contentType: string,
-): "pdf" | "docx" {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-  if (
-    extension === "pdf" &&
-    contentType === "application/pdf" &&
-    buffer.subarray(0, 5).toString("ascii") === "%PDF-"
-  ) return "pdf";
-  if (
-    extension === "docx" &&
-    contentType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" &&
-    buffer.subarray(0, 2).toString("ascii") === "PK"
-  ) return "docx";
-  throw new Error("Resume analysis accepts genuine PDF or DOCX files only.");
+): ResumeFileKind {
+  return detectResumeFileKind(buffer, fileName, contentType);
+}
+
+export function resolveBaseResumeContentType(
+  buffer: Buffer,
+  fileName: string,
+  contentType: string,
+): { kind: ResumeFileKind; contentType: string } {
+  const kind = detectResumeFileKind(buffer, fileName, contentType);
+  return { kind, contentType: contentTypeForResumeKind(kind) };
 }
 
 export function validateTxtOverride(
@@ -25,7 +29,13 @@ export function validateTxtOverride(
   if (!buffer.length || buffer.length > 1024 * 1024) {
     throw new Error("TXT override must be between 1 byte and 1 MB.");
   }
-  if (!fileName.toLowerCase().endsWith(".txt") || !["text/plain", ""].includes(contentType)) {
+  const mime = (contentType || "").toLowerCase().split(";")[0]?.trim() ?? "";
+  if (
+    !fileName.toLowerCase().endsWith(".txt") ||
+    (mime &&
+      mime !== "text/plain" &&
+      mime !== "application/octet-stream")
+  ) {
     throw new Error("Upload a UTF-8 .txt file.");
   }
   if (buffer.includes(0)) throw new Error("Binary TXT files are not accepted.");

@@ -79,10 +79,9 @@
   100% { background-position: 200% 50%; }
 }
 .intelligenceActions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.intelligenceActions button, .fileAction { min-height: 38px; padding: 8px 12px; border: 1px solid var(--jb-border); border-radius: 10px; background: var(--jb-input-bg); color: var(--jb-ink); font: inherit; font-size: 12px; font-weight: 700; }
-.intelligenceActions button, .fileAction { cursor: pointer; }
-.intelligenceActions button:disabled, .fileAction:has(input:disabled) { opacity: .55; cursor: not-allowed; }
-.fileAction input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.intelligenceActions button { min-height: 38px; padding: 8px 12px; border: 1px solid var(--jb-border); border-radius: 10px; background: var(--jb-input-bg); color: var(--jb-ink); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.intelligenceActions button:disabled { opacity: .55; cursor: not-allowed; }
+.hiddenFileInput { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .intelligenceNotice, .intelligenceError { margin: 0; font-size: 12px; line-height: 1.5; }
 .intelligenceNotice { color: var(--jb-ink-muted); }
 .intelligenceError { color: #d44b62; }

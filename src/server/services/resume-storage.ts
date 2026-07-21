@@ -1,5 +1,9 @@
+import { createHash } from "crypto";
 import { createAdminClient } from "@/server/db/supabase-admin";
-import { RESUME_MIME_TYPES } from "@/lib/resume-mime";
+import {
+  normalizeStorageContentType,
+  RESUME_MIME_TYPES,
+} from "@/lib/resume-mime";
 
 const RESUME_SIGNED_URL_TTL_SECONDS = 60 * 60;
 const RESUME_EXTENSIONS = ["pdf", "docx", "doc"] as const;
@@ -12,31 +16,47 @@ function contentTypeForFileName(fileName: string): string {
   if (extension === "doc") {
     return "application/msword";
   }
+  if (extension === "txt") {
+    return "text/plain";
+  }
   return "application/pdf";
 }
 
-async function resolveResumeStoragePath(
+async function ensureResumesBucket(
   admin: ReturnType<typeof createAdminClient>,
-  userId: string,
-  storedValue: string | null,
-): Promise<string | null> {
-  if (storedValue && !storedValue.startsWith("http")) {
-    return storedValue;
+): Promise<void> {
+  const { data: buckets, error: listError } = await admin.storage.listBuckets();
+  if (listError) {
+    throw new Error(listError.message);
   }
 
-  const { data: files } = await admin.storage.from("resumes").list(userId);
-  if (!files?.length) {
-    return null;
-  }
+  const allowedMimeTypes = [...RESUME_MIME_TYPES];
+  const exists = buckets?.some((bucket) => bucket.name === "resumes");
 
-  for (const extension of RESUME_EXTENSIONS) {
-    const fileName = `base-resume.${extension}`;
-    if (files.some((file) => file.name === fileName)) {
-      return `${userId}/${fileName}`;
+  if (!exists) {
+    const { error: createError } = await admin.storage.createBucket("resumes", {
+      public: false,
+      fileSizeLimit: 5 * 1024 * 1024,
+      allowedMimeTypes,
+    });
+    if (
+      createError &&
+      !createError.message.toLowerCase().includes("already exists")
+    ) {
+      throw new Error(createError.message);
     }
+    return;
   }
 
-  return null;
+  // Existing buckets keep the old PDF/DOCX-only allowlist — refresh so TXT overrides work.
+  const { error: updateError } = await admin.storage.updateBucket("resumes", {
+    public: false,
+    fileSizeLimit: 5 * 1024 * 1024,
+    allowedMimeTypes,
+  });
+  if (updateError) {
+    console.error("Could not update resumes bucket MIME allowlist:", updateError.message);
+  }
 }
 
 export async function getFreshCandidateResumeUrl(
@@ -73,6 +93,30 @@ export async function getFreshCandidateResumeUrl(
     resumeUrl: signedData.signedUrl,
     fileName,
   };
+}
+
+async function resolveResumeStoragePath(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  storedValue: string | null,
+): Promise<string | null> {
+  if (storedValue && !storedValue.startsWith("http")) {
+    return storedValue;
+  }
+
+  const { data: files } = await admin.storage.from("resumes").list(userId);
+  if (!files?.length) {
+    return null;
+  }
+
+  for (const extension of RESUME_EXTENSIONS) {
+    const fileName = `base-resume.${extension}`;
+    if (files.some((file) => file.name === fileName)) {
+      return `${userId}/${fileName}`;
+    }
+  }
+
+  return null;
 }
 
 export async function getCandidateResumeFile(
@@ -116,32 +160,27 @@ export async function saveCandidateResumeFile(input: {
   contentType: string;
 }): Promise<{ resumeUrl: string; storagePath: string }> {
   const admin = createAdminClient();
-
-  const { data: buckets, error: listError } = await admin.storage.listBuckets();
-  if (listError) {
-    throw new Error(listError.message);
-  }
-
-  if (!buckets?.some((bucket) => bucket.name === "resumes")) {
-    const { error: createError } = await admin.storage.createBucket("resumes", {
-      public: false,
-      fileSizeLimit: 5 * 1024 * 1024,
-      allowedMimeTypes: [...RESUME_MIME_TYPES],
-    });
-
-    if (createError && !createError.message.toLowerCase().includes("already exists")) {
-      throw new Error(createError.message);
-    }
-  }
+  await ensureResumesBucket(admin);
 
   const extension = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
   const path = `${input.userId}/base-resume.${extension}`;
+  const contentType = normalizeStorageContentType(
+    input.contentType || contentTypeForFileName(input.fileName),
+  );
+
+  // Remove other extension variants so an old PDF cannot shadow a new DOCX (or vice versa).
+  const stalePaths = RESUME_EXTENSIONS.filter((ext) => ext !== extension).map(
+    (ext) => `${input.userId}/base-resume.${ext}`,
+  );
+  if (stalePaths.length) {
+    await admin.storage.from("resumes").remove(stalePaths);
+  }
 
   const { error: uploadError } = await admin.storage
     .from("resumes")
-    .upload(path, input.fileBuffer, {
+    .upload(path, Buffer.from(input.fileBuffer), {
       upsert: true,
-      contentType: input.contentType,
+      contentType,
     });
 
   if (uploadError) {
@@ -190,34 +229,21 @@ export async function saveApplicationResumeFile(input: {
   contentType: string;
 }): Promise<{ storagePath: string; fileName: string }> {
   const admin = createAdminClient();
-
-  const { data: buckets, error: listError } = await admin.storage.listBuckets();
-  if (listError) {
-    throw new Error(listError.message);
-  }
-
-  if (!buckets?.some((bucket) => bucket.name === "resumes")) {
-    const { error: createError } = await admin.storage.createBucket("resumes", {
-      public: false,
-      fileSizeLimit: 5 * 1024 * 1024,
-      allowedMimeTypes: [...RESUME_MIME_TYPES],
-    });
-
-    if (createError && !createError.message.toLowerCase().includes("already exists")) {
-      throw new Error(createError.message);
-    }
-  }
+  await ensureResumesBucket(admin);
 
   const extension = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
   const safeName =
     input.fileName.replace(/[^\w.-]/g, "_").slice(0, 120) || `resume.${extension}`;
   const path = `${input.candidateId}/applications/${input.jobId}/${safeName}`;
+  const contentType = normalizeStorageContentType(
+    input.contentType || contentTypeForFileName(input.fileName),
+  );
 
   const { error: uploadError } = await admin.storage
     .from("resumes")
-    .upload(path, input.fileBuffer, {
+    .upload(path, Buffer.from(input.fileBuffer), {
       upsert: true,
-      contentType: input.contentType,
+      contentType,
     });
 
   if (uploadError) {
@@ -227,3 +253,27 @@ export async function saveApplicationResumeFile(input: {
   return { storagePath: path, fileName: input.fileName };
 }
 
+/** Upload admin TXT override bytes into the resumes bucket. */
+export async function saveResumeTxtOverrideFile(input: {
+  candidateId: string;
+  fileName: string;
+  fileBuffer: Buffer;
+}): Promise<string> {
+  const admin = createAdminClient();
+  await ensureResumesBucket(admin);
+
+  const digest = createHash("sha256")
+    .update(input.fileBuffer)
+    .digest("hex")
+    .slice(0, 16);
+  const path = `${input.candidateId}/resume-intelligence/admin-override-${digest}.txt`;
+
+  const { error } = await admin.storage.from("resumes").upload(path, Buffer.from(input.fileBuffer), {
+    upsert: true,
+    contentType: "text/plain",
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return path;
+}
