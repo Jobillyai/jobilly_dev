@@ -6,9 +6,10 @@ import { getSessionUser } from "@/lib/auth/session";
 import { termsOfService } from "@/lib/legal/content";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Jobilly.ai",
+  title: "Terms of Service",
   description:
-    "Terms for using Jobilly.ai, including subscriptions, AI features, managed job applications, and institution programs.",
+    "Terms for using Jobilly.ai, including accounts, subscriptions, AI features, managed job applications, and institutional programs.",
+  alternates: { canonical: "/terms" },
 };
 
 export default async function TermsRoutePage() {

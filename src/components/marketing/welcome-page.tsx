@@ -12,6 +12,7 @@ import { WelcomePipelineSection } from "./welcome-pipeline-section";
 import { WelcomeServicesSection } from "./welcome-services-section";
 import { JobenChatWidget } from "./joben-chat-widget";
 import { useScrollReveal } from "./use-scroll-reveal";
+import { SITE_FAQS } from "@/lib/seo/site";
 
 const platformStats = [
   { value: "4", label: "career phases" },
@@ -121,6 +122,33 @@ export function WelcomePage() {
       </section>
 
       <WelcomeServicesSection />
+
+      <section className={styles.faqSection} id="faq" aria-labelledby="faq-heading">
+        <div className={styles.sectionContent}>
+          <div className={styles.faqHeader}>
+            <p className={styles.faqEyebrow}>FAQ</p>
+            <h2
+              id="faq-heading"
+              className={`${styles.faqTitle} ${revealStyles.revealFromLeft}`}
+              data-reveal
+              data-reveal-visible-class="revealed"
+            >
+              Questions graduates ask us
+            </h2>
+            <p className={styles.faqSub}>
+              Straight answers about advisory, mock interviews, and managed applications.
+            </p>
+          </div>
+          <div className={styles.faqList}>
+            {SITE_FAQS.map((item) => (
+              <details key={item.question} className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>{item.question}</summary>
+                <p className={styles.faqAnswer}>{item.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <div className={styles.companiesStrip}>
         <WelcomeWaveMesh direction="bl-tr" lineCount={52} extent="strip" />

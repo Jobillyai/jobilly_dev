@@ -6,9 +6,10 @@ import { getSessionUser } from "@/lib/auth/session";
 import { privacyPolicy } from "@/lib/legal/content";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Jobilly.ai",
+  title: "Privacy Policy",
   description:
-    "How Jobilly.ai collects, uses, and protects your personal data across career advisory, learning, mock interviews, and job application services.",
+    "Read how Jobilly.ai collects, uses, stores, and protects personal data across career advisory, learning, mock interviews, and managed job applications.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default async function PrivacyRoutePage() {

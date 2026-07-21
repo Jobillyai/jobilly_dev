@@ -5,9 +5,16 @@ import { getMarketingHomePath } from "@/lib/auth/home-path";
 import { getSessionUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
-  title: "Contact Us — Jobilly.ai",
+  title: "Contact",
   description:
-    "Submit a service request to Jobilly.ai. Our manager will assign a mentor admin to help with your enquiry.",
+    "Contact Jobilly.ai for career advisory, mock interviews, managed job applications, or partnership enquiries. Our team responds with next steps.",
+  alternates: { canonical: "/contact" },
+  openGraph: {
+    title: "Contact Jobilly.ai",
+    description:
+      "Reach Jobilly for graduate career support, product questions, and service requests.",
+    url: "/contact",
+  },
 };
 
 export default async function ContactRoutePage() {
