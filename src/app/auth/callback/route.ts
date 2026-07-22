@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { getOriginFromRequest } from "@/lib/auth/app-origin";
 import { applySessionCookiesToSet, attachTabSessionCookie } from "@/lib/auth/supabase-cookies";
 import {
   POST_AUTH_WELCOME_COOKIE,
@@ -67,7 +68,8 @@ function redirectWithSessionCookies(
  * `?token_hash=...&type=signup`) after signup, password recovery, or OAuth.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = getOriginFromRequest(request);
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;

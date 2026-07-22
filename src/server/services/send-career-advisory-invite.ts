@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import {
   buildCareerAdvisoryIcsInvite,
   formatSessionDateTimeForStaffHtml,
@@ -201,7 +202,7 @@ export async function sendCareerAdvisoryMeetInvite(
     organizerEmail,
   });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const appUrl = getPublicAppOrigin();
   const adminCandidateUrl = `${appUrl}/admin/candidates#candidate-${input.candidateId}`;
   const adminCalendarUrl = `${appUrl}/admin/calendar`;
 

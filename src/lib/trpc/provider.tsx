@@ -6,9 +6,21 @@ import { httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc/client";
 
+import { SITE_URL } from "@/lib/seo/site";
+
 function getBaseUrl() {
   if (typeof window !== "undefined") return "";
-  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (fromEnv && !fromEnv.includes(".vercel.app")) {
+    return fromEnv.replace(/\/$/, "");
+  }
+
+  if (process.env.VERCEL_ENV === "production") {
+    return SITE_URL;
+  }
+
+  return "http://localhost:3000";
 }
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {

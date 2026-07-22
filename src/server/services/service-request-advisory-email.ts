@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import { formatSessionDateTimeFromIso } from "@/lib/career-advisory/session-datetime";
 import { listManagerEmails } from "@/server/services/service-requests";
 
@@ -37,7 +38,7 @@ export async function notifyManagersOfAdvisoryMeetingRemarks(input: {
       input.sessionScheduledAt
     : "Not recorded";
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const appUrl = getPublicAppOrigin();
   const html = `
     <div style="font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#0a1628;max-width:560px;">
       <h1 style="font-size:22px;margin-bottom:12px;">Career advisory session completed</h1>

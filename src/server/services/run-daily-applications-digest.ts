@@ -1,3 +1,4 @@
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import {
   getApplicationsDigestTimezone,
   getLocalDateString,
@@ -46,7 +47,7 @@ export type SendCandidateApplicationsDigestResult =
   | { error: string };
 
 function portalApplicationsUrl(): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const appUrl = getPublicAppOrigin();
   return `${appUrl}/dashboard/applications`;
 }
 

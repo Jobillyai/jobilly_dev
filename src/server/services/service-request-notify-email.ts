@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import type { ServiceRequestType } from "@/server/services/service-requests";
 
 type NotifyManagerInput = {
@@ -62,7 +63,7 @@ export async function notifyManagersOfServiceRequest(
     return;
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const appUrl = getPublicAppOrigin();
   const adminUrl = `${appUrl}/admin/requests`;
   const isNewCandidate = input.requestType === "new_candidate";
   const isCareerAdvisory = input.requestType === "career_advisory";

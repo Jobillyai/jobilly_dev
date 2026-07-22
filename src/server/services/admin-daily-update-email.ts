@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import { groupDailyActivityItems } from "@/lib/group-daily-activity";
 import type { AdminDailyUpdate } from "@/server/services/admin-daily-updates";
 import { listManagerEmails } from "@/server/services/service-requests";
@@ -92,7 +93,7 @@ export async function notifyManagersOfDailyUpdate(
     return;
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const appUrl = getPublicAppOrigin();
   const adminUrl = `${appUrl}/admin/tasks`;
   const mentorLabel = update.employeeName?.trim() || update.employeeEmail;
   const subject = isUpdate

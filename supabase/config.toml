@@ -17,8 +17,17 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000", "http://localhost:3000/auth/callback", "http://localhost:3000/reset-password"]
+site_url = "https://www.jobilly.ai"
+additional_redirect_urls = [
+  "https://www.jobilly.ai",
+  "https://www.jobilly.ai/auth/callback",
+  "https://www.jobilly.ai/reset-password",
+  "https://jobilly.ai",
+  "https://jobilly.ai/auth/callback",
+  "http://localhost:3000",
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3000/reset-password",
+]
 jwt_expiry = 3600
 enable_signup = true
 

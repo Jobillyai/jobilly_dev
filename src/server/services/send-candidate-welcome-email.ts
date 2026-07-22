@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import {
   buildEmailLogoHtml,
@@ -111,7 +112,7 @@ export async function sendCandidateWelcomeEmail(input: {
 
   const firstName =
     input.recipientName.trim().split(/\s+/)[0] || "there";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const appUrl = getPublicAppOrigin();
   const dashboardUrl = `${appUrl}/dashboard`;
   const productsUrl = `${appUrl}/products`;
   const resendApiKey = process.env.RESEND_API_KEY?.trim();

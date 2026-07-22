@@ -17,7 +17,12 @@ const nextConfig = {
   ...(isOneDriveProject && isNextDev ? { distDir: getDevDistDirRelative() } : {}),
   experimental: {
     typedRoutes: true,
-    serverComponentsExternalPackages: ["pdf-parse", "pdfjs-dist", "mammoth"],
+    serverComponentsExternalPackages: [
+      "pdf-parse",
+      "pdfjs-dist",
+      "@napi-rs/canvas",
+      "mammoth",
+    ],
   },
   webpack: (config, { dev }) => {
     // OneDrive sync corrupts webpack chunks (undefined factory / CSS 404).

@@ -17,9 +17,14 @@ export function normalizeResumeExtractedText(text: string): string {
 }
 
 async function parsePdfText(buffer: Buffer): Promise<string> {
-  // Copy bytes so PDF parsing cannot detach/neuter the caller's buffer.
+  // pdf-parse (pdfjs) needs canvas polyfills in Node before the main module loads.
+  const { CanvasFactory } = await import("pdf-parse/worker");
   const { PDFParse } = await import("pdf-parse");
-  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  // Copy bytes so PDF parsing cannot detach/neuter the caller's buffer.
+  const parser = new PDFParse({
+    data: new Uint8Array(buffer),
+    CanvasFactory,
+  });
 
   try {
     const parsed = await parser.getText();

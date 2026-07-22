@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import { formatSessionDateTimeForCandidate } from "@/lib/career-advisory/session-datetime";
 import { formatSessionDateTimeForStaffHtml } from "@/server/services/career-advisory-invite";
 import {
@@ -175,7 +176,7 @@ export async function sendCareerAdvisorySubmissionAck(
   const fromEmail =
     process.env.RESEND_FROM_EMAIL?.trim() ?? "Jobilly <onboarding@resend.dev>";
   const resendApiKey = process.env.RESEND_API_KEY?.trim();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const appUrl = getPublicAppOrigin();
   const adminCandidateUrl = `${appUrl}/admin/candidates#candidate-${input.candidateId}`;
   const logoAttachment = getCandidateInviteLogoAttachment();
 

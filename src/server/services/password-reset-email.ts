@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import { createAdminClient } from "@/server/db/supabase-admin";
 import {
   buildEmailLogoHtml,
@@ -91,7 +92,7 @@ export function buildPasswordResetEmailHtml(input: {
 
 async function createRecoveryLink(email: string): Promise<string | null> {
   const admin = createAdminClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const appUrl = getPublicAppOrigin();
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
