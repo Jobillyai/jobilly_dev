@@ -1492,20 +1492,13 @@ function renderScorecardTabs(sc, keywords, resumeText, atsScoreLabel) {
     });
   }
 
-  const resumeLines = (resumeText || '').split('\n').map(l => l.trim()).filter(Boolean);
-  let autoFilename = 'Resume_Tailored.doc';
-  if (resumeLines.length >= 2) {
-    const rawName = resumeLines[0].replace(/[^a-zA-Z\s]/g, '').trim();
-    const namePart = rawName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('_');
-    const rawTitle = resumeLines[1].replace(/[^a-zA-Z\s]/g, '').trim();
-    const titlePart = rawTitle.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('_');
-    if (namePart && titlePart) autoFilename = `${namePart}_${titlePart}.doc`;
-    else if (namePart) autoFilename = `${namePart}_Resume.doc`;
-  }
+  const resumeForName = resumeText || state.tailoredResume || state.scoredResume || '';
+  const jdForName = document.getElementById('jdInput')?.value || '';
+  const autoFilename = `${buildCandidateRoleBasename(resumeForName, jdForName)}.doc`;
   state.filename = autoFilename;
   document.getElementById('suggestedFilename').textContent = autoFilename;
   document.getElementById('filenameReason').textContent =
-    'ATS systems and recruiters sort by filename. Using FirstName_LastName_RoleTitle.doc ensures immediate identification and avoids generic filenames.';
+    'ATS systems and recruiters sort by filename. Using CandidateName_RoleTitle ensures immediate identification and avoids generic filenames.';
 
   state.atsScore = atsScore;
   state.scorecard = sc;
@@ -2145,12 +2138,102 @@ function parseResumeToHtml(text) {
   return html;
 }
 
+function slugifyFilenamePart(text) {
+  return String(text || '')
+    .replace(/[^a-zA-Z0-9\s_-]/g, ' ')
+    .trim()
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join('_');
+}
+
+function extractCandidateNamePart(resumeText) {
+  const firstLine = String(resumeText || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean);
+  return slugifyFilenamePart(firstLine || '');
+}
+
+function extractRoleFromResumeHeadline(resumeText) {
+  const lines = String(resumeText || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length < 2) return '';
+  // Skip contact-looking lines (email/phone/url) when picking a headline.
+  for (let i = 1; i < Math.min(lines.length, 5); i += 1) {
+    const line = lines[i];
+    if (/@|https?:\/\/|linkedin\.com|\d{3}[-.\s]?\d{3}/i.test(line)) continue;
+    if (line.length < 4 || line.length > 90) continue;
+    return slugifyFilenamePart(line);
+  }
+  return '';
+}
+
+function extractRoleFromJd(jdText) {
+  const lines = String(jdText || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  for (const line of lines.slice(0, 30)) {
+    const labeled = line.match(
+      /^(?:job\s*title|title|position|role|opening)\s*[:\-–]\s*(.+)$/i,
+    );
+    if (labeled?.[1]) return slugifyFilenamePart(labeled[1]);
+  }
+  for (const line of lines.slice(0, 10)) {
+    if (line.length < 6 || line.length > 80) continue;
+    if (/^(about|we are|company|location|job description|responsibilities|requirements|summary)/i.test(line)) {
+      continue;
+    }
+    if (/[.!?]$/.test(line)) continue;
+    if (/@|https?:\/\//i.test(line)) continue;
+    return slugifyFilenamePart(line);
+  }
+  return '';
+}
+
+/** CandidateName_Role — used for Print/Save PDF, .doc, and .txt exports. */
+function buildCandidateRoleBasename(resumeText, jdText) {
+  const namePart = extractCandidateNamePart(resumeText) || 'Candidate';
+  const rolePart =
+    extractRoleFromJd(jdText) ||
+    extractRoleFromResumeHeadline(resumeText) ||
+    'Resume';
+  return `${namePart}_${rolePart}`;
+}
+
+function getExportBasename() {
+  if (state.filename) {
+    return String(state.filename).replace(/\.(docx?|txt|pdf)$/i, '');
+  }
+  const resumeText =
+    state.tailoredResume ||
+    state.scoredResume ||
+    document.getElementById('outputArea')?.textContent ||
+    document.getElementById('resumeInput')?.value ||
+    '';
+  const jdText = document.getElementById('jdInput')?.value || '';
+  return buildCandidateRoleBasename(resumeText, jdText);
+}
+
+function ensureExportFilename(extension) {
+  const basename = getExportBasename();
+  const withExt = `${basename}.${extension.replace(/^\./, '')}`;
+  state.filename = `${basename}.doc`;
+  const suggested = document.getElementById('suggestedFilename');
+  if (suggested) suggested.textContent = state.filename;
+  return withExt;
+}
+
 // ─── DOCX DOWNLOAD ────────────────────────────────────────────────
 function downloadDocx() {
   const content = state.tailoredResume || state.scoredResume || document.getElementById('outputArea').textContent;
   if (!content.trim()) { showToast('⚠️ No resume to download yet', '#ef4444'); return; }
   const resumeHtml = parseResumeToHtml(content);
-  const filename = (state.filename || 'tailored_resume.docx').replace(/\.txt$/i, '.docx');
+  const filename = ensureExportFilename('doc');
 
   const wordHtml = `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -2159,7 +2242,7 @@ function downloadDocx() {
 <head>
   <meta charset="UTF-8">
   <meta name="ProgId" content="Word.Document">
-  <title>${filename}</title>
+  <title>${filename.replace(/\.docx?$/i, '')}</title>
   <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
   <style>
     @page WordSection1 {
@@ -2267,7 +2350,7 @@ function downloadTxt() {
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = (state.filename || 'tailored_resume.txt').replace(/\.doc(x)?$/i, '.txt');
+  a.download = ensureExportFilename('txt');
   a.click();
   showToast('📥 .txt downloaded — open in Word and Save As .docx for best results');
 }
@@ -2281,16 +2364,20 @@ function printResume() {
   const content = state.tailoredResume || state.scoredResume || document.getElementById('outputArea').textContent;
   if (!content.trim()) { showToast('⚠️ No resume to print yet', '#ef4444'); return; }
   const resumeHtml = parseResumeToHtml(content);
+  const exportBasename = ensureExportFilename('pdf').replace(/\.pdf$/i, '');
+  const safeTitle = exportBasename
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 
-  // Print via a same-origin hidden iframe (not a blob: URL) with an empty <title>
-  // so Chrome/Edge do not stamp the resume filename or blob URL into the page header/footer.
-  // Users should also leave "Headers and footers" unchecked in the print dialog
-  // to hide the browser date and page numbers.
+  // Document <title> becomes the default "Save as PDF" filename in Chrome/Edge.
+  // Leave "Headers and footers" unchecked in the print dialog to hide date/URL.
   const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title></title>
+  <title>${safeTitle}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -2416,7 +2503,7 @@ function printResume() {
     try {
       frameWindow.focus();
       frameWindow.print();
-      showToast('Print tip: turn off “Headers and footers” for a clean PDF (no date / page numbers)');
+      showToast(`Save as PDF as “${exportBasename}.pdf” — turn off “Headers and footers” for a clean page`);
     } catch (err) {
       cleanup();
       showToast('⚠️ Print failed — try Download .doc instead', '#ef4444');
@@ -2425,7 +2512,8 @@ function printResume() {
 }
 
 function copyFilename() {
-  navigator.clipboard.writeText(state.filename).then(() => showToast('📋 Filename copied!'));
+  const name = ensureExportFilename('doc');
+  navigator.clipboard.writeText(name).then(() => showToast('📋 Filename copied!'));
 }
 </script>
 </body>
