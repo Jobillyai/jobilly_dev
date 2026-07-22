@@ -8,7 +8,7 @@ import {
   POST_AUTH_WELCOME_COOKIE,
   getPostAuthWelcomeCookieOptions,
 } from "@/lib/auth/post-auth-welcome";
-import { getRequestAppOrigin } from "@/lib/auth/app-origin";
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import { isAdminPortalRole } from "@/lib/auth/roles";
 import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
 import { combineFirstLastName } from "@/lib/format-person-name";
@@ -136,7 +136,7 @@ export async function signupAction(
   }
 
   const supabase = await createClient();
-  const appOrigin = await getRequestAppOrigin();
+  const appOrigin = getPublicAppOrigin();
 
   const { data, error } = await supabase.auth.signUp({
     email,

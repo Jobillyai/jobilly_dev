@@ -58,7 +58,19 @@ export async function middleware(request: NextRequest) {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+
+  // Supabase Site URL often points at `/`, so confirm/OAuth codes land on the homepage.
+  // Forward them to the callback handler before anything else.
+  if (
+    pathname !== "/auth/callback" &&
+    (searchParams.has("code") ||
+      (searchParams.has("token_hash") && searchParams.has("type")))
+  ) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/callback";
+    return NextResponse.redirect(callbackUrl);
+  }
 
   if (!supabaseUrl || !supabaseAnonKey) {
     if (

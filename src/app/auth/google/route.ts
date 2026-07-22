@@ -1,6 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getOriginFromRequest } from "@/lib/auth/app-origin";
+import { getPublicAppOrigin } from "@/lib/auth/app-origin";
 import { sanitizeCandidateRedirectPath } from "@/lib/auth/safe-redirect";
 import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
 
@@ -9,7 +9,7 @@ import { applySessionCookiesToSet } from "@/lib/auth/supabase-cookies";
  * on the redirect response — more reliable than a server action in production.
  */
 export async function GET(request: NextRequest) {
-  const origin = getOriginFromRequest(request);
+  const origin = getPublicAppOrigin();
   const next = sanitizeCandidateRedirectPath(request.nextUrl.searchParams.get("next"));
   let cookieResponse = NextResponse.next({ request });
 
